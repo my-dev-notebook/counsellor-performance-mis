@@ -137,7 +137,7 @@ export function CounsellorTable({
                 <td className="px-3 py-2">
                   <div className="flex items-center gap-1.5">
                     <StatusPill status={c.status} />
-                    {c.belowNonNegotiable === true && (
+                    {c.belowNonNegotiable === true && c.status !== "Red" && (
                       <span className="inline-flex items-center rounded-full bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-700 ring-1 ring-red-600/20 ring-inset">
                         &lt; NN
                       </span>
