@@ -1,0 +1,11 @@
+.next
+.open-next
+out
+build
+coverage
+node_modules
+pnpm-lock.yaml
+next-env.d.ts
+cloudflare-env.d.ts
+worker-configuration.d.ts
+tmp
