@@ -1,13 +1,11 @@
 "use client";
 
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useMemo, useState, type CSSProperties } from "react";
 import { formatInt, formatPct, formatText } from "@/lib/format";
-import type { Counsellor } from "@/lib/parser/schemas";
-import { StatusPill } from "@/components/StatusPill";
+import type { Counsellor, Status } from "@/lib/parser/schemas";
 import { DrillDownPanel } from "@/components/drilldown/DrillDownPanel";
 
-type SortKey =
-  "name" | "team" | "agency" | "target" | "nonNegotiable" | "achieved" | "pctAchieved" | "status";
+type SortKey = "name" | "team" | "agency" | "target" | "nonNegotiable" | "achieved" | "pctAchieved";
 type SortDirection = "asc" | "desc";
 
 const COLUMNS: { key: SortKey; label: string }[] = [
@@ -18,8 +16,19 @@ const COLUMNS: { key: SortKey; label: string }[] = [
   { key: "nonNegotiable", label: "Non-Neg" },
   { key: "achieved", label: "Achieved" },
   { key: "pctAchieved", label: "Ach %" },
-  { key: "status", label: "Status" },
 ];
+
+/** Left-edge accent tint per status, faded out toward the row's background. */
+const ROW_TINT: Record<Status, string> = {
+  Green: "rgba(16, 185, 129, 0.16)",
+  Yellow: "rgba(245, 158, 11, 0.16)",
+  Red: "rgba(239, 68, 68, 0.16)",
+  Unknown: "rgba(161, 161, 170, 0.14)",
+};
+
+function rowAccentStyle(status: Status): CSSProperties {
+  return { backgroundImage: `linear-gradient(to right, ${ROW_TINT[status]}, transparent 12rem)` };
+}
 
 function sortValue(c: Counsellor, key: SortKey): string | number | null {
   switch (key) {
@@ -37,8 +46,6 @@ function sortValue(c: Counsellor, key: SortKey): string | number | null {
       return c.achieved;
     case "pctAchieved":
       return c.pctAchieved;
-    case "status":
-      return c.status;
   }
 }
 
@@ -125,6 +132,7 @@ export function CounsellorTable({
                   onSelect(c.id);
                 }}
                 aria-expanded={selectedId === c.id}
+                style={rowAccentStyle(c.status)}
                 className={`cursor-pointer hover:bg-zinc-50 ${selectedId === c.id ? "bg-zinc-50" : ""}`}
               >
                 <td className="px-3 py-2 font-medium text-zinc-900">{c.name}</td>
@@ -133,11 +141,10 @@ export function CounsellorTable({
                 <td className="px-3 py-2 text-zinc-600">{formatInt(c.target)}</td>
                 <td className="px-3 py-2 text-zinc-600">{formatInt(c.nonNegotiable)}</td>
                 <td className="px-3 py-2 text-zinc-600">{formatInt(c.achieved)}</td>
-                <td className="px-3 py-2 text-zinc-600">{formatPct(c.pctAchieved)}</td>
-                <td className="px-3 py-2">
+                <td className="px-3 py-2 text-zinc-600">
                   <div className="flex items-center gap-1.5">
-                    <StatusPill status={c.status} />
-                    {c.belowNonNegotiable === true && c.status !== "Red" && (
+                    {formatPct(c.pctAchieved)}
+                    {c.belowNonNegotiable === true && (
                       <span className="inline-flex items-center rounded-full bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-nowrap text-red-700 ring-1 ring-red-600/20 ring-inset">
                         &lt; NN
                       </span>
