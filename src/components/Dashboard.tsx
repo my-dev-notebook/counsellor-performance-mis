@@ -10,7 +10,6 @@ import { KpiCards } from "@/components/kpi/KpiCards";
 import { TeamPerformancePanel } from "@/components/team/TeamPerformancePanel";
 import { PerformanceHealthPanel } from "@/components/health/PerformanceHealthPanel";
 import { CounsellorTable } from "@/components/table/CounsellorTable";
-import { DrillDownPanel } from "@/components/drilldown/DrillDownPanel";
 
 export function Dashboard({ workbook }: { workbook: ParsedWorkbook }) {
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
@@ -18,22 +17,24 @@ export function Dashboard({ workbook }: { workbook: ParsedWorkbook }) {
 
   const filtered = useMemo(() => applyFilters(workbook.counsellors, filters), [workbook, filters]);
   const summary = useMemo(() => summarize(filtered), [filtered]);
-  const selected = selectedId
-    ? (workbook.counsellors.find((c) => c.id === selectedId) ?? null)
-    : null;
 
   const resetFilters = () => {
     setFilters(DEFAULT_FILTERS);
     setSelectedId(null);
   };
 
+  const toggleSelected = (id: string) => {
+    setSelectedId((prev) => (prev === id ? null : id));
+  };
+
   return (
-    <div className="space-y-6">
+    <div data-component="Dashboard" className="space-y-6">
       <FilterBar
         counsellors={workbook.counsellors}
         agencies={workbook.agencies}
         filters={filters}
         onChange={setFilters}
+        onReset={resetFilters}
       />
       <KpiCards summary={summary} />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -46,10 +47,16 @@ export function Dashboard({ workbook }: { workbook: ParsedWorkbook }) {
           <PerformanceHealthPanel counsellors={filtered} />
         </section>
       </div>
-      {selected && <DrillDownPanel counsellor={selected} onReset={resetFilters} />}
       <section>
         <h2 className="mb-3 text-sm font-semibold text-zinc-900">Counsellors</h2>
-        <CounsellorTable counsellors={filtered} selectedId={selectedId} onSelect={setSelectedId} />
+        <CounsellorTable
+          counsellors={filtered}
+          selectedId={selectedId}
+          onSelect={toggleSelected}
+          onCloseDrilldown={() => {
+            setSelectedId(null);
+          }}
+        />
       </section>
     </div>
   );

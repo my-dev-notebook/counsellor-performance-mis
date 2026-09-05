@@ -29,6 +29,7 @@ export function UploadZone({
 
   return (
     <div
+      data-component="UploadZone"
       onDragOver={(event) => {
         event.preventDefault();
         setIsDraggingOver(true);

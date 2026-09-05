@@ -33,7 +33,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="flex min-h-full flex-1 flex-col bg-zinc-50">
+    <div data-component="Home" className="flex min-h-full flex-1 flex-col bg-zinc-50">
       <Header
         monthLabel={state.status === "ready" ? state.workbook.monthLabel : undefined}
         counsellorCount={state.status === "ready" ? state.workbook.counsellors.length : undefined}

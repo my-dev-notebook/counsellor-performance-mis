@@ -16,11 +16,15 @@ export function TeamPerformancePanel({ counsellors }: { counsellors: readonly Co
   const teams = summarizeByTeam(counsellors);
 
   if (teams.length === 0) {
-    return <p className="text-sm text-zinc-500">No teams in the current filter.</p>;
+    return (
+      <p data-component="TeamPerformancePanel" className="text-sm text-zinc-500">
+        No teams in the current filter.
+      </p>
+    );
   }
 
   return (
-    <div className="space-y-3">
+    <div data-component="TeamPerformancePanel" className="space-y-3">
       {teams.map(({ team, summary }) => {
         const status = deriveStatus(summary.pctAchieved);
         const widthPct =

@@ -11,7 +11,7 @@ function KpiCard({
   caption?: string | undefined;
 }) {
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-4">
+    <div data-component="KpiCard" className="rounded-lg border border-zinc-200 bg-white p-4">
       <p className="text-xs font-semibold tracking-wide text-zinc-500 uppercase">{label}</p>
       <p className="mt-1 text-2xl font-semibold text-zinc-900">{value}</p>
       {caption && <p className="mt-1 text-xs text-zinc-400">{caption}</p>}
@@ -22,7 +22,7 @@ function KpiCard({
 /** PLAN.md §5.3 — six KPI cards. `INCENTIVE ELIGIBLE` is deliberately not here (not in the data). */
 export function KpiCards({ summary }: { summary: Summary }) {
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+    <div data-component="KpiCards" className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
       <KpiCard label="Counsellors" value={formatInt(summary.headcount)} />
       <KpiCard label="Target" value={formatInt(summary.target)} />
       <KpiCard label="Achieved" value={formatInt(summary.achieved)} />

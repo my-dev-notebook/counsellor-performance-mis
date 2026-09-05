@@ -13,7 +13,7 @@ export function PerformanceHealthPanel({ counsellors }: { counsellors: readonly 
   for (const c of counsellors) counts[c.status]++;
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div data-component="PerformanceHealthPanel" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
       {BUCKETS.map((bucket) => (
         <div key={bucket.status} className="rounded-lg border border-zinc-200 bg-white p-3">
           <div className="flex items-center gap-2">

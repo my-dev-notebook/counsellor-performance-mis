@@ -21,7 +21,7 @@ function Select({
   disabledHint?: string;
 }) {
   return (
-    <label className="flex flex-col gap-1">
+    <label data-component="Select" className="flex flex-col gap-1">
       <span className="text-xs font-semibold tracking-wide text-zinc-500 uppercase">{label}</span>
       {disabled ? (
         <span className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-400">
@@ -52,40 +52,54 @@ export function FilterBar({
   agencies,
   filters,
   onChange,
+  onReset,
 }: {
   counsellors: readonly Counsellor[];
   agencies: readonly string[];
   filters: Filters;
   onChange: (filters: Filters) => void;
+  onReset: () => void;
 }) {
   return (
-    <div className="grid grid-cols-1 gap-4 rounded-lg border border-zinc-200 bg-white p-4 sm:grid-cols-3">
-      <Select
-        label="Team"
-        value={filters.team}
-        options={CANONICAL_TEAMS}
-        onChange={(team) => {
-          onChange({ ...filters, team: team as Filters["team"], counsellor: "All" });
-        }}
-      />
-      <Select
-        label="Agency"
-        value={filters.agency}
-        options={agencies}
-        disabled={agencies.length === 0}
-        disabledHint="Not in this file"
-        onChange={(agency) => {
-          onChange({ ...filters, agency, counsellor: "All" });
-        }}
-      />
-      <Select
-        label="Counsellor"
-        value={filters.counsellor}
-        options={counsellorOptions(counsellors, filters)}
-        onChange={(counsellor) => {
-          onChange({ ...filters, counsellor });
-        }}
-      />
+    <div
+      data-component="FilterBar"
+      className="flex flex-col gap-4 rounded-lg border border-zinc-200 bg-white p-4 sm:flex-row sm:items-end sm:justify-between"
+    >
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <Select
+          label="Team"
+          value={filters.team}
+          options={CANONICAL_TEAMS}
+          onChange={(team) => {
+            onChange({ ...filters, team: team as Filters["team"], counsellor: "All" });
+          }}
+        />
+        <Select
+          label="Agency"
+          value={filters.agency}
+          options={agencies}
+          disabled={agencies.length === 0}
+          disabledHint="Not in this file"
+          onChange={(agency) => {
+            onChange({ ...filters, agency, counsellor: "All" });
+          }}
+        />
+        <Select
+          label="Counsellor"
+          value={filters.counsellor}
+          options={counsellorOptions(counsellors, filters)}
+          onChange={(counsellor) => {
+            onChange({ ...filters, counsellor });
+          }}
+        />
+      </div>
+      <button
+        type="button"
+        onClick={onReset}
+        className="rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+      >
+        Reset filters
+      </button>
     </div>
   );
 }

@@ -15,7 +15,10 @@ export function ParseReportPanel({ workbook }: { workbook: ParsedWorkbook }) {
   const otherWarnings = workbook.warnings.filter((w) => w.code !== "SHEET_IGNORED");
 
   return (
-    <section className="rounded-lg border border-zinc-200 bg-white">
+    <section
+      data-component="ParseReportPanel"
+      className="rounded-lg border border-zinc-200 bg-white"
+    >
       <button
         type="button"
         onClick={() => {

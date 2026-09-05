@@ -10,6 +10,7 @@ const STYLES: Record<Status, string> = {
 export function StatusPill({ status }: { status: Status }) {
   return (
     <span
+      data-component="StatusPill"
       className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${STYLES[status]}`}
     >
       {status}

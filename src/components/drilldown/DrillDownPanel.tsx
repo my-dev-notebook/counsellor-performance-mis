@@ -13,16 +13,16 @@ const FIELDS: { label: string; render: (c: Counsellor) => string }[] = [
   { label: "Achievement %", render: (c) => formatPct(c.pctAchieved) },
 ];
 
-/** PLAN.md §5.7 — individual drill-down for the selected counsellor. */
+/** PLAN.md §5.7 — individual drill-down for the selected counsellor, expanded inline under their table row. */
 export function DrillDownPanel({
   counsellor,
-  onReset,
+  onClose,
 }: {
   counsellor: Counsellor;
-  onReset: () => void;
+  onClose: () => void;
 }) {
   return (
-    <section className="rounded-lg border border-zinc-200 bg-white p-4">
+    <section data-component="DrillDownPanel" className="p-4">
       <div className="flex items-start justify-between">
         <div>
           <h3 className="text-base font-semibold text-zinc-900">{counsellor.name}</h3>
@@ -37,10 +37,11 @@ export function DrillDownPanel({
         </div>
         <button
           type="button"
-          onClick={onReset}
-          className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
+          onClick={onClose}
+          aria-label="Close details"
+          className="rounded-md border border-zinc-300 px-2 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100"
         >
-          Reset filters
+          ✕
         </button>
       </div>
 

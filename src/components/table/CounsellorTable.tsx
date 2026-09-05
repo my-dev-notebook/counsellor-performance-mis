@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { formatInt, formatPct, formatText } from "@/lib/format";
 import type { Counsellor } from "@/lib/parser/schemas";
 import { StatusPill } from "@/components/StatusPill";
+import { DrillDownPanel } from "@/components/drilldown/DrillDownPanel";
 
 type SortKey =
   "name" | "team" | "agency" | "target" | "nonNegotiable" | "achieved" | "pctAchieved" | "status";
@@ -58,10 +59,12 @@ export function CounsellorTable({
   counsellors,
   selectedId,
   onSelect,
+  onCloseDrilldown,
 }: {
   counsellors: readonly Counsellor[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  onCloseDrilldown: () => void;
 }) {
   const [sort, setSort] = useState<{ key: SortKey; direction: SortDirection }>({
     key: "pctAchieved",
@@ -83,14 +86,17 @@ export function CounsellorTable({
 
   if (counsellors.length === 0) {
     return (
-      <p className="py-8 text-center text-sm text-zinc-500">
+      <p data-component="CounsellorTable" className="py-8 text-center text-sm text-zinc-500">
         No counsellors match the current filters.
       </p>
     );
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
+    <div
+      data-component="CounsellorTable"
+      className="overflow-x-auto rounded-lg border border-zinc-200 bg-white"
+    >
       <table className="min-w-full divide-y divide-zinc-200 text-sm">
         <thead className="bg-zinc-50">
           <tr>
@@ -113,31 +119,40 @@ export function CounsellorTable({
         </thead>
         <tbody className="divide-y divide-zinc-100">
           {sorted.map((c) => (
-            <tr
-              key={c.id}
-              onClick={() => {
-                onSelect(c.id);
-              }}
-              className={`cursor-pointer hover:bg-zinc-50 ${selectedId === c.id ? "bg-zinc-50" : ""}`}
-            >
-              <td className="px-3 py-2 font-medium text-zinc-900">{c.name}</td>
-              <td className="px-3 py-2 text-zinc-600">{c.team}</td>
-              <td className="px-3 py-2 text-zinc-600">{formatText(c.agency)}</td>
-              <td className="px-3 py-2 text-zinc-600">{formatInt(c.target)}</td>
-              <td className="px-3 py-2 text-zinc-600">{formatInt(c.nonNegotiable)}</td>
-              <td className="px-3 py-2 text-zinc-600">{formatInt(c.achieved)}</td>
-              <td className="px-3 py-2 text-zinc-600">{formatPct(c.pctAchieved)}</td>
-              <td className="px-3 py-2">
-                <div className="flex items-center gap-1.5">
-                  <StatusPill status={c.status} />
-                  {c.belowNonNegotiable === true && (
-                    <span className="inline-flex items-center rounded-full bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-700 ring-1 ring-red-600/20 ring-inset">
-                      &lt; NN
-                    </span>
-                  )}
-                </div>
-              </td>
-            </tr>
+            <Fragment key={c.id}>
+              <tr
+                onClick={() => {
+                  onSelect(c.id);
+                }}
+                aria-expanded={selectedId === c.id}
+                className={`cursor-pointer hover:bg-zinc-50 ${selectedId === c.id ? "bg-zinc-50" : ""}`}
+              >
+                <td className="px-3 py-2 font-medium text-zinc-900">{c.name}</td>
+                <td className="px-3 py-2 text-zinc-600">{c.team}</td>
+                <td className="px-3 py-2 text-zinc-600">{formatText(c.agency)}</td>
+                <td className="px-3 py-2 text-zinc-600">{formatInt(c.target)}</td>
+                <td className="px-3 py-2 text-zinc-600">{formatInt(c.nonNegotiable)}</td>
+                <td className="px-3 py-2 text-zinc-600">{formatInt(c.achieved)}</td>
+                <td className="px-3 py-2 text-zinc-600">{formatPct(c.pctAchieved)}</td>
+                <td className="px-3 py-2">
+                  <div className="flex items-center gap-1.5">
+                    <StatusPill status={c.status} />
+                    {c.belowNonNegotiable === true && (
+                      <span className="inline-flex items-center rounded-full bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-700 ring-1 ring-red-600/20 ring-inset">
+                        &lt; NN
+                      </span>
+                    )}
+                  </div>
+                </td>
+              </tr>
+              {selectedId === c.id && (
+                <tr className="bg-zinc-50">
+                  <td colSpan={COLUMNS.length} className="p-0">
+                    <DrillDownPanel counsellor={c} onClose={onCloseDrilldown} />
+                  </td>
+                </tr>
+              )}
+            </Fragment>
           ))}
         </tbody>
       </table>
