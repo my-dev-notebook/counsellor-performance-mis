@@ -8,7 +8,6 @@ type Theme = "light" | "dark";
 const ThemeContext = createContext<{ theme: Theme; toggleTheme: () => void } | null>(null);
 
 function readStoredTheme(): Theme {
-  if (typeof window === "undefined") return "light";
   return window.localStorage.getItem("theme") === "dark" ? "dark" : "light";
 }
 
@@ -19,18 +18,20 @@ function applyTheme(theme: Theme) {
 /**
  * Owns the light/dark theme choice app-wide. The `<html>` element's initial
  * `data-theme` is set synchronously by an inline script in the root layout
- * (before first paint) and by the lazy `useState` initializer here, which
- * read the same `localStorage` key — so they agree and there's no flash.
- * The `useLayoutEffect` re-applies the attribute on mount to undo React
- * Strict Mode's dev-only remount, which otherwise clears it (see Next.js's
- * "preventing flash before hydration" guide).
+ * (before first paint), so there's no visual flash. React's own `theme`
+ * state must still start as "light" on both server and client — reading
+ * `localStorage` during the initial render (instead of in an effect) would
+ * make the client's first render diverge from the server-rendered HTML and
+ * trigger a hydration mismatch. The `useLayoutEffect` below corrects the
+ * state from `localStorage` right after mount, before paint.
  */
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(readStoredTheme);
+  const [theme, setTheme] = useState<Theme>("light");
 
   useLayoutEffect(() => {
-    applyTheme(theme);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const stored = readStoredTheme();
+    setTheme(stored);
+    applyTheme(stored);
   }, []);
 
   const toggleTheme = () => {
