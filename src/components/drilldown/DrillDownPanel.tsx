@@ -1,4 +1,3 @@
-import { FiX } from "react-icons/fi";
 import { formatDate, formatInt, formatPct, formatText } from "@/lib/format";
 import type { Counsellor } from "@/lib/parser/schemas";
 import { StatusPill } from "@/components/StatusPill";
@@ -17,36 +16,30 @@ const FIELDS: { label: string; render: (c: Counsellor) => string }[] = [
 /** PLAN.md §5.7 — individual drill-down for the selected counsellor, expanded inline under their table row. */
 export function DrillDownPanel({
   counsellor,
-  onClose,
+  rank,
 }: {
   counsellor: Counsellor;
-  onClose: () => void;
+  rank: number | null;
 }) {
   return (
     <section data-component="DrillDownPanel" className="p-4">
-      <div className="flex items-start justify-between">
-        <div>
-          <h3 className="text-base font-semibold text-foreground">{counsellor.name}</h3>
-          <div className="mt-1 flex items-center gap-2">
-            <StatusPill status={counsellor.status} />
-            {counsellor.belowNonNegotiable === true && (
-              <span className="inline-flex items-center rounded-full bg-destructive/15 px-1.5 py-0.5 text-[10px] font-semibold text-destructive ring-1 ring-destructive/30 ring-inset">
-                Below non-negotiable
-              </span>
-            )}
-          </div>
+      <div>
+        <h3 className="text-base font-semibold text-foreground">{counsellor.name}</h3>
+        <div className="mt-1 flex items-center gap-2">
+          <StatusPill status={counsellor.status} />
+          {counsellor.belowNonNegotiable === true && (
+            <span className="inline-flex items-center rounded-full bg-destructive/15 px-1.5 py-0.5 text-[10px] font-semibold text-destructive ring-1 ring-destructive/30 ring-inset">
+              Below non-negotiable
+            </span>
+          )}
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close details"
-          className="inline-flex items-center justify-center rounded-md border border-input p-1.5 text-foreground hover:bg-accent hover:text-accent-foreground"
-        >
-          <FiX className="h-3.5 w-3.5" />
-        </button>
       </div>
 
       <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
+        <div>
+          <dt className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Rank</dt>
+          <dd className="mt-0.5 text-sm text-foreground">{rank ?? "—"}</dd>
+        </div>
         {FIELDS.map((field) => (
           <div key={field.label}>
             <dt className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">

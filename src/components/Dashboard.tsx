@@ -49,14 +49,7 @@ export function Dashboard({ workbook }: { workbook: ParsedWorkbook }) {
       </div>
       <section>
         <h2 className="mb-3 text-sm font-semibold text-foreground">Counsellors</h2>
-        <CounsellorTable
-          counsellors={filtered}
-          selectedId={selectedId}
-          onSelect={toggleSelected}
-          onCloseDrilldown={() => {
-            setSelectedId(null);
-          }}
-        />
+        <CounsellorTable counsellors={filtered} selectedId={selectedId} onSelect={toggleSelected} />
       </section>
     </div>
   );

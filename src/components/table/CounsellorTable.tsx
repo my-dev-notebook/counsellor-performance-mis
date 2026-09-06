@@ -6,10 +6,19 @@ import { formatInt, formatPct, formatText } from "@/lib/format";
 import type { Counsellor, Status } from "@/lib/parser/schemas";
 import { DrillDownPanel } from "@/components/drilldown/DrillDownPanel";
 
-type SortKey = "name" | "team" | "agency" | "target" | "nonNegotiable" | "achieved" | "pctAchieved";
+type SortKey =
+  | "rank"
+  | "name"
+  | "team"
+  | "agency"
+  | "target"
+  | "nonNegotiable"
+  | "achieved"
+  | "pctAchieved";
 type SortDirection = "asc" | "desc";
 
 const COLUMNS: { key: SortKey; label: string }[] = [
+  { key: "rank", label: "Rank" },
   { key: "name", label: "Counsellor" },
   { key: "team", label: "Team" },
   { key: "agency", label: "Agency" },
@@ -31,8 +40,22 @@ function rowAccentStyle(status: Status): CSSProperties {
   return { backgroundImage: `linear-gradient(to right, ${ROW_TINT[status]}, transparent 12rem)` };
 }
 
-function sortValue(c: Counsellor, key: SortKey): string | number | null {
+/** Rank by achieved % descending; ties broken by name ascending (alphabetical), independent of the table's current sort. */
+function computeRanks(counsellors: readonly Counsellor[]): Map<string, number> {
+  const ordered = [...counsellors].sort((a, b) => {
+    if (a.pctAchieved === null && b.pctAchieved === null) return a.name.localeCompare(b.name);
+    if (a.pctAchieved === null) return 1;
+    if (b.pctAchieved === null) return -1;
+    if (a.pctAchieved !== b.pctAchieved) return b.pctAchieved - a.pctAchieved;
+    return a.name.localeCompare(b.name);
+  });
+  return new Map(ordered.map((c, i) => [c.id, i + 1]));
+}
+
+function sortValue(c: Counsellor, key: SortKey, ranks: Map<string, number>): string | number | null {
   switch (key) {
+    case "rank":
+      return ranks.get(c.id) ?? null;
     case "name":
       return c.name;
     case "team":
@@ -50,9 +73,15 @@ function sortValue(c: Counsellor, key: SortKey): string | number | null {
   }
 }
 
-function compare(a: Counsellor, b: Counsellor, key: SortKey, dir: SortDirection): number {
-  const va = sortValue(a, key);
-  const vb = sortValue(b, key);
+function compare(
+  a: Counsellor,
+  b: Counsellor,
+  key: SortKey,
+  dir: SortDirection,
+  ranks: Map<string, number>,
+): number {
+  const va = sortValue(a, key, ranks);
+  const vb = sortValue(b, key, ranks);
   // nulls always sort last, regardless of direction
   if (va === null && vb === null) return 0;
   if (va === null) return 1;
@@ -67,21 +96,21 @@ export function CounsellorTable({
   counsellors,
   selectedId,
   onSelect,
-  onCloseDrilldown,
 }: {
   counsellors: readonly Counsellor[];
   selectedId: string | null;
   onSelect: (id: string) => void;
-  onCloseDrilldown: () => void;
 }) {
   const [sort, setSort] = useState<{ key: SortKey; direction: SortDirection }>({
     key: "pctAchieved",
     direction: "desc",
   });
 
+  const ranks = useMemo(() => computeRanks(counsellors), [counsellors]);
+
   const sorted = useMemo(
-    () => [...counsellors].sort((a, b) => compare(a, b, sort.key, sort.direction)),
-    [counsellors, sort],
+    () => [...counsellors].sort((a, b) => compare(a, b, sort.key, sort.direction, ranks)),
+    [counsellors, sort, ranks],
   );
 
   const toggleSort = (key: SortKey) => {
@@ -138,6 +167,7 @@ export function CounsellorTable({
                 style={rowAccentStyle(c.status)}
                 className={`cursor-pointer hover:bg-accent/50 ${selectedId === c.id ? "bg-accent/50" : ""}`}
               >
+                <td className="px-3 py-2 text-muted-foreground">{ranks.get(c.id)}</td>
                 <td className="px-3 py-2 font-medium text-foreground">{c.name}</td>
                 <td className="px-3 py-2 text-muted-foreground">{c.team}</td>
                 <td className="px-3 py-2 text-muted-foreground">{formatText(c.agency)}</td>
@@ -158,7 +188,7 @@ export function CounsellorTable({
               {selectedId === c.id && (
                 <tr className="bg-accent/50">
                   <td colSpan={COLUMNS.length} className="p-0">
-                    <DrillDownPanel counsellor={c} onClose={onCloseDrilldown} />
+                    <DrillDownPanel counsellor={c} rank={ranks.get(c.id) ?? null} />
                   </td>
                 </tr>
               )}
