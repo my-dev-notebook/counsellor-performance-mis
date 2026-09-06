@@ -5,6 +5,13 @@ import { FiDownload } from "react-icons/fi";
 import { getExportDataAction } from "@/app/entry/actions";
 import { derivePending, derivePctAchieved } from "@/lib/metrics/derive";
 
+// Excel worksheet names cannot contain: * ? : \ / [ ]
+const INVALID_SHEET_NAME_CHARS = /[*?:\\/[\]]/g;
+
+function sanitizeSheetName(name: string): string {
+  return name.replace(INVALID_SHEET_NAME_CHARS, " ").trim().slice(0, 31);
+}
+
 const MONTH_NAMES = [
   "January",
   "February",
@@ -41,7 +48,7 @@ export function ExportButton({ year, month }: { year: number; month: number }) {
       }
 
       for (const [teamName, teamRows] of [...byTeam.entries()].sort(([a], [b]) => a.localeCompare(b))) {
-        const sheet = workbook.addWorksheet(teamName.slice(0, 31));
+        const sheet = workbook.addWorksheet(sanitizeSheetName(teamName));
         sheet.columns = [
           { header: "S.No", key: "sNo", width: 6 },
           { header: "Counsellor Name", key: "name", width: 24 },
