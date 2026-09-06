@@ -11,10 +11,10 @@ function KpiCard({
   caption?: string | undefined;
 }) {
   return (
-    <div data-component="KpiCard" className="rounded-lg border border-zinc-200 bg-white p-4">
-      <p className="text-xs font-semibold tracking-wide text-zinc-500 uppercase">{label}</p>
-      <p className="mt-1 text-2xl font-semibold text-zinc-900">{value}</p>
-      {caption && <p className="mt-1 text-xs text-zinc-400">{caption}</p>}
+    <div data-component="KpiCard" className="rounded-lg border border-border bg-card p-4">
+      <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{label}</p>
+      <p className="mt-1 text-2xl font-semibold text-foreground">{value}</p>
+      {caption && <p className="mt-1 text-xs text-muted-foreground">{caption}</p>}
     </div>
   );
 }

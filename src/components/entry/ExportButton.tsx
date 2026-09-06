@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { FiDownload } from "react-icons/fi";
 import { getExportDataAction } from "@/app/entry/actions";
 import { derivePending, derivePctAchieved } from "@/lib/metrics/derive";
 
@@ -110,8 +111,9 @@ export function ExportButton({ year, month }: { year: number; month: number }) {
       onClick={() => {
         void download();
       }}
-      className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+      className="inline-flex items-center gap-1.5 rounded-md border border-input bg-card px-3 py-1.5 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-50"
     >
+      <FiDownload className="h-3.5 w-3.5" />
       {busy ? "Preparing…" : "Download Excel"}
     </button>
   );

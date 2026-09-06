@@ -5,10 +5,10 @@ import type { Counsellor } from "@/lib/parser/schemas";
 import type { Status } from "@/lib/parser/schemas";
 
 const BAR_STYLES: Record<Status, string> = {
-  Green: "bg-emerald-500",
-  Yellow: "bg-amber-500",
-  Red: "bg-red-500",
-  Unknown: "bg-zinc-300",
+  Green: "bg-success",
+  Yellow: "bg-warning",
+  Red: "bg-destructive",
+  Unknown: "bg-muted-foreground/50",
 };
 
 /** PLAN.md §5.4 — horizontal bar per team, alphabetical. */
@@ -17,7 +17,7 @@ export function TeamPerformancePanel({ counsellors }: { counsellors: readonly Co
 
   if (teams.length === 0) {
     return (
-      <p data-component="TeamPerformancePanel" className="text-sm text-zinc-500">
+      <p data-component="TeamPerformancePanel" className="text-sm text-muted-foreground">
         No teams in the current filter.
       </p>
     );
@@ -32,13 +32,13 @@ export function TeamPerformancePanel({ counsellors }: { counsellors: readonly Co
         return (
           <div key={team}>
             <div className="flex items-baseline justify-between text-sm">
-              <span className="font-medium text-zinc-900">{team}</span>
-              <span className="text-zinc-500">
+              <span className="font-medium text-foreground">{team}</span>
+              <span className="text-muted-foreground">
                 {formatPct(summary.pctAchieved)} · {formatInt(summary.achieved)} /{" "}
                 {formatInt(summary.target)}
               </span>
             </div>
-            <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-zinc-100">
+            <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-muted">
               <div
                 className={`h-full rounded-full ${BAR_STYLES[status]}`}
                 style={{ width: `${String(widthPct)}%` }}

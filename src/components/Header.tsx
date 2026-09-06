@@ -8,13 +8,13 @@ export function Header({
   teamCount?: number | undefined;
 }) {
   return (
-    <header data-component="Header" className="border-b border-zinc-200 bg-white">
+    <header data-component="Header" className="border-b border-border bg-card">
       <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
-        <h1 className="text-xl font-semibold tracking-tight text-zinc-900">
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">
           COUNSELLOR PERFORMANCE — ADVANCED MIS
         </h1>
         {monthLabel && (
-          <p className="mt-1 text-sm text-zinc-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             {monthLabel} • {counsellorCount ?? 0} counsellors • {teamCount ?? 0} teams
           </p>
         )}

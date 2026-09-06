@@ -1,3 +1,4 @@
+import { FiX } from "react-icons/fi";
 import { formatDate, formatInt, formatPct, formatText } from "@/lib/format";
 import type { Counsellor } from "@/lib/parser/schemas";
 import { StatusPill } from "@/components/StatusPill";
@@ -25,11 +26,11 @@ export function DrillDownPanel({
     <section data-component="DrillDownPanel" className="p-4">
       <div className="flex items-start justify-between">
         <div>
-          <h3 className="text-base font-semibold text-zinc-900">{counsellor.name}</h3>
+          <h3 className="text-base font-semibold text-foreground">{counsellor.name}</h3>
           <div className="mt-1 flex items-center gap-2">
             <StatusPill status={counsellor.status} />
             {counsellor.belowNonNegotiable === true && (
-              <span className="inline-flex items-center rounded-full bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-700 ring-1 ring-red-600/20 ring-inset">
+              <span className="inline-flex items-center rounded-full bg-destructive/15 px-1.5 py-0.5 text-[10px] font-semibold text-destructive ring-1 ring-destructive/30 ring-inset">
                 Below non-negotiable
               </span>
             )}
@@ -39,36 +40,36 @@ export function DrillDownPanel({
           type="button"
           onClick={onClose}
           aria-label="Close details"
-          className="rounded-md border border-zinc-300 px-2 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100"
+          className="inline-flex items-center justify-center rounded-md border border-input p-1.5 text-foreground hover:bg-accent hover:text-accent-foreground"
         >
-          ✕
+          <FiX className="h-3.5 w-3.5" />
         </button>
       </div>
 
       <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
         {FIELDS.map((field) => (
           <div key={field.label}>
-            <dt className="text-xs font-semibold tracking-wide text-zinc-500 uppercase">
+            <dt className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
               {field.label}
             </dt>
-            <dd className="mt-0.5 text-sm text-zinc-900">{field.render(counsellor)}</dd>
+            <dd className="mt-0.5 text-sm text-foreground">{field.render(counsellor)}</dd>
           </div>
         ))}
       </dl>
 
       {counsellor.issues.length > 0 && (
-        <div className="mt-4 border-t border-zinc-100 pt-3">
-          <dt className="text-xs font-semibold tracking-wide text-zinc-500 uppercase">
+        <div className="mt-4 border-t border-border pt-3">
+          <dt className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
             Parse issues
           </dt>
-          <ul className="mt-1 list-inside list-disc text-xs text-zinc-500">
+          <ul className="mt-1 list-inside list-disc text-xs text-muted-foreground">
             {counsellor.issues.map((issue, i) => (
               <li key={i}>{issue}</li>
             ))}
           </ul>
         </div>
       )}
-      <p className="mt-3 text-xs text-zinc-400">
+      <p className="mt-3 text-xs text-muted-foreground">
         Source: {counsellor.source.sheet} row {counsellor.source.row}
       </p>
     </section>

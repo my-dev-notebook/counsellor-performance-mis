@@ -4,10 +4,18 @@ import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, X
 import type { MonthlyPoint } from "@/db/queries/reports";
 import { formatInt, formatPct } from "@/lib/format";
 
+const TOOLTIP_STYLE = {
+  backgroundColor: "var(--popover)",
+  borderColor: "var(--border)",
+  color: "var(--popover-foreground)",
+  borderRadius: 6,
+  fontSize: 12,
+};
+
 export function CompanyTrendChart({ points }: { points: MonthlyPoint[] }) {
   if (points.length === 0) {
     return (
-      <p data-component="CompanyTrendChart" className="py-8 text-center text-sm text-zinc-500">
+      <p data-component="CompanyTrendChart" className="py-8 text-center text-sm text-muted-foreground">
         No monthly data yet.
       </p>
     );
@@ -15,22 +23,39 @@ export function CompanyTrendChart({ points }: { points: MonthlyPoint[] }) {
 
   return (
     <div data-component="CompanyTrendChart" className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-      <div className="rounded-lg border border-zinc-200 bg-white p-4">
-        <h3 className="mb-3 text-sm font-semibold text-zinc-900">Target vs Achieved</h3>
+      <div className="rounded-lg border border-border bg-card p-4">
+        <h3 className="mb-3 text-sm font-semibold text-foreground">Target vs Achieved</h3>
         <ResponsiveContainer width="100%" height={280}>
           <LineChart data={points}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
-            <XAxis dataKey="monthLabel" tick={{ fontSize: 12 }} />
-            <YAxis tick={{ fontSize: 12 }} tickFormatter={(v: number) => formatInt(v)} />
-            <Tooltip formatter={(v: number) => formatInt(v)} />
-            <Legend />
-            <Line type="monotone" dataKey="target" name="Target" stroke="#3f3f46" strokeWidth={2} connectNulls />
-            <Line type="monotone" dataKey="achieved" name="Achieved" stroke="#10b981" strokeWidth={2} connectNulls />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+            <XAxis dataKey="monthLabel" tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} />
+            <YAxis
+              tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
+              tickFormatter={(v: number) => formatInt(v)}
+            />
+            <Tooltip formatter={(v: number) => formatInt(v)} contentStyle={TOOLTIP_STYLE} />
+            <Legend wrapperStyle={{ color: "var(--foreground)", fontSize: 12 }} />
+            <Line
+              type="monotone"
+              dataKey="target"
+              name="Target"
+              stroke="var(--muted-foreground)"
+              strokeWidth={2}
+              connectNulls
+            />
+            <Line
+              type="monotone"
+              dataKey="achieved"
+              name="Achieved"
+              stroke="var(--success)"
+              strokeWidth={2}
+              connectNulls
+            />
             <Line
               type="monotone"
               dataKey="nonNegotiable"
               name="Non-Negotiable"
-              stroke="#f59e0b"
+              stroke="var(--warning)"
               strokeWidth={2}
               strokeDasharray="4 4"
               connectNulls
@@ -38,15 +63,25 @@ export function CompanyTrendChart({ points }: { points: MonthlyPoint[] }) {
           </LineChart>
         </ResponsiveContainer>
       </div>
-      <div className="rounded-lg border border-zinc-200 bg-white p-4">
-        <h3 className="mb-3 text-sm font-semibold text-zinc-900">Achievement %</h3>
+      <div className="rounded-lg border border-border bg-card p-4">
+        <h3 className="mb-3 text-sm font-semibold text-foreground">Achievement %</h3>
         <ResponsiveContainer width="100%" height={280}>
           <LineChart data={points}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
-            <XAxis dataKey="monthLabel" tick={{ fontSize: 12 }} />
-            <YAxis tick={{ fontSize: 12 }} tickFormatter={(v: number) => formatPct(v)} />
-            <Tooltip formatter={(v: number) => formatPct(v)} />
-            <Line type="monotone" dataKey="pctAchieved" name="Achievement %" stroke="#2563eb" strokeWidth={2} connectNulls />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+            <XAxis dataKey="monthLabel" tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} />
+            <YAxis
+              tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
+              tickFormatter={(v: number) => formatPct(v)}
+            />
+            <Tooltip formatter={(v: number) => formatPct(v)} contentStyle={TOOLTIP_STYLE} />
+            <Line
+              type="monotone"
+              dataKey="pctAchieved"
+              name="Achievement %"
+              stroke="var(--info)"
+              strokeWidth={2}
+              connectNulls
+            />
           </LineChart>
         </ResponsiveContainer>
       </div>

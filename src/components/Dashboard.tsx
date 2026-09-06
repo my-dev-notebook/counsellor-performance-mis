@@ -38,17 +38,17 @@ export function Dashboard({ workbook }: { workbook: ParsedWorkbook }) {
       />
       <KpiCards summary={summary} />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <section className="rounded-lg border border-zinc-200 bg-white p-4">
-          <h2 className="mb-3 text-sm font-semibold text-zinc-900">Team Performance</h2>
+        <section className="rounded-lg border border-border bg-card p-4">
+          <h2 className="mb-3 text-sm font-semibold text-foreground">Team Performance</h2>
           <TeamPerformancePanel counsellors={filtered} />
         </section>
         <section>
-          <h2 className="mb-3 text-sm font-semibold text-zinc-900">Performance Health</h2>
+          <h2 className="mb-3 text-sm font-semibold text-foreground">Performance Health</h2>
           <PerformanceHealthPanel counsellors={filtered} />
         </section>
       </div>
       <section>
-        <h2 className="mb-3 text-sm font-semibold text-zinc-900">Counsellors</h2>
+        <h2 className="mb-3 text-sm font-semibold text-foreground">Counsellors</h2>
         <CounsellorTable
           counsellors={filtered}
           selectedId={selectedId}

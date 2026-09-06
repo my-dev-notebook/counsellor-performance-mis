@@ -24,9 +24,11 @@ function Select({
 }) {
   return (
     <label data-component="Select" className="flex flex-col gap-1">
-      <span className="text-xs font-semibold tracking-wide text-zinc-500 uppercase">{label}</span>
+      <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+        {label}
+      </span>
       {disabled ? (
-        <span className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-400">
+        <span className="rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
           {disabledHint ?? "—"}
         </span>
       ) : (
@@ -35,7 +37,7 @@ function Select({
           onChange={(event) => {
             onChange(event.target.value);
           }}
-          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 focus:outline-none"
+          className="rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:border-ring focus:ring-1 focus:ring-ring focus:outline-none"
         >
           <option value="All">All</option>
           {options.map((option) => (
@@ -65,7 +67,7 @@ export function FilterBar({
   return (
     <div
       data-component="FilterBar"
-      className="flex flex-col gap-4 rounded-lg border border-zinc-200 bg-white p-4 sm:flex-row sm:items-end sm:justify-between"
+      className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4 sm:flex-row sm:items-end sm:justify-between"
     >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
         <Select
@@ -106,7 +108,7 @@ export function FilterBar({
       <button
         type="button"
         onClick={onReset}
-        className="rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+        className="rounded-md border border-input px-3 py-2 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground"
       >
         Reset filters
       </button>

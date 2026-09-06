@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import type { DragEvent } from "react";
+import { FiUploadCloud } from "react-icons/fi";
 
 export function UploadZone({
   onFileSelected,
@@ -39,18 +40,19 @@ export function UploadZone({
       }}
       onDrop={onDrop}
       className={`rounded-xl border-2 border-dashed p-12 text-center transition-colors ${
-        isDraggingOver ? "border-zinc-900 bg-zinc-50" : "border-zinc-300 bg-white"
+        isDraggingOver ? "border-ring bg-accent" : "border-input bg-card"
       }`}
     >
-      <p className="text-sm font-medium text-zinc-900">
+      <FiUploadCloud className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
+      <p className="text-sm font-medium text-foreground">
         {busy ? "Parsing workbook…" : "Drop a monthly performance .xlsx here"}
       </p>
-      <p className="mt-1 text-sm text-zinc-500">or</p>
+      <p className="mt-1 text-sm text-muted-foreground">or</p>
       <button
         type="button"
         disabled={busy}
         onClick={() => inputRef.current?.click()}
-        className="mt-3 inline-flex items-center rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-3 inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
       >
         Choose file
       </button>

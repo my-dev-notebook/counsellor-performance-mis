@@ -33,7 +33,7 @@ export default function UploadPreviewPage() {
   }, []);
 
   return (
-    <div data-component="UploadPreviewPage" className="flex min-h-full flex-1 flex-col bg-zinc-50">
+    <div data-component="UploadPreviewPage" className="flex min-h-full flex-1 flex-col bg-background">
       <Header
         monthLabel={state.status === "ready" ? state.workbook.monthLabel : undefined}
         counsellorCount={state.status === "ready" ? state.workbook.counsellors.length : undefined}
@@ -41,11 +41,11 @@ export default function UploadPreviewPage() {
       />
       <main className="mx-auto w-full max-w-7xl flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-8">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-zinc-900">Upload &amp; Preview</h1>
-          <p className="mt-1 text-sm text-zinc-500">
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">Upload &amp; Preview</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             Drop a raw monthly workbook to preview how it parses. This is a scratch view only — nothing
             here is saved to the database. To record official figures, use{" "}
-            <span className="font-medium text-zinc-700">Monthly Entry</span> instead.
+            <span className="font-medium text-foreground">Monthly Entry</span> instead.
           </p>
         </div>
         <UploadZone onFileSelected={handleFile} busy={state.status === "parsing"} />

@@ -23,14 +23,14 @@ export function MonthPicker({
 
   return (
     <div data-component="MonthPicker" className="flex flex-wrap items-center gap-3">
-      <label className="flex items-center gap-1.5 text-sm text-zinc-600">
+      <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
         Month
         <select
           value={month}
           onChange={(e) => {
             navigate(year, Number(e.target.value));
           }}
-          className="rounded-md border border-zinc-300 px-2 py-1 text-sm"
+          className="rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
         >
           {MONTH_NAMES.map((name, i) => (
             <option key={name} value={i + 1}>
@@ -39,7 +39,7 @@ export function MonthPicker({
           ))}
         </select>
       </label>
-      <label className="flex items-center gap-1.5 text-sm text-zinc-600">
+      <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
         Year
         <input
           type="number"
@@ -48,12 +48,12 @@ export function MonthPicker({
             const y = Number.parseInt(e.target.value, 10);
             if (Number.isFinite(y)) navigate(y, month);
           }}
-          className="w-24 rounded-md border border-zinc-300 px-2 py-1 text-sm"
+          className="w-24 rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
         />
       </label>
       {existingMonths.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-xs text-zinc-400">Existing:</span>
+          <span className="text-xs text-muted-foreground">Existing:</span>
           {existingMonths.map((m) => (
             <button
               key={`${String(m.year)}-${String(m.month)}`}
@@ -63,8 +63,8 @@ export function MonthPicker({
               }}
               className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                 m.year === year && m.month === month
-                  ? "bg-zinc-900 text-white"
-                  : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-accent"
               }`}
             >
               {MONTH_NAMES[m.month - 1]?.slice(0, 3)} {m.year}

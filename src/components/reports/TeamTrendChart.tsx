@@ -13,10 +13,18 @@ const TEAM_COLORS: Record<string, string> = {
   "Media/Liberal Arts": "#ef4444",
 };
 
+const TOOLTIP_STYLE = {
+  backgroundColor: "var(--popover)",
+  borderColor: "var(--border)",
+  color: "var(--popover-foreground)",
+  borderRadius: 6,
+  fontSize: 12,
+};
+
 export function TeamTrendChart({ series }: { series: TeamSeries[] }) {
   if (series.length === 0) {
     return (
-      <p data-component="TeamTrendChart" className="py-8 text-center text-sm text-zinc-500">
+      <p data-component="TeamTrendChart" className="py-8 text-center text-sm text-muted-foreground">
         No monthly data yet.
       </p>
     );
@@ -41,22 +49,25 @@ export function TeamTrendChart({ series }: { series: TeamSeries[] }) {
   });
 
   return (
-    <div data-component="TeamTrendChart" className="rounded-lg border border-zinc-200 bg-white p-4">
-      <h3 className="mb-3 text-sm font-semibold text-zinc-900">Achievement % by Team</h3>
+    <div data-component="TeamTrendChart" className="rounded-lg border border-border bg-card p-4">
+      <h3 className="mb-3 text-sm font-semibold text-foreground">Achievement % by Team</h3>
       <ResponsiveContainer width="100%" height={380}>
         <LineChart data={rows}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
-          <XAxis dataKey="monthLabel" tick={{ fontSize: 12 }} />
-          <YAxis tick={{ fontSize: 12 }} tickFormatter={(v: number) => formatPct(v)} />
-          <Tooltip formatter={(v: number) => formatPct(v)} />
-          <Legend />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+          <XAxis dataKey="monthLabel" tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} />
+          <YAxis
+            tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
+            tickFormatter={(v: number) => formatPct(v)}
+          />
+          <Tooltip formatter={(v: number) => formatPct(v)} contentStyle={TOOLTIP_STYLE} />
+          <Legend wrapperStyle={{ color: "var(--foreground)", fontSize: 12 }} />
           {series.map(({ team }) => (
             <Line
               key={team}
               type="monotone"
               dataKey={team}
               name={team}
-              stroke={TEAM_COLORS[team] ?? "#71717a"}
+              stroke={TEAM_COLORS[team] ?? "var(--muted-foreground)"}
               strokeWidth={2}
               connectNulls
             />

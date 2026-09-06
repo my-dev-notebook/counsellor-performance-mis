@@ -26,8 +26,10 @@ export default async function EntryPage({
   return (
     <div data-component="EntryPage" className="mx-auto w-full max-w-7xl flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-8">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-zinc-900">Monthly Performance Entry</h1>
-        <p className="mt-1 text-sm text-zinc-500">
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">
+          Monthly Performance Entry
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Fill in or update one counsellor&apos;s figures at a time. Save persists immediately.
         </p>
       </div>

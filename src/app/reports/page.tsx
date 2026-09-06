@@ -7,8 +7,8 @@ export default async function ReportsOverviewPage() {
   return (
     <div data-component="ReportsOverviewPage" className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-zinc-900">Overview</h1>
-        <p className="mt-1 text-sm text-zinc-500">
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">Overview</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Company-wide performance across every month on record.
         </p>
       </div>

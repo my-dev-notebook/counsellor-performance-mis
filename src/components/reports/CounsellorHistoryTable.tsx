@@ -6,32 +6,29 @@ const COLUMNS = ["Month", "Team", "Target", "Non-Neg", "Achieved", "Ach %", "Sta
 
 export function CounsellorHistoryTable({ points }: { points: PersonHistoryPoint[] }) {
   return (
-    <div
-      data-component="CounsellorHistoryTable"
-      className="overflow-x-auto rounded-lg border border-zinc-200 bg-white"
-    >
-      <table className="min-w-full divide-y divide-zinc-200 text-sm">
-        <thead className="bg-zinc-50">
+    <div data-component="CounsellorHistoryTable" className="overflow-x-auto rounded-lg border border-border bg-card">
+      <table className="min-w-full divide-y divide-border text-sm">
+        <thead className="bg-muted/50">
           <tr>
             {COLUMNS.map((h) => (
               <th
                 key={h}
-                className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-zinc-500 uppercase"
+                className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase"
               >
                 {h}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-zinc-100">
+        <tbody className="divide-y divide-border">
           {points.map((p) => (
             <tr key={`${String(p.year)}-${String(p.month)}`}>
-              <td className="px-3 py-2 text-zinc-600">{p.monthLabel}</td>
-              <td className="px-3 py-2 text-zinc-600">{p.team}</td>
-              <td className="px-3 py-2 text-zinc-600">{formatInt(p.target)}</td>
-              <td className="px-3 py-2 text-zinc-600">{formatInt(p.nonNegotiable)}</td>
-              <td className="px-3 py-2 text-zinc-600">{formatInt(p.achieved)}</td>
-              <td className="px-3 py-2 text-zinc-600">{formatPct(p.pctAchieved)}</td>
+              <td className="px-3 py-2 text-muted-foreground">{p.monthLabel}</td>
+              <td className="px-3 py-2 text-muted-foreground">{p.team}</td>
+              <td className="px-3 py-2 text-muted-foreground">{formatInt(p.target)}</td>
+              <td className="px-3 py-2 text-muted-foreground">{formatInt(p.nonNegotiable)}</td>
+              <td className="px-3 py-2 text-muted-foreground">{formatInt(p.achieved)}</td>
+              <td className="px-3 py-2 text-muted-foreground">{formatPct(p.pctAchieved)}</td>
               <td className="px-3 py-2">
                 <StatusPill status={p.status} />
               </td>

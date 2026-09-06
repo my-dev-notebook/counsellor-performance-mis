@@ -25,7 +25,7 @@ export default async function LiveDashboardPage({
   const workbook = await getMonthlyWorkbook(year, month);
 
   return (
-    <div data-component="LiveDashboardPage" className="flex min-h-full flex-1 flex-col bg-zinc-50">
+    <div data-component="LiveDashboardPage" className="flex min-h-full flex-1 flex-col bg-background">
       <Header
         monthLabel={workbook.monthLabel}
         counsellorCount={workbook.counsellors.length}

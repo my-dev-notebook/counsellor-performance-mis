@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { FiPlus } from "react-icons/fi";
 import type { CounsellorRow, Team, Agency } from "@/db/types";
 import { formatText } from "@/lib/format";
 import {
@@ -28,9 +29,10 @@ function AddCounsellorForm({ teams, agencies }: { teams: Team[]; agencies: Agenc
           onClick={() => {
             setOpen(true);
           }}
-          className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-700"
+          className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
         >
-          + Add Counsellor
+          <FiPlus className="h-3.5 w-3.5" />
+          Add Counsellor
         </button>
       </div>
     );
@@ -69,29 +71,29 @@ function AddCounsellorForm({ teams, agencies }: { teams: Team[]; agencies: Agenc
         e.preventDefault();
         submit();
       }}
-      className="flex flex-wrap items-end gap-3 rounded-lg border border-zinc-200 bg-white p-4"
+      className="flex flex-wrap items-end gap-3 rounded-lg border border-border bg-card p-4"
     >
-      <label className="flex flex-col text-xs font-medium text-zinc-600">
+      <label className="flex flex-col text-xs font-medium text-muted-foreground">
         Name
         <input
           value={name}
           onChange={(e) => {
             setName(e.target.value);
           }}
-          className="mt-1 rounded-md border border-zinc-300 px-2 py-1 text-sm"
+          className="mt-1 rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
         />
       </label>
-      <label className="flex flex-col text-xs font-medium text-zinc-600">
+      <label className="flex flex-col text-xs font-medium text-muted-foreground">
         Email
         <input
           value={email}
           onChange={(e) => {
             setEmail(e.target.value);
           }}
-          className="mt-1 rounded-md border border-zinc-300 px-2 py-1 text-sm"
+          className="mt-1 rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
         />
       </label>
-      <label className="flex flex-col text-xs font-medium text-zinc-600">
+      <label className="flex flex-col text-xs font-medium text-muted-foreground">
         DOJ
         <input
           type="date"
@@ -99,17 +101,17 @@ function AddCounsellorForm({ teams, agencies }: { teams: Team[]; agencies: Agenc
           onChange={(e) => {
             setDoj(e.target.value);
           }}
-          className="mt-1 rounded-md border border-zinc-300 px-2 py-1 text-sm"
+          className="mt-1 rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
         />
       </label>
-      <label className="flex flex-col text-xs font-medium text-zinc-600">
+      <label className="flex flex-col text-xs font-medium text-muted-foreground">
         Team
         <select
           value={teamId}
           onChange={(e) => {
             setTeamId(Number(e.target.value));
           }}
-          className="mt-1 rounded-md border border-zinc-300 px-2 py-1 text-sm"
+          className="mt-1 rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
         >
           {teams.map((t) => (
             <option key={t.id} value={t.id}>
@@ -118,14 +120,14 @@ function AddCounsellorForm({ teams, agencies }: { teams: Team[]; agencies: Agenc
           ))}
         </select>
       </label>
-      <label className="flex flex-col text-xs font-medium text-zinc-600">
+      <label className="flex flex-col text-xs font-medium text-muted-foreground">
         Agency
         <select
           value={agencyId}
           onChange={(e) => {
             setAgencyId(e.target.value === "" ? "" : Number(e.target.value));
           }}
-          className="mt-1 rounded-md border border-zinc-300 px-2 py-1 text-sm"
+          className="mt-1 rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
         >
           <option value="">—</option>
           {agencies.map((a) => (
@@ -138,7 +140,7 @@ function AddCounsellorForm({ teams, agencies }: { teams: Team[]; agencies: Agenc
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50"
+        className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
       >
         {pending ? "Saving…" : "Save"}
       </button>
@@ -147,11 +149,11 @@ function AddCounsellorForm({ teams, agencies }: { teams: Team[]; agencies: Agenc
         onClick={() => {
           setOpen(false);
         }}
-        className="rounded-md px-3 py-1.5 text-sm font-medium text-zinc-500 hover:bg-zinc-100"
+        className="rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
       >
         Cancel
       </button>
-      {error && <p className="w-full text-xs text-red-600">{error}</p>}
+      {error && <p className="w-full text-xs text-destructive">{error}</p>}
     </form>
   );
 }
@@ -181,18 +183,18 @@ function RosterRow({
 
   if (mode === "edit-profile") {
     return (
-      <tr data-component="RosterRow" className="bg-amber-50/40">
+      <tr data-component="RosterRow" className="bg-warning/10">
         <td className="px-3 py-2">
           <input
             value={name}
             onChange={(e) => {
               setName(e.target.value);
             }}
-            className="w-full rounded-md border border-zinc-300 px-2 py-1 text-sm"
+            className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
           />
         </td>
-        <td className="px-3 py-2 text-zinc-500">{counsellor.teamName}</td>
-        <td className="px-3 py-2 text-zinc-500">{formatText(counsellor.agencyName)}</td>
+        <td className="px-3 py-2 text-muted-foreground">{counsellor.teamName}</td>
+        <td className="px-3 py-2 text-muted-foreground">{formatText(counsellor.agencyName)}</td>
         <td className="px-3 py-2">
           <input
             value={email}
@@ -200,7 +202,7 @@ function RosterRow({
               setEmail(e.target.value);
             }}
             placeholder="email"
-            className="mb-1 w-full rounded-md border border-zinc-300 px-2 py-1 text-sm"
+            className="mb-1 w-full rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
           />
           <input
             type="date"
@@ -208,10 +210,12 @@ function RosterRow({
             onChange={(e) => {
               setDoj(e.target.value);
             }}
-            className="w-full rounded-md border border-zinc-300 px-2 py-1 text-sm"
+            className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
           />
         </td>
-        <td className="px-3 py-2 text-zinc-500">{counsellor.isActive ? "Active" : "Inactive"}</td>
+        <td className="px-3 py-2 text-muted-foreground">
+          {counsellor.isActive ? "Active" : "Inactive"}
+        </td>
         <td className="px-3 py-2">
           <div className="flex gap-2">
             <button
@@ -226,7 +230,7 @@ function RosterRow({
                   setMode("view");
                 });
               }}
-              className="rounded-md bg-zinc-900 px-2 py-1 text-xs font-medium text-white hover:bg-zinc-700 disabled:opacity-50"
+              className="rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             >
               Save
             </button>
@@ -235,7 +239,7 @@ function RosterRow({
                 resetProfileFields();
                 setMode("view");
               }}
-              className="rounded-md px-2 py-1 text-xs font-medium text-zinc-500 hover:bg-zinc-100"
+              className="rounded-md px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
             >
               Cancel
             </button>
@@ -247,15 +251,15 @@ function RosterRow({
 
   if (mode === "change-assignment") {
     return (
-      <tr data-component="RosterRow" className="bg-sky-50/40">
-        <td className="px-3 py-2 font-medium text-zinc-900">{counsellor.name}</td>
+      <tr data-component="RosterRow" className="bg-info/10">
+        <td className="px-3 py-2 font-medium text-foreground">{counsellor.name}</td>
         <td className="px-3 py-2">
           <select
             value={teamId}
             onChange={(e) => {
               setTeamId(Number(e.target.value));
             }}
-            className="rounded-md border border-zinc-300 px-2 py-1 text-sm"
+            className="rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
           >
             {teams.map((t) => (
               <option key={t.id} value={t.id}>
@@ -270,7 +274,7 @@ function RosterRow({
             onChange={(e) => {
               setAgencyId(e.target.value === "" ? "" : Number(e.target.value));
             }}
-            className="rounded-md border border-zinc-300 px-2 py-1 text-sm"
+            className="rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
           >
             <option value="">—</option>
             {agencies.map((a) => (
@@ -280,8 +284,10 @@ function RosterRow({
             ))}
           </select>
         </td>
-        <td className="px-3 py-2 text-zinc-500">{formatText(counsellor.email)}</td>
-        <td className="px-3 py-2 text-zinc-500">{counsellor.isActive ? "Active" : "Inactive"}</td>
+        <td className="px-3 py-2 text-muted-foreground">{formatText(counsellor.email)}</td>
+        <td className="px-3 py-2 text-muted-foreground">
+          {counsellor.isActive ? "Active" : "Inactive"}
+        </td>
         <td className="px-3 py-2">
           <div className="flex gap-2">
             <button
@@ -295,7 +301,7 @@ function RosterRow({
                   setMode("view");
                 });
               }}
-              className="rounded-md bg-zinc-900 px-2 py-1 text-xs font-medium text-white hover:bg-zinc-700 disabled:opacity-50"
+              className="rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             >
               Save (new assignment row)
             </button>
@@ -305,7 +311,7 @@ function RosterRow({
                 setAgencyId(counsellor.agencyId ?? "");
                 setMode("view");
               }}
-              className="rounded-md px-2 py-1 text-xs font-medium text-zinc-500 hover:bg-zinc-100"
+              className="rounded-md px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
             >
               Cancel
             </button>
@@ -317,11 +323,13 @@ function RosterRow({
 
   return (
     <tr data-component="RosterRow" className={counsellor.isActive ? "" : "opacity-50"}>
-      <td className="px-3 py-2 font-medium text-zinc-900">{counsellor.name}</td>
-      <td className="px-3 py-2 text-zinc-600">{counsellor.teamName}</td>
-      <td className="px-3 py-2 text-zinc-600">{formatText(counsellor.agencyName)}</td>
-      <td className="px-3 py-2 text-zinc-600">{formatText(counsellor.email)}</td>
-      <td className="px-3 py-2 text-zinc-600">{counsellor.isActive ? "Active" : "Inactive"}</td>
+      <td className="px-3 py-2 font-medium text-foreground">{counsellor.name}</td>
+      <td className="px-3 py-2 text-muted-foreground">{counsellor.teamName}</td>
+      <td className="px-3 py-2 text-muted-foreground">{formatText(counsellor.agencyName)}</td>
+      <td className="px-3 py-2 text-muted-foreground">{formatText(counsellor.email)}</td>
+      <td className="px-3 py-2 text-muted-foreground">
+        {counsellor.isActive ? "Active" : "Inactive"}
+      </td>
       <td className="px-3 py-2">
         {counsellor.isActive && (
           <div className="flex gap-2">
@@ -329,7 +337,7 @@ function RosterRow({
               onClick={() => {
                 setMode("edit-profile");
               }}
-              className="text-xs font-medium text-zinc-600 hover:text-zinc-900 hover:underline"
+              className="text-xs font-medium text-muted-foreground hover:text-foreground hover:underline"
             >
               Edit profile
             </button>
@@ -337,7 +345,7 @@ function RosterRow({
               onClick={() => {
                 setMode("change-assignment");
               }}
-              className="text-xs font-medium text-zinc-600 hover:text-zinc-900 hover:underline"
+              className="text-xs font-medium text-muted-foreground hover:text-foreground hover:underline"
             >
               Change team/agency
             </button>
@@ -349,7 +357,7 @@ function RosterRow({
                   await deactivateCounsellorAction(counsellor.id);
                 });
               }}
-              className="text-xs font-medium text-red-600 hover:text-red-800 hover:underline disabled:opacity-50"
+              className="text-xs font-medium text-destructive hover:underline disabled:opacity-50"
             >
               Deactivate
             </button>
@@ -396,14 +404,14 @@ export function RosterView({
           onChange={(e) => {
             setSearch(e.target.value);
           }}
-          className="rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
+          className="rounded-md border border-input bg-background px-2 py-1.5 text-sm text-foreground"
         />
         <select
           value={teamFilter}
           onChange={(e) => {
             setTeamFilter(e.target.value === "" ? "" : Number(e.target.value));
           }}
-          className="rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
+          className="rounded-md border border-input bg-background px-2 py-1.5 text-sm text-foreground"
         >
           <option value="">All teams</option>
           {teams.map((t) => (
@@ -417,7 +425,7 @@ export function RosterView({
           onChange={(e) => {
             setAgencyFilter(e.target.value === "" ? "" : Number(e.target.value));
           }}
-          className="rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
+          className="rounded-md border border-input bg-background px-2 py-1.5 text-sm text-foreground"
         >
           <option value="">All agencies</option>
           {agencies.map((a) => (
@@ -426,7 +434,7 @@ export function RosterView({
             </option>
           ))}
         </select>
-        <label className="flex items-center gap-1.5 text-sm text-zinc-600">
+        <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
           <input
             type="checkbox"
             checked={showInactive}
@@ -439,25 +447,25 @@ export function RosterView({
       </div>
 
       {filtered.length === 0 ? (
-        <p data-component="RosterView" className="py-8 text-center text-sm text-zinc-500">
+        <p data-component="RosterView" className="py-8 text-center text-sm text-muted-foreground">
           No counsellors match the current filters.
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
-          <table className="min-w-full divide-y divide-zinc-200 text-sm">
-            <thead className="bg-zinc-50">
+        <div className="overflow-x-auto rounded-lg border border-border bg-card">
+          <table className="min-w-full divide-y divide-border text-sm">
+            <thead className="bg-muted/50">
               <tr>
                 {["Name", "Team", "Agency", "Email", "Status", "Actions"].map((h) => (
                   <th
                     key={h}
-                    className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-zinc-500 uppercase"
+                    className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase"
                   >
                     {h}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-100">
+            <tbody className="divide-y divide-border">
               {filtered.map((c) => (
                 <RosterRow key={c.id} counsellor={c} teams={teams} agencies={agencies} />
               ))}
