@@ -1,3 +1,22 @@
+export const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+export function formatMonthLabel(year: number, month: number): string {
+  return `${MONTH_NAMES[month - 1] ?? "?"} ${String(year)}`;
+}
+
 export function formatInt(n: number | null): string {
   return n === null ? "—" : Math.round(n).toLocaleString("en-IN");
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
+import { NavBar } from "@/components/NavBar";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -15,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Counsellor Performance — Advanced MIS",
-  description: "Upload a monthly counsellor performance workbook to view the parsed MIS report.",
+  description: "Live counsellor performance dashboard by month, backed by the database.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -25,7 +26,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       data-component="RootLayout"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        <NavBar />
+        {children}
+      </body>
     </html>
   );
 }

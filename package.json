@@ -10,9 +10,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
-    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview --env staging",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy --env staging",
+    "cf-typegen": "wrangler types --env staging --env-interface CloudflareEnv cloudflare-env.d.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply DB --env staging --local",
+    "db:migrate:staging": "wrangler d1 migrations apply DB --env staging --remote",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -22,11 +25,13 @@
     "prepare": "git config core.hooksPath .githooks"
   },
   "dependencies": {
+    "drizzle-orm": "0.45.2",
     "exceljs": "4.4.0",
     "neverthrow": "8.2.0",
     "next": "16.3.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "recharts": "^3.10.1",
     "zod": "4.5.4"
   },
   "devDependencies": {
@@ -36,6 +41,7 @@
     "@types/node": "20.19.43",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.5",
+    "drizzle-kit": "0.31.10",
     "eslint": "9.39.5",
     "eslint-config-next": "16.3.4",
     "eslint-config-prettier": "10.1.8",

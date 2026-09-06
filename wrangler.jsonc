@@ -8,4 +8,21 @@
     "binding": "ASSETS",
     "directory": ".open-next/assets",
   },
+  // Only "staging" is configured for now (per product-owner decision) — the
+  // "production" environment is deliberately not set up yet. Add an
+  // `env.production` block here, mirroring `env.staging`, once a production
+  // D1 database exists.
+  "env": {
+    "staging": {
+      "name": "counsellor-performance-advanced-mis-staging",
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "counsellor-performance-staging",
+          "database_id": "47ad3445-df08-4990-8e35-ff8349ce53ad",
+          "migrations_dir": "migrations",
+        },
+      ],
+    },
+  },
 }

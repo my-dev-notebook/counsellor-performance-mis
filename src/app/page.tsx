@@ -1,60 +1,40 @@
-"use client";
-
-import { useCallback, useState } from "react";
-import type { DashboardState } from "@/lib/dashboard-state";
+import { getMonthlyWorkbook } from "@/db/queries/dashboard";
+import { listMonthsWithData } from "@/db/queries/performance";
 import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
-import { UploadZone } from "@/components/upload/UploadZone";
-import { ParseReportPanel } from "@/components/upload/ParseReportPanel";
-import { ErrorState } from "@/components/ErrorState";
 import { Dashboard } from "@/components/Dashboard";
+import { MonthPicker } from "@/components/MonthPicker";
 
-export default function Home() {
-  const [state, setState] = useState<DashboardState>({ status: "idle" });
+function parseIntParam(value: string | string[] | undefined, fallback: number): number {
+  if (typeof value !== "string") return fallback;
+  const n = Number.parseInt(value, 10);
+  return Number.isFinite(n) ? n : fallback;
+}
 
-  const handleFile = useCallback((file: File) => {
-    setState({ status: "parsing", fileName: file.name });
-    void file.arrayBuffer().then(async (buffer) => {
-      // Dynamic import: `exceljs` must never be evaluated during SSR on the
-      // Workers runtime (it calls `process.umask()` at module-load time,
-      // which `unenv`'s Node compat shim doesn't implement) — only load it
-      // client-side, on demand.
-      const { parseWorkbook } = await import("@/lib/parser/parse-workbook");
-      const result = await parseWorkbook(buffer, file.name);
-      result.match(
-        (workbook) => {
-          setState({ status: "ready", workbook });
-        },
-        (error) => {
-          setState({ status: "failed", error, fileName: file.name });
-        },
-      );
-    });
-  }, []);
+export default async function LiveDashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const params = await searchParams;
+  const months = await listMonthsWithData();
+  const latest = months[0];
+  const now = new Date();
+  const year = parseIntParam(params.year, latest?.year ?? now.getFullYear());
+  const month = parseIntParam(params.month, latest?.month ?? now.getMonth() + 1);
+
+  const workbook = await getMonthlyWorkbook(year, month);
 
   return (
-    <div data-component="Home" className="flex min-h-full flex-1 flex-col bg-zinc-50">
+    <div data-component="LiveDashboardPage" className="flex min-h-full flex-1 flex-col bg-zinc-50">
       <Header
-        monthLabel={state.status === "ready" ? state.workbook.monthLabel : undefined}
-        counsellorCount={state.status === "ready" ? state.workbook.counsellors.length : undefined}
-        teamCount={state.status === "ready" ? state.workbook.teams.length : undefined}
+        monthLabel={workbook.monthLabel}
+        counsellorCount={workbook.counsellors.length}
+        teamCount={workbook.teams.length}
       />
       <main className="mx-auto w-full max-w-7xl flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-        <UploadZone onFileSelected={handleFile} busy={state.status === "parsing"} />
-        {state.status === "failed" && <ErrorState error={state.error} fileName={state.fileName} />}
-        {state.status === "ready" && (
-          <>
-            <ParseReportPanel workbook={state.workbook} />
-            <Dashboard workbook={state.workbook} />
-          </>
-        )}
+        <MonthPicker year={year} month={month} existingMonths={months} basePath="/" />
+        <Dashboard workbook={workbook} />
       </main>
-      {state.status === "ready" && (
-        <Footer
-          sourceFileName={state.workbook.sourceFileName}
-          monthLabel={state.workbook.monthLabel}
-        />
-      )}
     </div>
   );
 }
