@@ -79,7 +79,7 @@ export async function getProgressForMonth(
 
   return rows.map((row) => ({
     counsellor: { ...row.counsellor, isActive: row.counsellor.isActive === 1 } satisfies CounsellorRow,
-    entry: row.entry && row.entry.id !== null ? toEntry(row.entry as Parameters<typeof toEntry>[0]) : null,
+    entry: row.entry ? toEntry(row.entry as Parameters<typeof toEntry>[0]) : null,
   }));
 }
 

@@ -93,7 +93,8 @@ export function ExportButton({ year, month }: { year: number; month: number }) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${MONTH_NAMES[month - 1] ?? month} ${year} Performance.xlsx`;
+      const monthLabel = MONTH_NAMES[month - 1] ?? String(month);
+      a.download = `${monthLabel} ${String(year)} Performance.xlsx`;
       a.click();
       URL.revokeObjectURL(url);
     } finally {

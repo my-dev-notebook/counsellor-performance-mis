@@ -61,7 +61,9 @@ export async function getTeamMonthlySeries(): Promise<TeamSeries[]> {
     const workbook = await getMonthlyWorkbook(year, month);
     const monthLabel = formatMonthLabel(year, month);
     for (const { team, summary } of summarizeByTeam(workbook.counsellors)) {
-      byTeam.get(team)!.push({
+      const points = byTeam.get(team);
+      if (!points) continue;
+      points.push({
         year,
         month,
         monthLabel,
@@ -74,7 +76,7 @@ export async function getTeamMonthlySeries(): Promise<TeamSeries[]> {
     }
   }
 
-  return CANONICAL_TEAMS.map((team) => ({ team, points: byTeam.get(team)! })).filter(
+  return CANONICAL_TEAMS.map((team) => ({ team, points: byTeam.get(team) ?? [] })).filter(
     (t) => t.points.length > 0,
   );
 }
