@@ -19,8 +19,8 @@
         "typecheck": "tsc --noEmit",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
-        "format": "prettier --write .",
-        "format:check": "prettier --check .",
+        "format": "prettier --write '**/*.{ts,tsx,html,css,json,jsonc,yml,yaml}'",
+        "format:check": "prettier --check '**/*.{ts,tsx,html,css,json,jsonc,yml,yaml}'",
         "test": "vitest run",
         "prepare": "git config core.hooksPath .githooks"
     },
