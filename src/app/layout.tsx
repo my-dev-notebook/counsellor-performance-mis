@@ -7,36 +7,36 @@ import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import "./globals.css";
 
 const poppins = Poppins({
-  variable: "--font-poppins",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+    variable: "--font-poppins",
+    subsets: ["latin"],
+    weight: ["300", "400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
-  title: "Counsellor Performance — Advanced MIS",
-  description: "Live counsellor performance dashboard by month, backed by the database.",
+    title: "Counsellor Performance — Advanced MIS",
+    description: "Live counsellor performance dashboard by month, backed by the database.",
 };
 
 const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem("theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}})()`;
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-  return (
-    <html
-      lang="en"
-      data-component="RootLayout"
-      data-theme="light"
-      suppressHydrationWarning
-      className={`${poppins.variable} h-full antialiased`}
-    >
-      <body className="flex min-h-full flex-col">
-        <Script id="theme-init" strategy="beforeInteractive">
-          {THEME_INIT_SCRIPT}
-        </Script>
-        <ThemeProvider>
-          <NavBar />
-          {children}
-        </ThemeProvider>
-      </body>
-    </html>
-  );
+    return (
+        <html
+            lang="en"
+            data-component="RootLayout"
+            data-theme="light"
+            suppressHydrationWarning
+            className={`${poppins.variable} h-full antialiased`}
+        >
+            <body className="flex min-h-full flex-col">
+                <Script id="theme-init" strategy="beforeInteractive">
+                    {THEME_INIT_SCRIPT}
+                </Script>
+                <ThemeProvider>
+                    <NavBar />
+                    {children}
+                </ThemeProvider>
+            </body>
+        </html>
+    );
 }

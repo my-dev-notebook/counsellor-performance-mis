@@ -7,7 +7,7 @@ import { createAgency } from "@/db/queries/agencies";
 const AgencyNameInput = z.string().trim().min(1);
 
 export async function createAgencyAction(name: string) {
-  const parsed = AgencyNameInput.parse(name);
-  await createAgency(parsed);
-  refresh();
+    const parsed = AgencyNameInput.parse(name);
+    await createAgency(parsed);
+    refresh();
 }

@@ -8,11 +8,11 @@ type Theme = "light" | "dark";
 const ThemeContext = createContext<{ theme: Theme; toggleTheme: () => void } | null>(null);
 
 function readStoredTheme(): Theme {
-  return window.localStorage.getItem("theme") === "dark" ? "dark" : "light";
+    return window.localStorage.getItem("theme") === "dark" ? "dark" : "light";
 }
 
 function applyTheme(theme: Theme) {
-  document.documentElement.setAttribute("data-theme", theme);
+    document.documentElement.setAttribute("data-theme", theme);
 }
 
 /**
@@ -26,28 +26,28 @@ function applyTheme(theme: Theme) {
  * state from `localStorage` right after mount, before paint.
  */
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("light");
+    const [theme, setTheme] = useState<Theme>("light");
 
-  useLayoutEffect(() => {
-    const stored = readStoredTheme();
-    setTheme(stored);
-    applyTheme(stored);
-  }, []);
+    useLayoutEffect(() => {
+        const stored = readStoredTheme();
+        setTheme(stored);
+        applyTheme(stored);
+    }, []);
 
-  const toggleTheme = () => {
-    setTheme((prev) => {
-      const next: Theme = prev === "dark" ? "light" : "dark";
-      window.localStorage.setItem("theme", next);
-      applyTheme(next);
-      return next;
-    });
-  };
+    const toggleTheme = () => {
+        setTheme((prev) => {
+            const next: Theme = prev === "dark" ? "light" : "dark";
+            window.localStorage.setItem("theme", next);
+            applyTheme(next);
+            return next;
+        });
+    };
 
-  return <ThemeContext.Provider value={{ theme, toggleTheme }}>{children}</ThemeContext.Provider>;
+    return <ThemeContext.Provider value={{ theme, toggleTheme }}>{children}</ThemeContext.Provider>;
 }
 
 export function useTheme() {
-  const ctx = useContext(ThemeContext);
-  if (!ctx) throw new Error("useTheme must be used within a ThemeProvider");
-  return ctx;
+    const ctx = useContext(ThemeContext);
+    if (!ctx) throw new Error("useTheme must be used within a ThemeProvider");
+    return ctx;
 }

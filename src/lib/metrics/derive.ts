@@ -5,24 +5,21 @@
  */
 
 export function derivePending(target: number | null, achieved: number | null): number | null {
-  if (target === null || achieved === null) return null;
-  return target - achieved;
+    if (target === null || achieved === null) return null;
+    return target - achieved;
 }
 
 export function derivePctAchieved(target: number | null, achieved: number | null): number | null {
-  if (target === null || achieved === null || target <= 0) return null;
-  return achieved / target;
+    if (target === null || achieved === null || target <= 0) return null;
+    return achieved / target;
 }
 
 export function deriveTargetGap(pending: number | null): number {
-  if (pending === null) return 0;
-  return Math.max(0, pending);
+    if (pending === null) return 0;
+    return Math.max(0, pending);
 }
 
-export function deriveBelowNonNegotiable(
-  nonNegotiable: number | null,
-  achieved: number | null,
-): boolean | null {
-  if (nonNegotiable === null || achieved === null) return null;
-  return achieved < nonNegotiable;
+export function deriveBelowNonNegotiable(nonNegotiable: number | null, achieved: number | null): boolean | null {
+    if (nonNegotiable === null || achieved === null) return null;
+    return achieved < nonNegotiable;
 }

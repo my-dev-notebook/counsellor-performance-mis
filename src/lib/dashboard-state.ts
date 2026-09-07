@@ -6,7 +6,7 @@ import type { ParsedWorkbook } from "@/lib/parser/schemas";
  * `Result`s never leak into components below this.
  */
 export type DashboardState =
-  | { status: "idle" }
-  | { status: "parsing"; fileName: string }
-  | { status: "ready"; workbook: ParsedWorkbook }
-  | { status: "failed"; error: ParseError; fileName: string };
+    | { status: "idle" }
+    | { status: "parsing"; fileName: string }
+    | { status: "ready"; workbook: ParsedWorkbook }
+    | { status: "failed"; error: ParseError; fileName: string };
