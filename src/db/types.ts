@@ -24,14 +24,25 @@ export interface CounsellorRow {
 export interface PerformanceEntry {
     id: number;
     userId: number;
-    year: number;
-    month: number;
+    date: string;
     overall: number | null;
     nonNegotiable: number | null;
     achieved: number | null;
-    achievedFlagged: boolean;
-    acknowledgment: boolean | null;
-    feedback: string | null;
+}
+
+export interface DailyAdmission {
+    id: number;
+    userId: number;
+    date: string;
+    count: number;
+    metadata: string | null;
+}
+
+/** One admission's lead details, serialized into `DailyAdmission.metadata` as a JSON array. */
+export interface AdmissionRecord {
+    leadId: string;
+    leadName: string;
+    leadEmail: string;
 }
 
 export interface ProgressRow {

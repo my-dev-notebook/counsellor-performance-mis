@@ -8,6 +8,7 @@ const LINKS = [
     { href: "/", label: "Dashboard" },
     { href: "/roster", label: "Counsellors" },
     { href: "/entry", label: "Monthly Entry" },
+    { href: "/entry/daily", label: "Daily Entry" },
     { href: "/agencies", label: "Agencies" },
     { href: "/reports", label: "Reports" },
     { href: "/upload", label: "Upload & Preview" },

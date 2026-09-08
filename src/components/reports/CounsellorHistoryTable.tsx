@@ -25,7 +25,7 @@ export function CounsellorHistoryTable({ points }: { points: PersonHistoryPoint[
                 </thead>
                 <tbody className="divide-y divide-border">
                     {points.map((p) => (
-                        <tr key={`${String(p.year)}-${String(p.month)}`}>
+                        <tr key={p.date}>
                             <td className="px-3 py-2 text-muted-foreground">{p.monthLabel}</td>
                             <td className="px-3 py-2 text-muted-foreground">{p.team}</td>
                             <td className="px-3 py-2 text-muted-foreground">{formatInt(p.target)}</td>

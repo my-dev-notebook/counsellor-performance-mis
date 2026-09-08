@@ -12,13 +12,14 @@ function hasEntry(row: ProgressRow): row is ProgressRow & { entry: PerformanceEn
 }
 
 /**
- * Builds a `ParsedWorkbook`-shaped snapshot of one (year, month) straight
- * from the database, so the same `Dashboard` component that renders an
- * ad-hoc Excel upload (`/upload`) can also render live data.
+ * Builds a `ParsedWorkbook`-shaped snapshot of one month (given as a
+ * "YYYY-MM" date string) straight from the database, so the same
+ * `Dashboard` component that renders an ad-hoc Excel upload (`/upload`) can
+ * also render live data.
  *
- * Only counsellors with an actual `counsellor_performance` row for this
- * (year, month) are included — matching what an Excel sheet for that month
- * would have shown (someone with nothing recorded doesn't appear at all,
+ * Only counsellors with an actual `counsellor_perf_monthly` row for this
+ * month are included — matching what an Excel sheet for that month would
+ * have shown (someone with nothing recorded doesn't appear at all,
  * confirmed over showing them with blank/0 figures).
  *
  * A person who was reassigned mid-history (`person_id` shared across
@@ -28,8 +29,8 @@ function hasEntry(row: ProgressRow): row is ProgressRow & { entry: PerformanceEn
  * entries end up attached to an old (now inactive) period in the first
  * place.
  */
-export async function getMonthlyWorkbook(year: number, month: number): Promise<ParsedWorkbook> {
-    const progress = await getProgressForMonth(year, month, { includeInactive: true });
+export async function getMonthlyWorkbook(date: string): Promise<ParsedWorkbook> {
+    const progress = await getProgressForMonth(date, { includeInactive: true });
 
     const byPerson = new Map<number, ProgressRow[]>();
     for (const row of progress) {
@@ -48,11 +49,11 @@ export async function getMonthlyWorkbook(year: number, month: number): Promise<P
         const team = CanonicalTeam.parse(rep.counsellor.teamName);
         const target = rep.entry.overall;
         const nonNegotiable = rep.entry.nonNegotiable;
-        // A flagged entry is treated as unreliable/unknown, matching how the
-        // entry page excludes flagged values from its own totals. Otherwise a
-        // genuinely blank Achieved cell degrades to 0 (mirrors the Excel-import
-        // rule in src/lib/parser/build-row.ts).
-        const achieved = rep.entry.achievedFlagged ? null : (rep.entry.achieved ?? 0);
+        // Blank Achieved degrades to 0 (mirrors the Excel-import rule in
+        // src/lib/parser/build-row.ts). getProgressForMonth already resolves a
+        // null `achieved` to the live daily-sum, so this is just the last-mile
+        // null-to-0 fallback.
+        const achieved = rep.entry.achieved ?? 0;
         const pending = derivePending(target, achieved);
         const pctAchieved = derivePctAchieved(target, achieved);
 
@@ -68,8 +69,8 @@ export async function getMonthlyWorkbook(year: number, month: number): Promise<P
             target,
             nonNegotiable,
             achieved,
-            acknowledgment: rep.entry.acknowledgment,
-            feedback: rep.entry.feedback,
+            acknowledgment: null,
+            feedback: null,
             pending,
             pctAchieved,
             status: deriveStatus(pctAchieved),
@@ -91,7 +92,7 @@ export async function getMonthlyWorkbook(year: number, month: number): Promise<P
 
     return {
         sourceFileName: "database",
-        monthLabel: formatMonthLabel(year, month),
+        monthLabel: formatMonthLabel(date),
         teams: teams.sort((a, b) => a.team.localeCompare(b.team)),
         counsellors,
         agencies: Array.from(agencySet).sort(),

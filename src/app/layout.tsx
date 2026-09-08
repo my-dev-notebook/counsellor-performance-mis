@@ -29,9 +29,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             className={`${poppins.variable} h-full antialiased`}
         >
             <body className="flex min-h-full flex-col">
-                <Script id="theme-init" strategy="beforeInteractive">
-                    {THEME_INIT_SCRIPT}
-                </Script>
+                <Script
+                    id="theme-init"
+                    strategy="beforeInteractive"
+                    dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }}
+                />
                 <ThemeProvider>
                     <NavBar />
                     {children}

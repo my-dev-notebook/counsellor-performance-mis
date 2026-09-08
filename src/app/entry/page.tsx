@@ -1,10 +1,16 @@
 import { getProgressForMonth, getMonthSummary, listMonthsWithData } from "@/db/queries/performance";
 import { EntryView } from "@/components/entry/EntryView";
 
-function parseIntParam(value: string | string[] | undefined, fallback: number): number {
-    if (typeof value !== "string") return fallback;
-    const n = Number.parseInt(value, 10);
-    return Number.isFinite(n) ? n : fallback;
+const MONTH_DATE_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
+
+function currentMonthDate(): string {
+    const now = new Date();
+    return `${String(now.getFullYear())}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function parseDateParam(value: string | string[] | undefined): string {
+    if (typeof value === "string" && MONTH_DATE_RE.test(value)) return value;
+    return currentMonthDate();
 }
 
 export default async function EntryPage({
@@ -13,13 +19,11 @@ export default async function EntryPage({
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
     const params = await searchParams;
-    const now = new Date();
-    const year = parseIntParam(params.year, now.getFullYear());
-    const month = parseIntParam(params.month, now.getMonth() + 1);
+    const date = parseDateParam(params.date);
 
     const [progress, summary, months] = await Promise.all([
-        getProgressForMonth(year, month, { includeInactive: true }),
-        getMonthSummary(year, month, { includeInactive: false }),
+        getProgressForMonth(date, { includeInactive: true }),
+        getMonthSummary(date, { includeInactive: false }),
         listMonthsWithData(),
     ]);
 
@@ -28,10 +32,11 @@ export default async function EntryPage({
             <div>
                 <h1 className="text-xl font-semibold tracking-tight text-foreground">Monthly Performance Entry</h1>
                 <p className="mt-1 text-sm text-muted-foreground">
-                    Fill in or update one counsellor&apos;s figures at a time. Save persists immediately.
+                    Set each counsellor&apos;s monthly target (overall) and non-negotiable. Achieved is derived from
+                    daily admissions — expand a row and use &quot;Manage daily admissions&quot; to record those.
                 </p>
             </div>
-            <EntryView year={year} month={month} progress={progress} summary={summary} existingMonths={months} />
+            <EntryView date={date} progress={progress} summary={summary} existingMonths={months} />
         </div>
     );
 }

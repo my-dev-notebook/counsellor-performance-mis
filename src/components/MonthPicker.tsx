@@ -3,22 +3,30 @@
 import { useRouter } from "next/navigation";
 import { MONTH_NAMES } from "@/lib/format";
 
-/** Shared month/year navigation control — pushes `?year=&month=` onto `basePath`. */
+function parseDate(date: string): { year: number; month: number } {
+    const [yearStr, monthStr] = date.split("-");
+    return { year: Number.parseInt(yearStr ?? "", 10), month: Number.parseInt(monthStr ?? "", 10) };
+}
+
+function toDate(year: number, month: number): string {
+    return `${String(year)}-${String(month).padStart(2, "0")}`;
+}
+
+/** Shared month/year navigation control — pushes `?date=YYYY-MM` onto `basePath`. */
 export function MonthPicker({
-    year,
-    month,
+    date,
     existingMonths,
     basePath,
 }: {
-    year: number;
-    month: number;
-    existingMonths: { year: number; month: number }[];
+    date: string;
+    existingMonths: string[];
     basePath: string;
 }) {
     const router = useRouter();
+    const { year, month } = parseDate(date);
 
     const navigate = (y: number, m: number) => {
-        router.push(`${basePath}?year=${String(y)}&month=${String(m)}`);
+        router.push(`${basePath}?date=${toDate(y, m)}`);
     };
 
     return (
@@ -54,22 +62,25 @@ export function MonthPicker({
             {existingMonths.length > 0 && (
                 <div className="flex flex-wrap items-center gap-1.5">
                     <span className="text-xs text-muted-foreground">Existing:</span>
-                    {existingMonths.map((m) => (
-                        <button
-                            key={`${String(m.year)}-${String(m.month)}`}
-                            type="button"
-                            onClick={() => {
-                                navigate(m.year, m.month);
-                            }}
-                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                                m.year === year && m.month === month
-                                    ? "bg-primary text-primary-foreground"
-                                    : "bg-muted text-muted-foreground hover:bg-accent"
-                            }`}
-                        >
-                            {MONTH_NAMES[m.month - 1]?.slice(0, 3)} {m.year}
-                        </button>
-                    ))}
+                    {existingMonths.map((m) => {
+                        const { month: mMonth, year: mYear } = parseDate(m);
+                        return (
+                            <button
+                                key={m}
+                                type="button"
+                                onClick={() => {
+                                    navigate(mYear, mMonth);
+                                }}
+                                className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                                    m === date
+                                        ? "bg-primary text-primary-foreground"
+                                        : "bg-muted text-muted-foreground hover:bg-accent"
+                                }`}
+                            >
+                                {MONTH_NAMES[mMonth - 1]?.slice(0, 3)} {mYear}
+                            </button>
+                        );
+                    })}
                 </div>
             )}
         </div>

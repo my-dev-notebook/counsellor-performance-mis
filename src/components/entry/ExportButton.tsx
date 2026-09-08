@@ -4,6 +4,7 @@ import { useState } from "react";
 import { FiDownload } from "react-icons/fi";
 import { getExportDataAction } from "@/app/entry/actions";
 import { derivePending, derivePctAchieved } from "@/lib/metrics/derive";
+import { formatMonthLabel } from "@/lib/format";
 
 // Excel worksheet names cannot contain: * ? : \ / [ ]
 const INVALID_SHEET_NAME_CHARS = /[*?:\\/[\]]/g;
@@ -12,28 +13,13 @@ function sanitizeSheetName(name: string): string {
     return name.replace(INVALID_SHEET_NAME_CHARS, " ").trim().slice(0, 31);
 }
 
-const MONTH_NAMES = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-];
-
-export function ExportButton({ year, month }: { year: number; month: number }) {
+export function ExportButton({ date }: { date: string }) {
     const [busy, setBusy] = useState(false);
 
     const download = async () => {
         setBusy(true);
         try {
-            const rows = await getExportDataAction(year, month);
+            const rows = await getExportDataAction(date);
 
             // Dynamic import: exceljs must never be evaluated during SSR on the
             // Workers runtime (see src/app/page.tsx) — only load it client-side.
@@ -58,10 +44,8 @@ export function ExportButton({ year, month }: { year: number; month: number }) {
                     { header: "Target", key: "target", width: 10 },
                     { header: "Non-Negotiable", key: "nonNegotiable", width: 14 },
                     { header: "Achieved", key: "achieved", width: 10 },
-                    { header: "Acknowledgment", key: "acknowledgment", width: 14 },
                     { header: "Pending", key: "pending", width: 10 },
                     { header: "% Achieved", key: "pctAchieved", width: 12, style: { numFmt: "0.0%" } },
-                    { header: "Feedback", key: "feedback", width: 30 },
                 ];
                 sheet.getRow(1).font = { bold: true };
 
@@ -70,7 +54,7 @@ export function ExportButton({ year, month }: { year: number; month: number }) {
                     .forEach((row, index) => {
                         const target = row.entry?.overall ?? null;
                         const achieved = row.entry?.achieved ?? null;
-                        const excelRow = sheet.addRow({
+                        sheet.addRow({
                             sNo: index + 1,
                             name: row.counsellor.name,
                             agency: row.counsellor.agencyName ?? "",
@@ -79,22 +63,9 @@ export function ExportButton({ year, month }: { year: number; month: number }) {
                             target,
                             nonNegotiable: row.entry?.nonNegotiable ?? null,
                             achieved,
-                            acknowledgment:
-                                row.entry?.acknowledgment === true
-                                    ? "Yes"
-                                    : row.entry?.acknowledgment === false
-                                      ? "No"
-                                      : "",
                             pending: derivePending(target, achieved),
                             pctAchieved: derivePctAchieved(target, achieved),
-                            feedback: row.entry?.feedback ?? "",
                         });
-
-                        if (row.entry?.achievedFlagged) {
-                            const cell = excelRow.getCell("achieved");
-                            cell.note = "Flagged as questionable — value may be unreliable.";
-                            cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFF3CD" } };
-                        }
                     });
             }
 
@@ -105,8 +76,7 @@ export function ExportButton({ year, month }: { year: number; month: number }) {
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            const monthLabel = MONTH_NAMES[month - 1] ?? String(month);
-            a.download = `${monthLabel} ${String(year)} Performance.xlsx`;
+            a.download = `${formatMonthLabel(date)} Performance.xlsx`;
             a.click();
             URL.revokeObjectURL(url);
         } finally {

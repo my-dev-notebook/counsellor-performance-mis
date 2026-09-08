@@ -1,6 +1,6 @@
 import { asc, eq } from "drizzle-orm";
 import { getDb } from "@/db/client";
-import { users, teams, counsellorPerformance } from "@/db/schema";
+import { users, teams, counsellorPerfMonthly } from "@/db/schema";
 import { CANONICAL_TEAMS } from "@/lib/parser/schemas";
 import type { Status } from "@/lib/parser/schemas";
 import { derivePctAchieved } from "@/lib/metrics/derive";
@@ -8,11 +8,10 @@ import { deriveStatus } from "@/lib/metrics/buckets";
 import { summarize, summarizeByTeam } from "@/lib/metrics/summarize";
 import { formatMonthLabel } from "@/lib/format";
 import { getMonthlyWorkbook } from "./dashboard";
-import { listMonthsWithData } from "./performance";
+import { listMonthsWithData, getAchievedForMonth } from "./performance";
 
 export interface MonthlyPoint {
-    year: number;
-    month: number;
+    date: string;
     monthLabel: string;
     headcount: number;
     target: number;
@@ -21,22 +20,21 @@ export interface MonthlyPoint {
     pctAchieved: number | null;
 }
 
-async function chronologicalMonths(): Promise<{ year: number; month: number }[]> {
+async function chronologicalMonths(): Promise<string[]> {
     const months = await listMonthsWithData();
-    return [...months].sort((a, b) => a.year - b.year || a.month - b.month);
+    return [...months].sort((a, b) => a.localeCompare(b));
 }
 
 /** Company-wide Target/Achieved/Non-Negotiable across every month with data. */
 export async function getCompanyMonthlySeries(): Promise<MonthlyPoint[]> {
     const months = await chronologicalMonths();
     return Promise.all(
-        months.map(async ({ year, month }) => {
-            const workbook = await getMonthlyWorkbook(year, month);
+        months.map(async (date) => {
+            const workbook = await getMonthlyWorkbook(date);
             const s = summarize(workbook.counsellors);
             return {
-                year,
-                month,
-                monthLabel: formatMonthLabel(year, month),
+                date,
+                monthLabel: formatMonthLabel(date),
                 headcount: s.headcount,
                 target: s.target,
                 achieved: s.achieved,
@@ -57,15 +55,14 @@ export async function getTeamMonthlySeries(): Promise<TeamSeries[]> {
     const months = await chronologicalMonths();
     const byTeam = new Map<string, MonthlyPoint[]>(CANONICAL_TEAMS.map((t) => [t, []]));
 
-    for (const { year, month } of months) {
-        const workbook = await getMonthlyWorkbook(year, month);
-        const monthLabel = formatMonthLabel(year, month);
+    for (const date of months) {
+        const workbook = await getMonthlyWorkbook(date);
+        const monthLabel = formatMonthLabel(date);
         for (const { team, summary } of summarizeByTeam(workbook.counsellors)) {
             const points = byTeam.get(team);
             if (!points) continue;
             points.push({
-                year,
-                month,
+                date,
                 monthLabel,
                 headcount: summary.headcount,
                 target: summary.target,
@@ -105,8 +102,7 @@ export async function listPeopleForSelector(): Promise<PersonOption[]> {
 }
 
 export interface PersonHistoryPoint {
-    year: number;
-    month: number;
+    date: string;
     monthLabel: string;
     team: string;
     target: number | null;
@@ -119,41 +115,42 @@ export interface PersonHistoryPoint {
 /**
  * One person's full recorded history across every assignment period they've
  * held (joined via `person_id`, not just their current `users` row) — every
- * `counsellor_performance` entry ever attached to any of their periods, in
- * chronological order.
+ * `counsellor_perf_monthly` entry ever attached to any of their periods, in
+ * chronological order. `achieved` falls back to the live daily-sum for any
+ * month whose monthly row hasn't been finalized yet.
  */
 export async function getPersonHistory(personId: number): Promise<PersonHistoryPoint[]> {
     const db = await getDb();
     const rows = await db
         .select({
-            year: counsellorPerformance.year,
-            month: counsellorPerformance.month,
-            overall: counsellorPerformance.overall,
-            nonNegotiable: counsellorPerformance.nonNegotiable,
-            achieved: counsellorPerformance.achieved,
-            achievedFlagged: counsellorPerformance.achievedFlagged,
+            date: counsellorPerfMonthly.date,
+            overall: counsellorPerfMonthly.overall,
+            nonNegotiable: counsellorPerfMonthly.nonNegotiable,
+            achieved: counsellorPerfMonthly.achieved,
+            userId: counsellorPerfMonthly.userId,
             teamName: teams.name,
         })
-        .from(counsellorPerformance)
-        .innerJoin(users, eq(counsellorPerformance.userId, users.id))
+        .from(counsellorPerfMonthly)
+        .innerJoin(users, eq(counsellorPerfMonthly.userId, users.id))
         .innerJoin(teams, eq(users.teamId, teams.id))
         .where(eq(users.personId, personId))
-        .orderBy(asc(counsellorPerformance.year), asc(counsellorPerformance.month));
+        .orderBy(asc(counsellorPerfMonthly.date));
 
-    return rows.map((row) => {
-        const target = row.overall;
-        const achieved = row.achievedFlagged === 1 ? null : row.achieved;
-        const pctAchieved = derivePctAchieved(target, achieved);
-        return {
-            year: row.year,
-            month: row.month,
-            monthLabel: formatMonthLabel(row.year, row.month),
-            team: row.teamName,
-            target,
-            nonNegotiable: row.nonNegotiable,
-            achieved,
-            pctAchieved,
-            status: deriveStatus(pctAchieved),
-        };
-    });
+    return Promise.all(
+        rows.map(async (row) => {
+            const target = row.overall;
+            const achieved = row.achieved === null ? await getAchievedForMonth(row.userId, row.date) : row.achieved;
+            const pctAchieved = derivePctAchieved(target, achieved);
+            return {
+                date: row.date,
+                monthLabel: formatMonthLabel(row.date),
+                team: row.teamName,
+                target,
+                nonNegotiable: row.nonNegotiable,
+                achieved,
+                pctAchieved,
+                status: deriveStatus(pctAchieved),
+            };
+        }),
+    );
 }

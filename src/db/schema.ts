@@ -52,25 +52,25 @@ export const users = sqliteTable(
 // One row per counsellor per month. `pending`/`% achieved`/`status` are
 // never stored here — always recomputed at read time via the existing
 // src/lib/metrics/derive.ts + buckets.ts logic (§3, §6).
-export const counsellorPerformance = sqliteTable(
-    "counsellor_performance",
+//
+// `date` is a "YYYY-MM" string (e.g. "2026-09") — replaces the old
+// year/month int pair. `achieved` is nullable: NULL means "not yet
+// finalized" — for the live/current month it's computed on the fly from
+// `counsellorPerfDaily` at read time (see getAchievedForMonth /
+// getAchievedForCounsellors in src/db/queries/performance.ts); for a
+// closed/past month it's written in by the finalize job
+// (src/db/queries/finalize.ts) so history reads stay a single cheap lookup.
+export const counsellorPerfMonthly = sqliteTable(
+    "counsellor_perf_monthly",
     {
         id: integer("id").primaryKey({ autoIncrement: true }),
         userId: integer("user_id")
             .notNull()
             .references(() => users.id),
-        year: integer("year").notNull(),
-        month: integer("month").notNull(),
+        date: text("date").notNull(),
         overall: integer("overall"),
         nonNegotiable: integer("non_negotiable"),
         achieved: integer("achieved"),
-        // Tri-state design for `achieved` (§5): NULL = not entered, any integer
-        // (including 0) = a real value, independent of this flag.
-        achievedFlagged: integer("achieved_flagged").notNull().default(0),
-        // Nullable boolean: 1 (yes), 0 (no), NULL (not set) — a plain checkbox
-        // can't represent "not set" as distinct from "no".
-        acknowledgment: integer("acknowledgment"),
-        feedback: text("feedback"),
         createdAt: text("created_at")
             .notNull()
             .default(sql`(datetime('now'))`),
@@ -79,10 +79,38 @@ export const counsellorPerformance = sqliteTable(
             .default(sql`(datetime('now'))`),
     },
     (table) => [
-        uniqueIndex("idx_counsellor_performance_user_year_month").on(table.userId, table.year, table.month),
-        check("chk_month_range", sql`${table.month} BETWEEN 1 AND 12`),
+        uniqueIndex("idx_counsellor_perf_monthly_user_date").on(table.userId, table.date),
         check("chk_overall_non_negative", sql`${table.overall} IS NULL OR ${table.overall} >= 0`),
         check("chk_non_negotiable_non_negative", sql`${table.nonNegotiable} IS NULL OR ${table.nonNegotiable} >= 0`),
         check("chk_achieved_non_negative", sql`${table.achieved} IS NULL OR ${table.achieved} >= 0`),
+    ],
+);
+
+// One row per counsellor per day. `date` is a "YYYY-MM-DD" string. `count`
+// is the number of admissions that day; `metadata` is a minified JSON array
+// string (one entry per admission, e.g. `[{"admissionId":...,"name":...}]`)
+// that the app must keep in sync with `count` (count === parsed-metadata
+// length) on every write — enforced in the zod schema / action layer, not
+// in SQL.
+export const counsellorPerfDaily = sqliteTable(
+    "counsellor_perf_daily",
+    {
+        id: integer("id").primaryKey({ autoIncrement: true }),
+        userId: integer("user_id")
+            .notNull()
+            .references(() => users.id),
+        date: text("date").notNull(),
+        count: integer("count").notNull().default(0),
+        metadata: text("metadata"),
+        createdAt: text("created_at")
+            .notNull()
+            .default(sql`(datetime('now'))`),
+        updatedAt: text("updated_at")
+            .notNull()
+            .default(sql`(datetime('now'))`),
+    },
+    (table) => [
+        uniqueIndex("idx_counsellor_perf_daily_user_date").on(table.userId, table.date),
+        check("chk_daily_count_non_negative", sql`${table.count} >= 0`),
     ],
 );

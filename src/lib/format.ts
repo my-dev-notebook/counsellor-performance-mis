@@ -13,8 +13,11 @@ export const MONTH_NAMES = [
     "December",
 ];
 
-export function formatMonthLabel(year: number, month: number): string {
-    return `${MONTH_NAMES[month - 1] ?? "?"} ${String(year)}`;
+/** `date` is a "YYYY-MM" string, e.g. "2026-09". */
+export function formatMonthLabel(date: string): string {
+    const [yearStr, monthStr] = date.split("-");
+    const month = Number.parseInt(monthStr ?? "", 10);
+    return `${MONTH_NAMES[month - 1] ?? "?"} ${yearStr ?? "?"}`;
 }
 
 export function formatInt(n: number | null): string {

@@ -1,34 +1,17 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import type { ProgressRow } from "@/db/types";
-import { formatDate, formatText } from "@/lib/format";
+import { formatDate, formatInt, formatText } from "@/lib/format";
 import { saveEntryAction, getPrefillAction } from "@/app/entry/actions";
 
-type AckValue = "yes" | "no" | "unset";
-
-function ackToValue(ack: boolean | null): AckValue {
-    if (ack === true) return "yes";
-    if (ack === false) return "no";
-    return "unset";
-}
-
-function valueToAck(v: AckValue): boolean | null {
-    if (v === "yes") return true;
-    if (v === "no") return false;
-    return null;
-}
-
-export function EntryRow({ row, year, month }: { row: ProgressRow; year: number; month: number }) {
+export function EntryRow({ row, date }: { row: ProgressRow; date: string }) {
     const { counsellor, entry } = row;
     const [open, setOpen] = useState(false);
     const [loadingPrefill, setLoadingPrefill] = useState(false);
     const [overall, setOverall] = useState<string>(entry?.overall?.toString() ?? "");
     const [nonNegotiable, setNonNegotiable] = useState<string>(entry?.nonNegotiable?.toString() ?? "");
-    const [achieved, setAchieved] = useState<string>(entry?.achieved?.toString() ?? "");
-    const [achievedFlagged, setAchievedFlagged] = useState(entry?.achievedFlagged ?? false);
-    const [acknowledgment, setAcknowledgment] = useState<AckValue>(ackToValue(entry?.acknowledgment ?? null));
-    const [feedback, setFeedback] = useState(entry?.feedback ?? "");
     const [pending, startTransition] = useTransition();
     const [error, setError] = useState<string | null>(null);
 
@@ -37,7 +20,7 @@ export function EntryRow({ row, year, month }: { row: ProgressRow; year: number;
         setOpen(next);
         if (next && entry === null) {
             setLoadingPrefill(true);
-            void getPrefillAction(counsellor.id, year, month)
+            void getPrefillAction(counsellor.id, date)
                 .then((prefill) => {
                     if (prefill) {
                         setOverall((cur) => (cur === "" ? (prefill.overall?.toString() ?? "") : cur));
@@ -62,14 +45,9 @@ export function EntryRow({ row, year, month }: { row: ProgressRow; year: number;
             try {
                 await saveEntryAction({
                     userId: counsellor.id,
-                    year,
-                    month,
+                    date,
                     overall: parseNumberField(overall),
                     nonNegotiable: parseNumberField(nonNegotiable),
-                    achieved: parseNumberField(achieved),
-                    achievedFlagged,
-                    acknowledgment: valueToAck(acknowledgment),
-                    feedback: feedback.trim() === "" ? null : feedback,
                 });
             } catch {
                 setError("Failed to save. Check the values and try again.");
@@ -78,7 +56,6 @@ export function EntryRow({ row, year, month }: { row: ProgressRow; year: number;
     };
 
     const status = entry === null ? "Pending" : "Filled";
-    const flagged = entry?.achievedFlagged ?? false;
 
     return (
         <>
@@ -92,22 +69,15 @@ export function EntryRow({ row, year, month }: { row: ProgressRow; year: number;
                 <td className="px-3 py-2 text-muted-foreground">{counsellor.teamName}</td>
                 <td className="px-3 py-2 text-muted-foreground">{formatText(counsellor.agencyName)}</td>
                 <td className="px-3 py-2">
-                    <div className="flex items-center gap-1.5">
-                        <span
-                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${
-                                status === "Filled"
-                                    ? "bg-success/15 text-success ring-1 ring-success/30"
-                                    : "bg-muted text-muted-foreground ring-1 ring-border"
-                            }`}
-                        >
-                            {status}
-                        </span>
-                        {flagged && (
-                            <span className="inline-flex items-center rounded-full bg-warning/15 px-2 py-0.5 text-xs font-semibold text-warning ring-1 ring-warning/30">
-                                Flagged
-                            </span>
-                        )}
-                    </div>
+                    <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${
+                            status === "Filled"
+                                ? "bg-success/15 text-success ring-1 ring-success/30"
+                                : "bg-muted text-muted-foreground ring-1 ring-border"
+                        }`}
+                    >
+                        {status}
+                    </span>
                 </td>
             </tr>
             {open && (
@@ -144,7 +114,7 @@ export function EntryRow({ row, year, month }: { row: ProgressRow; year: number;
                             <p className="mt-3 text-xs text-muted-foreground">Loading last month&apos;s figures…</p>
                         )}
 
-                        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                             <label className="flex flex-col text-xs font-medium text-muted-foreground">
                                 Overall / Target
                                 <input
@@ -169,55 +139,14 @@ export function EntryRow({ row, year, month }: { row: ProgressRow; year: number;
                                     className="mt-1 rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
                                 />
                             </label>
-                            <label className="flex flex-col text-xs font-medium text-muted-foreground">
+                            <div className="flex flex-col text-xs font-medium text-muted-foreground">
                                 Achieved
-                                <input
-                                    type="number"
-                                    min={0}
-                                    value={achieved}
-                                    onChange={(e) => {
-                                        setAchieved(e.target.value);
-                                    }}
-                                    className="mt-1 rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
-                                />
-                                <span className="mt-1 flex items-center gap-1.5 text-xs font-normal text-muted-foreground">
-                                    <input
-                                        type="checkbox"
-                                        checked={achievedFlagged}
-                                        onChange={(e) => {
-                                            setAchievedFlagged(e.target.checked);
-                                        }}
-                                    />
-                                    Flag as questionable
+                                {/* Read-only: derived from daily admissions (live) or the finalize job (closed months). */}
+                                <span className="mt-1 rounded-md border border-transparent px-2 py-1 text-sm text-foreground">
+                                    {formatInt(entry?.achieved ?? null)}
                                 </span>
-                            </label>
-                            <label className="flex flex-col text-xs font-medium text-muted-foreground">
-                                Acknowledgment
-                                <select
-                                    value={acknowledgment}
-                                    onChange={(e) => {
-                                        setAcknowledgment(e.target.value as AckValue);
-                                    }}
-                                    className="mt-1 rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
-                                >
-                                    <option value="unset">Unset</option>
-                                    <option value="yes">Yes</option>
-                                    <option value="no">No</option>
-                                </select>
-                            </label>
+                            </div>
                         </div>
-
-                        <label className="mt-4 flex flex-col text-xs font-medium text-muted-foreground">
-                            Feedback
-                            <textarea
-                                value={feedback}
-                                onChange={(e) => {
-                                    setFeedback(e.target.value);
-                                }}
-                                rows={2}
-                                className="mt-1 rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
-                            />
-                        </label>
 
                         <div className="mt-4 flex items-center gap-3">
                             <button
@@ -229,6 +158,15 @@ export function EntryRow({ row, year, month }: { row: ProgressRow; year: number;
                                 {pending ? "Saving…" : "Save"}
                             </button>
                             {error && <p className="text-xs text-destructive">{error}</p>}
+                            <Link
+                                href={`/entry/daily?userId=${String(counsellor.id)}&date=${date}`}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                }}
+                                className="ml-auto text-xs font-medium text-primary hover:underline"
+                            >
+                                Manage daily admissions →
+                            </Link>
                         </div>
                     </td>
                 </tr>

@@ -1,154 +1,166 @@
-import { eq, and, or, lt, desc, sql } from "drizzle-orm";
+import { eq, and, lt, desc, sql, like } from "drizzle-orm";
 import { getDb } from "@/db/client";
-import { users, teams, agencies, counsellorPerformance } from "@/db/schema";
+import { users, teams, agencies, counsellorPerfMonthly, counsellorPerfDaily } from "@/db/schema";
 import type { CounsellorRow, MonthSummary, PerformanceEntry, ProgressRow } from "@/db/types";
 
 function toEntry(row: {
     id: number;
     userId: number;
-    year: number;
-    month: number;
+    date: string;
     overall: number | null;
     nonNegotiable: number | null;
     achieved: number | null;
-    achievedFlagged: number;
-    acknowledgment: number | null;
-    feedback: string | null;
 }): PerformanceEntry {
-    return {
-        ...row,
-        achievedFlagged: row.achievedFlagged === 1,
-        acknowledgment: row.acknowledgment === null ? null : row.acknowledgment === 1,
-    };
+    return { ...row };
 }
 
-export async function listMonthsWithData(): Promise<{ year: number; month: number }[]> {
+/** Previous calendar month's "YYYY-MM" string, e.g. "2026-09" -> "2026-08". */
+function previousMonthDate(date: string): string {
+    const [yearStr, monthStr] = date.split("-");
+    const year = Number.parseInt(yearStr ?? "", 10);
+    const month = Number.parseInt(monthStr ?? "", 10);
+    const prevMonth = month === 1 ? 12 : month - 1;
+    const prevYear = month === 1 ? year - 1 : year;
+    return `${String(prevYear)}-${String(prevMonth).padStart(2, "0")}`;
+}
+
+export async function listMonthsWithData(): Promise<string[]> {
     const db = await getDb();
-    return db
-        .selectDistinct({ year: counsellorPerformance.year, month: counsellorPerformance.month })
-        .from(counsellorPerformance)
-        .orderBy(desc(counsellorPerformance.year), desc(counsellorPerformance.month));
+    const rows = await db
+        .selectDistinct({ date: counsellorPerfMonthly.date })
+        .from(counsellorPerfMonthly)
+        .orderBy(desc(counsellorPerfMonthly.date));
+    return rows.map((r) => r.date);
+}
+
+/**
+ * Live "achieved" for every counsellor in one month, computed as
+ * SUM(counsellor_perf_daily.count) grouped by user, for daily rows whose
+ * date falls inside the given "YYYY-MM" month. One query, used to avoid
+ * N+1 lookups from getProgressForMonth's per-counsellor list.
+ */
+export async function getAchievedForCounsellors(monthDate: string): Promise<Map<number, number>> {
+    const db = await getDb();
+    const rows = await db
+        .select({ userId: counsellorPerfDaily.userId, total: sql<number>`SUM(${counsellorPerfDaily.count})` })
+        .from(counsellorPerfDaily)
+        .where(like(counsellorPerfDaily.date, `${monthDate}-%`))
+        .groupBy(counsellorPerfDaily.userId);
+    return new Map(rows.map((r) => [r.userId, Number(r.total)]));
+}
+
+/** Single-counsellor version of getAchievedForCounsellors, for one-off lookups. */
+export async function getAchievedForMonth(userId: number, monthDate: string): Promise<number> {
+    const db = await getDb();
+    const rows = await db
+        .select({ total: sql<number>`SUM(${counsellorPerfDaily.count})` })
+        .from(counsellorPerfDaily)
+        .where(and(eq(counsellorPerfDaily.userId, userId), like(counsellorPerfDaily.date, `${monthDate}-%`)));
+    return Number(rows[0]?.total ?? 0);
 }
 
 export async function getProgressForMonth(
-    year: number,
-    month: number,
+    date: string,
     options?: { includeInactive?: boolean },
 ): Promise<ProgressRow[]> {
     const db = await getDb();
-    const rows = await db
-        .select({
-            counsellor: {
-                id: users.id,
-                personId: users.personId,
-                name: users.name,
-                email: users.email,
-                doj: users.doj,
-                teamId: users.teamId,
-                teamName: teams.name,
-                agencyId: users.agencyId,
-                agencyName: agencies.name,
-                isActive: users.isActive,
-            },
-            entry: {
-                id: counsellorPerformance.id,
-                userId: counsellorPerformance.userId,
-                year: counsellorPerformance.year,
-                month: counsellorPerformance.month,
-                overall: counsellorPerformance.overall,
-                nonNegotiable: counsellorPerformance.nonNegotiable,
-                achieved: counsellorPerformance.achieved,
-                achievedFlagged: counsellorPerformance.achievedFlagged,
-                acknowledgment: counsellorPerformance.acknowledgment,
-                feedback: counsellorPerformance.feedback,
-            },
-        })
-        .from(users)
-        .innerJoin(teams, eq(users.teamId, teams.id))
-        .leftJoin(agencies, eq(users.agencyId, agencies.id))
-        .leftJoin(
-            counsellorPerformance,
-            and(
-                eq(counsellorPerformance.userId, users.id),
-                eq(counsellorPerformance.year, year),
-                eq(counsellorPerformance.month, month),
-            ),
-        )
-        .where(options?.includeInactive ? undefined : eq(users.isActive, 1))
-        .orderBy(users.name);
+    const [rows, liveAchieved] = await Promise.all([
+        db
+            .select({
+                counsellor: {
+                    id: users.id,
+                    personId: users.personId,
+                    name: users.name,
+                    email: users.email,
+                    doj: users.doj,
+                    teamId: users.teamId,
+                    teamName: teams.name,
+                    agencyId: users.agencyId,
+                    agencyName: agencies.name,
+                    isActive: users.isActive,
+                },
+                entry: {
+                    id: counsellorPerfMonthly.id,
+                    userId: counsellorPerfMonthly.userId,
+                    date: counsellorPerfMonthly.date,
+                    overall: counsellorPerfMonthly.overall,
+                    nonNegotiable: counsellorPerfMonthly.nonNegotiable,
+                    achieved: counsellorPerfMonthly.achieved,
+                },
+            })
+            .from(users)
+            .innerJoin(teams, eq(users.teamId, teams.id))
+            .leftJoin(agencies, eq(users.agencyId, agencies.id))
+            .leftJoin(
+                counsellorPerfMonthly,
+                and(eq(counsellorPerfMonthly.userId, users.id), eq(counsellorPerfMonthly.date, date)),
+            )
+            .where(options?.includeInactive ? undefined : eq(users.isActive, 1))
+            .orderBy(users.name),
+        getAchievedForCounsellors(date),
+    ]);
 
-    return rows.map((row) => ({
-        counsellor: { ...row.counsellor, isActive: row.counsellor.isActive === 1 } satisfies CounsellorRow,
-        entry: row.entry ? toEntry(row.entry as Parameters<typeof toEntry>[0]) : null,
-    }));
+    return rows.map((row) => {
+        const counsellor = { ...row.counsellor, isActive: row.counsellor.isActive === 1 } satisfies CounsellorRow;
+        if (row.entry === null) {
+            return { counsellor, entry: null };
+        }
+        const entry = toEntry(row.entry as Parameters<typeof toEntry>[0]);
+        // Finalized months carry a written `achieved`; a live/open month falls
+        // back to the on-the-fly daily sum.
+        if (entry.achieved === null) {
+            entry.achieved = liveAchieved.get(counsellor.id) ?? 0;
+        }
+        return { counsellor, entry };
+    });
 }
 
-export async function getMonthSummary(
-    year: number,
-    month: number,
-    options?: { includeInactive?: boolean },
-): Promise<MonthSummary> {
-    const progress = await getProgressForMonth(year, month, options);
+export async function getMonthSummary(date: string, options?: { includeInactive?: boolean }): Promise<MonthSummary> {
+    const progress = await getProgressForMonth(date, options);
     const totalCount = progress.length;
     const filled = progress.filter((p) => p.entry !== null);
     const filledCount = filled.length;
     const targetSoFar = filled.reduce((sum, p) => sum + (p.entry?.overall ?? 0), 0);
     const achievedSoFar = filled
-        .filter((p) => p.entry && !p.entry.achievedFlagged && p.entry.achieved !== null)
+        .filter((p) => p.entry && p.entry.achieved !== null)
         .reduce((sum, p) => sum + (p.entry?.achieved ?? 0), 0);
     return { filledCount, totalCount, targetSoFar, achievedSoFar };
 }
 
-/** DATA_ENTRY_INTERFACE.md §4.3 step 6 — prefill source: most recent entry strictly before (year, month). */
-export async function getPreviousEntry(userId: number, year: number, month: number): Promise<PerformanceEntry | null> {
+/** DATA_ENTRY_INTERFACE.md §4.3 step 6 — prefill source: most recent entry strictly before `date`. */
+export async function getPreviousEntry(userId: number, date: string): Promise<PerformanceEntry | null> {
     const db = await getDb();
     const rows = await db
         .select()
-        .from(counsellorPerformance)
-        .where(
-            and(
-                eq(counsellorPerformance.userId, userId),
-                or(
-                    lt(counsellorPerformance.year, year),
-                    and(eq(counsellorPerformance.year, year), lt(counsellorPerformance.month, month)),
-                ),
-            ),
-        )
-        .orderBy(desc(counsellorPerformance.year), desc(counsellorPerformance.month))
+        .from(counsellorPerfMonthly)
+        .where(and(eq(counsellorPerfMonthly.userId, userId), lt(counsellorPerfMonthly.date, date)))
+        .orderBy(desc(counsellorPerfMonthly.date))
         .limit(1);
     const row = rows[0];
     return row ? toEntry(row) : null;
 }
 
-/** §4.3 step 5 — one Save action, upsert via the (user_id, year, month) unique index. */
+/** §4.3 step 5 — one Save action, upsert via the (user_id, date) unique index. */
 export async function upsertEntry(input: {
     userId: number;
-    year: number;
-    month: number;
+    date: string;
     overall: number | null;
     nonNegotiable: number | null;
-    achieved: number | null;
-    achievedFlagged: boolean;
-    acknowledgment: boolean | null;
-    feedback: string | null;
 }): Promise<void> {
     const db = await getDb();
     const values = {
         userId: input.userId,
-        year: input.year,
-        month: input.month,
+        date: input.date,
         overall: input.overall,
         nonNegotiable: input.nonNegotiable,
-        achieved: input.achieved,
-        achievedFlagged: input.achievedFlagged ? 1 : 0,
-        acknowledgment: input.acknowledgment === null ? null : input.acknowledgment ? 1 : 0,
-        feedback: input.feedback,
     };
     await db
-        .insert(counsellorPerformance)
+        .insert(counsellorPerfMonthly)
         .values(values)
         .onConflictDoUpdate({
-            target: [counsellorPerformance.userId, counsellorPerformance.year, counsellorPerformance.month],
+            target: [counsellorPerfMonthly.userId, counsellorPerfMonthly.date],
             set: { ...values, updatedAt: sql`(datetime('now'))` },
         });
 }
+
+export { previousMonthDate };

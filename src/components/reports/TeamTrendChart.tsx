@@ -30,19 +30,19 @@ export function TeamTrendChart({ series }: { series: TeamSeries[] }) {
         );
     }
 
-    const months = new Map<number, { year: number; month: number; label: string }>();
+    const months = new Map<string, string>();
     for (const { points } of series) {
         for (const p of points) {
-            const key = p.year * 12 + p.month;
-            if (!months.has(key)) months.set(key, { year: p.year, month: p.month, label: p.monthLabel });
+            if (!months.has(p.date)) months.set(p.date, p.monthLabel);
         }
     }
-    const ordered = [...months.entries()].sort(([a], [b]) => a - b).map(([, v]) => v);
+    // "YYYY-MM" strings sort/compare correctly as strings.
+    const ordered = [...months.entries()].sort(([a], [b]) => a.localeCompare(b));
 
-    const rows = ordered.map(({ year, month, label }) => {
+    const rows = ordered.map(([date, label]) => {
         const row: Record<string, string | number | null> = { monthLabel: label };
         for (const { team, points } of series) {
-            const point = points.find((p) => p.year === year && p.month === month);
+            const point = points.find((p) => p.date === date);
             row[team] = point ? point.pctAchieved : null;
         }
         return row;
