@@ -1,8 +1,8 @@
 import { deriveStatus } from "@/lib/metrics/buckets";
 import { summarizeByTeam } from "@/lib/metrics/summarize";
 import { formatInt, formatPct } from "@/lib/format";
-import type { Counsellor } from "@/lib/parser/schemas";
-import type { Status } from "@/lib/parser/schemas";
+import type { Counsellor } from "@/schemas/parser";
+import type { Status } from "@/schemas/parser";
 
 const BAR_STYLES: Record<Status, string> = {
     Green: "bg-success",

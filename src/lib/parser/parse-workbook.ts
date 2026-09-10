@@ -10,7 +10,7 @@ import { matchTeamSheetName } from "./match-team";
 import { detectMonth } from "./month";
 import { readWorkbook } from "./read";
 import type { RawSheet } from "./read";
-import type { Counsellor, ParsedWorkbook, TeamAggregate, Warning, CanonicalTeam } from "./schemas";
+import type { Counsellor, ParsedWorkbook, TeamAggregate, Warning, CanonicalTeam } from "@/schemas/parser";
 import { columnLetter } from "./util";
 import { makeWarning } from "./warnings";
 

@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import type { AdmissionRecord, CounsellorRow, DailyAdmission } from "@/db/types";
+import type { AdmissionRecord, AdmissionRow, CounsellorRow } from "@/db/types";
 import { MONTH_NAMES } from "@/lib/format";
-import { saveDailyAdmissionAction } from "@/app/entry/actions";
+import { saveDailyAdmissionAction, autoFetchApplicantsAction } from "@/app/entry/actions";
+import { loadNpfSession } from "@/lib/nopaperformsSession";
 
 /** Days in the "YYYY-MM" month, via vanilla Date (day 0 of next month = last day of this month). */
 function daysInMonth(date: string): number {
@@ -27,16 +28,6 @@ function firstWeekday(date: string): number {
 }
 
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-function parseMetadata(metadata: string | null): AdmissionRecord[] {
-    if (!metadata) return [];
-    try {
-        const parsed: unknown = JSON.parse(metadata);
-        return Array.isArray(parsed) ? (parsed as AdmissionRecord[]) : [];
-    } catch {
-        return [];
-    }
-}
 
 function parseMonthDate(date: string): { year: number; month: number } {
     const [yearStr, monthStr] = date.split("-");
@@ -205,18 +196,85 @@ function CalendarGrid({
     );
 }
 
-function isEmptyRecord(r: AdmissionRecord): boolean {
-    return r.leadId === "" && r.leadName === "" && r.leadEmail === "";
+/**
+ * The grid's in-progress mirror of `AdmissionRecord`, with every field a string.
+ * `AdmissionRecord` types the two ids as numbers (they're integer columns), but
+ * a half-typed id is neither a valid number nor meaningfully "0" — so editing
+ * happens on strings and `toRecord` converts once, on save.
+ */
+interface DraftRecord {
+    applicationNumber: string;
+    applicantUserId: string;
+    applicantName: string;
+    formId: string;
+    formName: string;
 }
 
-const BLANK_RECORD: AdmissionRecord = { leadId: "", leadName: "", leadEmail: "" };
+const BLANK_DRAFT: DraftRecord = {
+    applicationNumber: "",
+    applicantUserId: "",
+    applicantName: "",
+    formId: "",
+    formName: "",
+};
 
-/** Guarantees exactly one trailing blank row, so the table always has a place to type a new admission. */
-function withTrailingBlank(records: AdmissionRecord[]): AdmissionRecord[] {
-    if (records.length === 0 || !isEmptyRecord(records[records.length - 1])) {
-        return [...records, { ...BLANK_RECORD }];
+function isEmptyDraft(d: DraftRecord): boolean {
+    return (
+        d.applicationNumber === "" &&
+        d.applicantUserId === "" &&
+        d.applicantName === "" &&
+        d.formId === "" &&
+        d.formName === ""
+    );
+}
+
+function toDraft(r: AdmissionRecord): DraftRecord {
+    return {
+        applicationNumber: r.applicationNumber,
+        applicantUserId: String(r.applicantUserId),
+        applicantName: r.applicantName,
+        formId: String(r.formId),
+        formName: r.formName,
+    };
+}
+
+/**
+ * Every `admissions` column is notNull, so a row is either complete or it isn't
+ * saved — returns null for an incomplete draft rather than writing a partial
+ * record the DB would reject anyway.
+ */
+function toRecord(d: DraftRecord): AdmissionRecord | null {
+    const applicantUserId = Number(d.applicantUserId.trim());
+    const formId = Number(d.formId.trim());
+    if (
+        d.applicationNumber.trim() === "" ||
+        d.applicantName.trim() === "" ||
+        d.formName.trim() === "" ||
+        !Number.isInteger(applicantUserId) ||
+        applicantUserId <= 0 ||
+        !Number.isInteger(formId) ||
+        formId <= 0
+    ) {
+        return null;
     }
-    return records;
+    return {
+        applicationNumber: d.applicationNumber.trim(),
+        applicantUserId,
+        applicantName: d.applicantName.trim(),
+        formId,
+        formName: d.formName.trim(),
+    };
+}
+
+/**
+ * Drops any run of trailing blank rows and appends exactly one back, so
+ * typing into the last row grows the table and clearing it back out shrinks
+ * the table — instead of leaving stray blank rows behind.
+ */
+function normalizeDrafts(drafts: DraftRecord[]): DraftRecord[] {
+    let end = drafts.length;
+    while (end > 0 && isEmptyDraft(drafts[end - 1] ?? BLANK_DRAFT)) end--;
+    return [...drafts.slice(0, end), { ...BLANK_DRAFT }];
 }
 
 function DayEditor({
@@ -230,14 +288,15 @@ function DayEditor({
     initialRecords: AdmissionRecord[];
     onSaved: (dDate: string, records: AdmissionRecord[]) => void;
 }) {
-    const [records, setRecords] = useState<AdmissionRecord[]>(() => withTrailingBlank(initialRecords));
-    const [past, setPast] = useState<AdmissionRecord[][]>([]);
-    const [future, setFuture] = useState<AdmissionRecord[][]>([]);
+    const [records, setRecords] = useState<DraftRecord[]>(() => normalizeDrafts(initialRecords.map(toDraft)));
+    const [past, setPast] = useState<DraftRecord[][]>([]);
+    const [future, setFuture] = useState<DraftRecord[][]>([]);
     const [pending, startTransition] = useTransition();
+    const [fetching, setFetching] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [saved, setSaved] = useState(true);
 
-    const commit = (next: AdmissionRecord[]) => {
+    const commit = (next: DraftRecord[]) => {
         setPast((p) => [...p, records]);
         setFuture([]);
         setRecords(next);
@@ -247,6 +306,7 @@ function DayEditor({
     const undo = () => {
         if (past.length === 0) return;
         const previous = past[past.length - 1];
+        if (!previous) return;
         setPast((p) => p.slice(0, -1));
         setFuture((f) => [records, ...f]);
         setRecords(previous);
@@ -256,6 +316,7 @@ function DayEditor({
     const redo = () => {
         if (future.length === 0) return;
         const next = future[0];
+        if (!next) return;
         setFuture((f) => f.slice(1));
         setPast((p) => [...p, records]);
         setRecords(next);
@@ -279,23 +340,61 @@ function DayEditor({
         };
     }, [records, past, future]);
 
-    const updateRecord = (index: number, field: keyof AdmissionRecord, value: string) => {
-        const next = withTrailingBlank(records.map((r, i) => (i === index ? { ...r, [field]: value } : r)));
+    const updateRecord = (index: number, field: keyof DraftRecord, value: string) => {
+        const next = normalizeDrafts(records.map((r, i) => (i === index ? { ...r, [field]: value } : r)));
         commit(next);
     };
 
     const removeRecord = (index: number) => {
-        commit(withTrailingBlank(records.filter((_, i) => i !== index)));
+        commit(normalizeDrafts(records.filter((_, i) => i !== index)));
+    };
+
+    const autoFetch = () => {
+        setError(null);
+        const session = loadNpfSession();
+        if (!session) {
+            setError("No saved NPF session — capture one on the Curl Parser page first.");
+            return;
+        }
+        setFetching(true);
+        void autoFetchApplicantsAction(session.url, session.headers, userId, date)
+            .then((fetched) => {
+                if (fetched.length === 0) {
+                    setError("Auto-fetch returned no applicants for this counsellor.");
+                    return;
+                }
+                const kept = records.filter((r) => !isEmptyDraft(r));
+                // application_number is globally unique in `admissions`, so
+                // re-fetching a day must not re-add rows already in the grid.
+                const existing = new Set(kept.map((r) => r.applicationNumber));
+                const toAdd = fetched.map(toDraft).filter((r) => !existing.has(r.applicationNumber));
+                commit(normalizeDrafts([...kept, ...toAdd]));
+            })
+            .catch(() => {
+                setError("Auto-fetch failed. Check the saved session is still valid.");
+            })
+            .finally(() => {
+                setFetching(false);
+            });
     };
 
     const save = () => {
         setError(null);
-        const toSave = records.filter((r) => !isEmptyRecord(r));
+        const drafts = records.filter((r) => !isEmptyDraft(r));
+        const toSave = drafts.map(toRecord);
+        const firstInvalid = toSave.indexOf(null);
+        if (firstInvalid !== -1) {
+            setError(
+                `Row ${String(firstInvalid + 1)} is incomplete — all five fields are required, and Applicant ID / Form ID must be positive whole numbers.`,
+            );
+            return;
+        }
+        const valid = toSave as AdmissionRecord[];
         startTransition(async () => {
             try {
-                await saveDailyAdmissionAction(userId, date, toSave);
+                await saveDailyAdmissionAction(userId, date, valid);
                 setSaved(true);
-                onSaved(date, toSave);
+                onSaved(date, valid);
             } catch {
                 setError("Failed to save. Check the values and try again.");
             }
@@ -303,7 +402,7 @@ function DayEditor({
     };
 
     const day = Number.parseInt(date.split("-")[2] ?? "0", 10);
-    const filledCount = records.filter((r) => !isEmptyRecord(r)).length;
+    const filledCount = records.filter((r) => !isEmptyDraft(r)).length;
 
     return (
         <div data-component="DayEditor" className="rounded-lg border border-border bg-card px-4 py-3">
@@ -312,6 +411,15 @@ function DayEditor({
                     Day {day} — {filledCount} admission{filledCount === 1 ? "" : "s"}
                 </p>
                 <div className="flex items-center gap-1">
+                    <button
+                        type="button"
+                        disabled={fetching}
+                        onClick={autoFetch}
+                        title="Fetch this counsellor's applicants from the saved NPF session"
+                        className="rounded-md border border-input px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent disabled:opacity-40"
+                    >
+                        {fetching ? "Fetching…" : "Auto-fetch"}
+                    </button>
                     <button
                         type="button"
                         disabled={past.length === 0}
@@ -336,7 +444,7 @@ function DayEditor({
                 <table className="min-w-full divide-y divide-border text-sm">
                     <thead>
                         <tr>
-                            {["Lead user ID", "Lead name", "Lead email", ""].map((h) => (
+                            {["Application no", "Applicant ID", "Applicant name", "Form ID", "Form name", ""].map((h) => (
                                 <th
                                     key={h}
                                     className="px-2 py-1.5 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase"
@@ -348,42 +456,64 @@ function DayEditor({
                     </thead>
                     <tbody className="divide-y divide-border">
                         {records.map((record, index) => {
-                            const blank = isEmptyRecord(record);
+                            const blank = isEmptyDraft(record);
+                            const isSentinel = blank && index === records.length - 1;
                             return (
                                 <tr key={index}>
                                     <td className="px-2 py-1">
                                         <input
-                                            value={record.leadId}
-                                            placeholder="Lead user ID"
+                                            value={record.applicationNumber}
+                                            placeholder="Application no"
                                             onChange={(e) => {
-                                                updateRecord(index, "leadId", e.target.value);
+                                                updateRecord(index, "applicationNumber", e.target.value);
                                             }}
                                             className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
                                         />
                                     </td>
                                     <td className="px-2 py-1">
                                         <input
-                                            value={record.leadName}
-                                            placeholder="Lead name"
+                                            value={record.applicantUserId}
+                                            inputMode="numeric"
+                                            placeholder="Applicant ID"
                                             onChange={(e) => {
-                                                updateRecord(index, "leadName", e.target.value);
+                                                updateRecord(index, "applicantUserId", e.target.value);
                                             }}
                                             className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
                                         />
                                     </td>
                                     <td className="px-2 py-1">
                                         <input
-                                            type="email"
-                                            value={record.leadEmail}
-                                            placeholder="Lead email"
+                                            value={record.applicantName}
+                                            placeholder="Applicant name"
                                             onChange={(e) => {
-                                                updateRecord(index, "leadEmail", e.target.value);
+                                                updateRecord(index, "applicantName", e.target.value);
                                             }}
                                             className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
                                         />
                                     </td>
                                     <td className="px-2 py-1">
-                                        {!blank && (
+                                        <input
+                                            value={record.formId}
+                                            inputMode="numeric"
+                                            placeholder="Form ID"
+                                            onChange={(e) => {
+                                                updateRecord(index, "formId", e.target.value);
+                                            }}
+                                            className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
+                                        />
+                                    </td>
+                                    <td className="px-2 py-1">
+                                        <input
+                                            value={record.formName}
+                                            placeholder="Form name"
+                                            onChange={(e) => {
+                                                updateRecord(index, "formName", e.target.value);
+                                            }}
+                                            className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
+                                        />
+                                    </td>
+                                    <td className="px-2 py-1">
+                                        {!isSentinel && (
                                             <button
                                                 type="button"
                                                 onClick={() => {
@@ -429,13 +559,27 @@ export function DailyEntryView({
     counsellors: CounsellorRow[];
     selectedUserId: number | null;
     counsellorName: string | null;
-    admissions: DailyAdmission[];
+    admissions: AdmissionRow[];
 }) {
     const router = useRouter();
     const [selectedDate, setSelectedDate] = useState<string | null>(null);
-    const [recordsByDate, setRecordsByDate] = useState<Map<string, AdmissionRecord[]>>(
-        new Map(admissions.map((a) => [a.date, parseMetadata(a.metadata)])),
-    );
+    // `admissions` arrives as one row per admission; the calendar grid and the
+    // day editor both work per-day, so group once on mount.
+    const [recordsByDate, setRecordsByDate] = useState<Map<string, AdmissionRecord[]>>(() => {
+        const byDate = new Map<string, AdmissionRecord[]>();
+        for (const row of admissions) {
+            const records = byDate.get(row.date) ?? [];
+            records.push({
+                applicationNumber: row.applicationNumber,
+                applicantUserId: row.applicantUserId,
+                applicantName: row.applicantName,
+                formId: row.formId,
+                formName: row.formName,
+            });
+            byDate.set(row.date, records);
+        }
+        return byDate;
+    });
 
     if (selectedUserId === null) {
         return <CounsellorPicker counsellors={counsellors} date={date} />;

@@ -12,6 +12,7 @@ const LINKS = [
     { href: "/agencies", label: "Agencies" },
     { href: "/reports", label: "Reports" },
     { href: "/upload", label: "Upload & Preview" },
+    { href: "/tools/curl-parser", label: "Curl Parser" },
 ];
 
 export function NavBar() {

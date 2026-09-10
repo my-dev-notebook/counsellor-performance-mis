@@ -1,5 +1,5 @@
-import type { CanonicalTeam, Counsellor } from "@/lib/parser/schemas";
-import { CANONICAL_TEAMS } from "@/lib/parser/schemas";
+import type { CanonicalTeam, Counsellor } from "@/schemas/parser";
+import { CANONICAL_TEAMS } from "@/schemas/parser";
 
 export interface Summary {
     headcount: number;

@@ -1,8 +1,8 @@
 import { asc, eq } from "drizzle-orm";
 import { getDb } from "@/db/client";
 import { users, teams, counsellorPerfMonthly } from "@/db/schema";
-import { CANONICAL_TEAMS } from "@/lib/parser/schemas";
-import type { Status } from "@/lib/parser/schemas";
+import { CANONICAL_TEAMS } from "@/schemas/parser";
+import type { Status } from "@/schemas/parser";
 import { derivePctAchieved } from "@/lib/metrics/derive";
 import { deriveStatus } from "@/lib/metrics/buckets";
 import { summarize, summarizeByTeam } from "@/lib/metrics/summarize";

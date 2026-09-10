@@ -15,7 +15,7 @@ function AddCounsellorForm({ teams, agencies }: { teams: Team[]; agencies: Agenc
     const [open, setOpen] = useState(false);
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
-    const [doj, setDoj] = useState("");
+    const [merittoUserId, setMerittoUserId] = useState("");
     const [teamId, setTeamId] = useState(teams[0]?.id ?? 0);
     const [agencyId, setAgencyId] = useState<number | "">("");
     const [pending, startTransition] = useTransition();
@@ -43,19 +43,24 @@ function AddCounsellorForm({ teams, agencies }: { teams: Team[]; agencies: Agenc
             setError("Name is required.");
             return;
         }
+        const parsedMerittoUserId = Number(merittoUserId.trim());
+        if (merittoUserId.trim() === "" || !Number.isInteger(parsedMerittoUserId) || parsedMerittoUserId <= 0) {
+            setError("Meritto User ID is required and must be a positive whole number.");
+            return;
+        }
         setError(null);
         startTransition(async () => {
             try {
                 await addCounsellorAction({
                     name,
                     email: email.trim() === "" ? null : email.trim(),
-                    doj: doj.trim() === "" ? null : doj.trim(),
+                    merittoUserId: parsedMerittoUserId,
                     teamId,
                     agencyId: agencyId === "" ? null : agencyId,
                 });
                 setName("");
                 setEmail("");
-                setDoj("");
+                setMerittoUserId("");
                 setAgencyId("");
                 setOpen(false);
             } catch {
@@ -94,13 +99,14 @@ function AddCounsellorForm({ teams, agencies }: { teams: Team[]; agencies: Agenc
                 />
             </label>
             <label className="flex flex-col text-xs font-medium text-muted-foreground">
-                DOJ
+                Meritto User ID
                 <input
-                    type="date"
-                    value={doj}
+                    inputMode="numeric"
+                    value={merittoUserId}
                     onChange={(e) => {
-                        setDoj(e.target.value);
+                        setMerittoUserId(e.target.value);
                     }}
+                    placeholder="16098382"
                     className="mt-1 rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
                 />
             </label>
@@ -162,7 +168,8 @@ function RosterRow({ counsellor, teams, agencies }: { counsellor: CounsellorRow;
     const [mode, setMode] = useState<"view" | "edit-profile" | "change-assignment">("view");
     const [name, setName] = useState(counsellor.name);
     const [email, setEmail] = useState(counsellor.email ?? "");
-    const [doj, setDoj] = useState(counsellor.doj ?? "");
+    const [merittoUserId, setMerittoUserId] = useState(String(counsellor.merittoUserId));
+    const [profileError, setProfileError] = useState<string | null>(null);
     const [teamId, setTeamId] = useState(counsellor.teamId);
     const [agencyId, setAgencyId] = useState<number | "">(counsellor.agencyId ?? "");
     const [pending, startTransition] = useTransition();
@@ -170,7 +177,8 @@ function RosterRow({ counsellor, teams, agencies }: { counsellor: CounsellorRow;
     const resetProfileFields = () => {
         setName(counsellor.name);
         setEmail(counsellor.email ?? "");
-        setDoj(counsellor.doj ?? "");
+        setMerittoUserId(String(counsellor.merittoUserId));
+        setProfileError(null);
     };
 
     if (mode === "edit-profile") {
@@ -194,16 +202,20 @@ function RosterRow({ counsellor, teams, agencies }: { counsellor: CounsellorRow;
                             setEmail(e.target.value);
                         }}
                         placeholder="email"
-                        className="mb-1 w-full rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
-                    />
-                    <input
-                        type="date"
-                        value={doj}
-                        onChange={(e) => {
-                            setDoj(e.target.value);
-                        }}
                         className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
                     />
+                </td>
+                <td className="px-3 py-2">
+                    <input
+                        inputMode="numeric"
+                        value={merittoUserId}
+                        onChange={(e) => {
+                            setMerittoUserId(e.target.value);
+                        }}
+                        placeholder="Meritto User ID"
+                        className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
+                    />
+                    {profileError && <p className="mt-1 text-xs text-destructive">{profileError}</p>}
                 </td>
                 <td className="px-3 py-2 text-muted-foreground">{counsellor.isActive ? "Active" : "Inactive"}</td>
                 <td className="px-3 py-2">
@@ -211,11 +223,21 @@ function RosterRow({ counsellor, teams, agencies }: { counsellor: CounsellorRow;
                         <button
                             disabled={pending}
                             onClick={() => {
+                                const parsedMerittoUserId = Number(merittoUserId.trim());
+                                if (
+                                    merittoUserId.trim() === "" ||
+                                    !Number.isInteger(parsedMerittoUserId) ||
+                                    parsedMerittoUserId <= 0
+                                ) {
+                                    setProfileError("Meritto User ID must be a positive whole number.");
+                                    return;
+                                }
+                                setProfileError(null);
                                 startTransition(async () => {
                                     await updateProfileAction(counsellor.id, {
                                         name,
                                         email: email.trim() === "" ? null : email.trim(),
-                                        doj: doj.trim() === "" ? null : doj.trim(),
+                                        merittoUserId: parsedMerittoUserId,
                                     });
                                     setMode("view");
                                 });
@@ -275,6 +297,7 @@ function RosterRow({ counsellor, teams, agencies }: { counsellor: CounsellorRow;
                     </select>
                 </td>
                 <td className="px-3 py-2 text-muted-foreground">{formatText(counsellor.email)}</td>
+                <td className="px-3 py-2 text-muted-foreground">{counsellor.merittoUserId}</td>
                 <td className="px-3 py-2 text-muted-foreground">{counsellor.isActive ? "Active" : "Inactive"}</td>
                 <td className="px-3 py-2">
                     <div className="flex gap-2">
@@ -315,6 +338,7 @@ function RosterRow({ counsellor, teams, agencies }: { counsellor: CounsellorRow;
             <td className="px-3 py-2 text-muted-foreground">{counsellor.teamName}</td>
             <td className="px-3 py-2 text-muted-foreground">{formatText(counsellor.agencyName)}</td>
             <td className="px-3 py-2 text-muted-foreground">{formatText(counsellor.email)}</td>
+            <td className="px-3 py-2 text-muted-foreground">{counsellor.merittoUserId}</td>
             <td className="px-3 py-2 text-muted-foreground">{counsellor.isActive ? "Active" : "Inactive"}</td>
             <td className="px-3 py-2">
                 {counsellor.isActive && (
@@ -441,7 +465,7 @@ export function RosterView({
                     <table className="min-w-full divide-y divide-border text-sm">
                         <thead className="bg-muted/50">
                             <tr>
-                                {["Name", "Team", "Agency", "Email", "Status", "Actions"].map((h) => (
+                                {["Name", "Team", "Agency", "Email", "Meritto ID", "Status", "Actions"].map((h) => (
                                     <th
                                         key={h}
                                         className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase"

@@ -4,7 +4,7 @@ import { counsellorPerfMonthly } from "@/db/schema";
 import { getAchievedForCounsellors } from "@/db/queries/performance";
 
 /**
- * Closes out a month: sums `counsellor_perf_daily` per counsellor and writes
+ * Closes out a month: counts `admissions` per counsellor and writes
  * the total into `counsellor_perf_monthly.achieved`, so future reads of that
  * month are a single cheap lookup instead of a live daily-sum query.
  *

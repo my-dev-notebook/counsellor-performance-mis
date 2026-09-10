@@ -1,4 +1,4 @@
-import type { Status } from "@/lib/parser/schemas";
+import type { Status } from "@/schemas/parser";
 
 /** Status bands (PLAN.md §6, ANS.md Q6). `Unknown` is never folded into `Red`. */
 export function deriveStatus(pctAchieved: number | null): Status {

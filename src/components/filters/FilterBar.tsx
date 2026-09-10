@@ -1,7 +1,7 @@
 "use client";
 
-import { CANONICAL_TEAMS } from "@/lib/parser/schemas";
-import type { Counsellor } from "@/lib/parser/schemas";
+import { CANONICAL_TEAMS } from "@/schemas/parser";
+import type { Counsellor } from "@/schemas/parser";
 import { counsellorOptions } from "@/lib/filters";
 import type { Filters } from "@/lib/filters";
 

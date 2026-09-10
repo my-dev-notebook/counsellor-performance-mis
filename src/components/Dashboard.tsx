@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { DEFAULT_FILTERS, applyFilters } from "@/lib/filters";
 import type { Filters } from "@/lib/filters";
 import { summarize } from "@/lib/metrics/summarize";
-import type { ParsedWorkbook } from "@/lib/parser/schemas";
+import type { ParsedWorkbook } from "@/schemas/parser";
 import { FilterBar } from "@/components/filters/FilterBar";
 import { KpiCards } from "@/components/kpi/KpiCards";
 import { TeamPerformancePanel } from "@/components/team/TeamPerformancePanel";

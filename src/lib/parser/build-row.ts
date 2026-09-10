@@ -3,8 +3,8 @@ import { deriveStatus } from "@/lib/metrics/buckets";
 import { toBoolean, toDate, toNumber, toStringOrNull } from "./coerce";
 import type { ColumnMap } from "./map-columns";
 import { matchTeamSheetName } from "./match-team";
-import type { CanonicalTeam, Counsellor, Warning } from "./schemas";
-import { Counsellor as CounsellorSchema } from "./schemas";
+import type { CanonicalTeam, Counsellor, Warning } from "@/schemas/parser";
+import { Counsellor as CounsellorSchema } from "@/schemas/parser";
 import { slug } from "./util";
 import { makeWarning } from "./warnings";
 

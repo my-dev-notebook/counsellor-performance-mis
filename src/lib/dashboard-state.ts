@@ -1,5 +1,5 @@
 import type { ParseError } from "@/lib/parser/errors";
-import type { ParsedWorkbook } from "@/lib/parser/schemas";
+import type { ParsedWorkbook } from "@/schemas/parser";
 
 /**
  * The one place a `Result` is unwrapped into view state (PLAN.md §8.2) —

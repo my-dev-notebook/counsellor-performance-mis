@@ -1,6 +1,5 @@
 "use server";
 
-import { z } from "zod";
 import { refresh } from "next/cache";
 import {
     createCounsellor,
@@ -8,25 +7,15 @@ import {
     changeCounsellorAssignment,
     deactivateCounsellor,
 } from "@/db/queries/counsellors";
+import { AddCounsellorInput, ProfileInput } from "@/schemas/roster";
 
-const ProfileInput = z.object({
-    name: z.string().trim().min(1),
-    email: z.string().trim().min(1).nullable(),
-    doj: z.string().trim().min(1).nullable(),
-});
-
-const AddCounsellorInput = ProfileInput.extend({
-    teamId: z.number().int(),
-    agencyId: z.number().int().nullable(),
-});
-
-export async function addCounsellorAction(input: z.infer<typeof AddCounsellorInput>) {
+export async function addCounsellorAction(input: AddCounsellorInput) {
     const parsed = AddCounsellorInput.parse(input);
     await createCounsellor(parsed);
     refresh();
 }
 
-export async function updateProfileAction(id: number, input: z.infer<typeof ProfileInput>) {
+export async function updateProfileAction(id: number, input: ProfileInput) {
     const parsed = ProfileInput.parse(input);
     await updateCounsellorProfile(id, parsed);
     refresh();

@@ -1,4 +1,4 @@
-import type { CanonicalTeam, Counsellor, Status } from "@/lib/parser/schemas";
+import type { CanonicalTeam, Counsellor, Status } from "@/schemas/parser";
 
 export interface Filters {
     team: CanonicalTeam | "All";

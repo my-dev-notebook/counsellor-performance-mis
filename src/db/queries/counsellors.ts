@@ -8,7 +8,7 @@ function toCounsellorRow(row: {
     personId: number;
     name: string;
     email: string | null;
-    doj: string | null;
+    merittoUserId: number;
     teamId: number;
     teamName: string;
     agencyId: number | null;
@@ -26,7 +26,7 @@ export async function listCounsellors(options?: { includeInactive?: boolean }): 
             personId: users.personId,
             name: users.name,
             email: users.email,
-            doj: users.doj,
+            merittoUserId: users.merittoUserId,
             teamId: users.teamId,
             teamName: teams.name,
             agencyId: users.agencyId,
@@ -49,7 +49,7 @@ export async function getActiveCounsellorById(id: number): Promise<CounsellorRow
             personId: users.personId,
             name: users.name,
             email: users.email,
-            doj: users.doj,
+            merittoUserId: users.merittoUserId,
             teamId: users.teamId,
             teamName: teams.name,
             agencyId: users.agencyId,
@@ -68,7 +68,7 @@ export async function getActiveCounsellorById(id: number): Promise<CounsellorRow
 export async function createCounsellor(input: {
     name: string;
     email: string | null;
-    doj: string | null;
+    merittoUserId: number;
     teamId: number;
     agencyId: number | null;
 }): Promise<number> {
@@ -78,7 +78,7 @@ export async function createCounsellor(input: {
         .values({
             name: input.name,
             email: input.email,
-            doj: input.doj,
+            merittoUserId: input.merittoUserId,
             teamId: input.teamId,
             agencyId: input.agencyId,
             personId: 0, // placeholder, corrected below
@@ -89,21 +89,29 @@ export async function createCounsellor(input: {
     return inserted.id;
 }
 
-/** §4.1 — "Edit profile": plain UPDATE on the currently-active row, name/email/doj only. */
+/** §4.1 — "Edit profile": plain UPDATE on the currently-active row, name/email/meritto id only. */
 export async function updateCounsellorProfile(
     id: number,
-    input: { name: string; email: string | null; doj: string | null },
+    input: { name: string; email: string | null; merittoUserId: number },
 ): Promise<void> {
     const db = await getDb();
     await db
         .update(users)
-        .set({ name: input.name, email: input.email, doj: input.doj, updatedAt: new Date().toISOString() })
+        .set({
+            name: input.name,
+            email: input.email,
+            merittoUserId: input.merittoUserId,
+            updatedAt: new Date().toISOString(),
+        })
         .where(eq(users.id, id));
 }
 
 /**
  * §4.1 — "Change team/agency": deactivate the current row, insert a new row
- * copying name/email/doj/person_id from it, with the new team_id/agency_id.
+ * copying name/email/meritto_user_id/person_id from it, with the new
+ * team_id/agency_id. Carrying `meritto_user_id` forward is required, not
+ * cosmetic: it's notNull, and the active-only unique index only frees the id
+ * because the old row is deactivated first.
  * Deliberately a separate code path from `deactivateCounsellor` even though
  * both set is_active = 0 on the old row — see §4.1's warning not to merge them.
  */
@@ -122,7 +130,7 @@ export async function changeCounsellorAssignment(
         .values({
             name: current.name,
             email: current.email,
-            doj: current.doj,
+            merittoUserId: current.merittoUserId,
             teamId: input.teamId,
             agencyId: input.agencyId,
             personId: current.personId,

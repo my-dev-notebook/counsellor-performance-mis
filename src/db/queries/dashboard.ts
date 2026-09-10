@@ -1,5 +1,5 @@
-import { CanonicalTeam, CANONICAL_TEAMS } from "@/lib/parser/schemas";
-import type { Counsellor, ParsedWorkbook, TeamAggregate } from "@/lib/parser/schemas";
+import { CanonicalTeam, CANONICAL_TEAMS } from "@/schemas/parser";
+import type { Counsellor, ParsedWorkbook, TeamAggregate } from "@/schemas/parser";
 import { aggregateTeam } from "@/lib/parser/aggregate";
 import { deriveBelowNonNegotiable, derivePctAchieved, derivePending } from "@/lib/metrics/derive";
 import { deriveStatus } from "@/lib/metrics/buckets";
@@ -64,7 +64,10 @@ export async function getMonthlyWorkbook(date: string): Promise<ParsedWorkbook> 
             name: rep.counsellor.name,
             team,
             agency: rep.counsellor.agencyName,
-            doj: rep.counsellor.doj ? new Date(rep.counsellor.doj) : null,
+            // Always null now — `doj` was dropped from `users`. The parser's
+            // `Counsellor` shape keeps the field because Excel sheets still
+            // carry a DOJ column, but nothing persists it any more.
+            doj: null,
             email: rep.counsellor.email,
             target,
             nonNegotiable,

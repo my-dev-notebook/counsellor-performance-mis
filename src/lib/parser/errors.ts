@@ -1,4 +1,4 @@
-import type { Warning } from "./schemas";
+import type { Warning } from "@/schemas/parser";
 
 /**
  * Fatal parse failures — no report is possible at all (PLAN.md §8.2).

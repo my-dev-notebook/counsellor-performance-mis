@@ -33,7 +33,7 @@ export function CompanyTrendChart({ points }: { points: MonthlyPoint[] }) {
                             tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
                             tickFormatter={(v: number) => formatInt(v)}
                         />
-                        <Tooltip formatter={(v: number) => formatInt(v)} contentStyle={TOOLTIP_STYLE} />
+                        <Tooltip formatter={(v) => formatInt(Number(v ?? 0))} contentStyle={TOOLTIP_STYLE} />
                         <Legend wrapperStyle={{ color: "var(--foreground)", fontSize: 12 }} />
                         <Line
                             type="monotone"
@@ -73,7 +73,7 @@ export function CompanyTrendChart({ points }: { points: MonthlyPoint[] }) {
                             tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
                             tickFormatter={(v: number) => formatPct(v)}
                         />
-                        <Tooltip formatter={(v: number) => formatPct(v)} contentStyle={TOOLTIP_STYLE} />
+                        <Tooltip formatter={(v) => formatPct(Number(v ?? 0))} contentStyle={TOOLTIP_STYLE} />
                         <Line
                             type="monotone"
                             dataKey="pctAchieved"

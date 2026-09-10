@@ -1,4 +1,4 @@
-import type { Counsellor, Status } from "@/lib/parser/schemas";
+import type { Counsellor, Status } from "@/schemas/parser";
 
 const BUCKETS: { status: Status; label: string; dot: string }[] = [
     { status: "Green", label: "Green (≥90%)", dot: "bg-success" },

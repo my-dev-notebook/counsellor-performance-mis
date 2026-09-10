@@ -1,23 +1,17 @@
 "use server";
 
-import { z } from "zod";
 import { refresh } from "next/cache";
 import { upsertEntry, getPreviousEntry, getProgressForMonth } from "@/db/queries/performance";
 import { upsertDailyAdmission } from "@/db/queries/dailyAdmissions";
 import { finalizeMonth } from "@/db/queries/finalize";
-import type { AdmissionRecord, PerformanceEntry, ProgressRow } from "@/db/types";
+import type { PerformanceEntry, ProgressRow } from "@/db/types";
+import { AdmissionRecord, SaveDailyAdmissionInput } from "@/schemas/admissions";
+import { SaveEntryInput } from "@/schemas/entry";
+import { DayDate, MonthDate } from "@/schemas/dates";
+import { getActiveCounsellorById } from "@/db/queries/counsellors";
+import { fetchApplicants } from "@/utils/meritto/fetch-applicants";
 
-const MONTH_DATE_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
-const DAY_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-
-const SaveEntryInput = z.object({
-    userId: z.number().int(),
-    date: z.string().regex(MONTH_DATE_RE, "date must be YYYY-MM"),
-    overall: z.number().int().min(0).nullable(),
-    nonNegotiable: z.number().int().min(0).nullable(),
-});
-
-export async function saveEntryAction(input: z.infer<typeof SaveEntryInput>) {
+export async function saveEntryAction(input: SaveEntryInput) {
     const parsed = SaveEntryInput.parse(input);
     await upsertEntry(parsed);
     refresh();
@@ -41,23 +35,54 @@ export async function getExportDataAction(date: string): Promise<ProgressRow[]> 
     return getProgressForMonth(date, { includeInactive: false });
 }
 
-const AdmissionRecordSchema = z.object({
-    leadId: z.string(),
-    leadName: z.string(),
-    leadEmail: z.string(),
-});
-
-const SaveDailyAdmissionInput = z.object({
-    userId: z.number().int(),
-    date: z.string().regex(DAY_DATE_RE, "date must be YYYY-MM-DD"),
-    records: z.array(AdmissionRecordSchema),
-});
-
-/** Per-day save on the daily-entry page. `count` is derived from `records.length`, never typed. */
+/**
+ * Per-day save on the daily-entry page. No count is stored or typed -- the day's
+ * total is COUNT(*) over the rows written here.
+ */
 export async function saveDailyAdmissionAction(userId: number, date: string, records: AdmissionRecord[]) {
     const parsed = SaveDailyAdmissionInput.parse({ userId, date, records });
     await upsertDailyAdmission(parsed.userId, parsed.date, parsed.records);
     refresh();
+}
+
+/**
+ * Auto-fetch from the daily-entry page: reuses the url/headers captured
+ * earlier via the curl-parser tool and asks Meritto for the applicants that
+ * `userId`'s counsellor closed on `date` (YYYY-MM-DD). The request body is
+ * built from scratch by `fetchApplicants`, so only the session's credentials
+ * are reused, not its filters. The caller merges the result into the day's
+ * rows.
+ *
+ * `userId` is our own users.id; Meritto keys applicants by the counsellor's
+ * `meritto_user_id`, so it is resolved here rather than trusted from the
+ * client.
+ */
+export async function autoFetchApplicantsAction(
+    url: string,
+    headers: Record<string, string>,
+    userId: number,
+    date: string,
+): Promise<AdmissionRecord[]> {
+    const parsedDate = DayDate.parse(date);
+    const counsellor = await getActiveCounsellorById(userId);
+    if (!counsellor) {
+        throw new Error(`autoFetchApplicantsAction: no active counsellor with id ${String(userId)}`);
+    }
+    const applicants = await fetchApplicants({
+        url,
+        headers,
+        date: new Date(`${parsedDate}T00:00:00`),
+        counsellorId: counsellor.merittoUserId,
+    });
+    // The scraper yields every field as a string straight out of the HTML;
+    // `admissions` stores the two ids as integers. Coerce here, at the boundary.
+    return applicants.map((a) => ({
+        applicationNumber: a.applicationNumber,
+        applicantUserId: Number(a.userId),
+        applicantName: a.registeredName,
+        formId: Number(a.formId),
+        formName: a.formName,
+    }));
 }
 
 /**
@@ -67,7 +92,7 @@ export async function saveDailyAdmissionAction(userId: number, date: string, rec
  * Wiring an actual cron, or a UI button to call this, is a future task.
  */
 export async function finalizeMonthAction(monthDate: string) {
-    const parsed = z.string().regex(MONTH_DATE_RE, "date must be YYYY-MM").parse(monthDate);
+    const parsed = MonthDate.parse(monthDate);
     const result = await finalizeMonth(parsed);
     refresh();
     return result;

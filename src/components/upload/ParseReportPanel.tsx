@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { ParsedWorkbook, WarningLevel } from "@/lib/parser/schemas";
+import type { ParsedWorkbook, WarningLevel } from "@/schemas/parser";
 
 const LEVEL_STYLES: Record<WarningLevel, string> = {
     info: "bg-info/15 text-info ring-info/30",

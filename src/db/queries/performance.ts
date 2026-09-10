@@ -1,6 +1,6 @@
 import { eq, and, lt, desc, sql, like } from "drizzle-orm";
 import { getDb } from "@/db/client";
-import { users, teams, agencies, counsellorPerfMonthly, counsellorPerfDaily } from "@/db/schema";
+import { users, teams, agencies, counsellorPerfMonthly, admissions } from "@/db/schema";
 import type { CounsellorRow, MonthSummary, PerformanceEntry, ProgressRow } from "@/db/types";
 
 function toEntry(row: {
@@ -34,18 +34,18 @@ export async function listMonthsWithData(): Promise<string[]> {
 }
 
 /**
- * Live "achieved" for every counsellor in one month, computed as
- * SUM(counsellor_perf_daily.count) grouped by user, for daily rows whose
- * date falls inside the given "YYYY-MM" month. One query, used to avoid
- * N+1 lookups from getProgressForMonth's per-counsellor list.
+ * Live "achieved" for every counsellor in one month: COUNT(*) of `admissions`
+ * rows whose date falls inside the given "YYYY-MM" month, grouped by user. One
+ * query, used to avoid N+1 lookups from getProgressForMonth's per-counsellor
+ * list.
  */
 export async function getAchievedForCounsellors(monthDate: string): Promise<Map<number, number>> {
     const db = await getDb();
     const rows = await db
-        .select({ userId: counsellorPerfDaily.userId, total: sql<number>`SUM(${counsellorPerfDaily.count})` })
-        .from(counsellorPerfDaily)
-        .where(like(counsellorPerfDaily.date, `${monthDate}-%`))
-        .groupBy(counsellorPerfDaily.userId);
+        .select({ userId: admissions.userId, total: sql<number>`COUNT(*)` })
+        .from(admissions)
+        .where(like(admissions.date, `${monthDate}-%`))
+        .groupBy(admissions.userId);
     return new Map(rows.map((r) => [r.userId, Number(r.total)]));
 }
 
@@ -53,9 +53,9 @@ export async function getAchievedForCounsellors(monthDate: string): Promise<Map<
 export async function getAchievedForMonth(userId: number, monthDate: string): Promise<number> {
     const db = await getDb();
     const rows = await db
-        .select({ total: sql<number>`SUM(${counsellorPerfDaily.count})` })
-        .from(counsellorPerfDaily)
-        .where(and(eq(counsellorPerfDaily.userId, userId), like(counsellorPerfDaily.date, `${monthDate}-%`)));
+        .select({ total: sql<number>`COUNT(*)` })
+        .from(admissions)
+        .where(and(eq(admissions.userId, userId), like(admissions.date, `${monthDate}-%`)));
     return Number(rows[0]?.total ?? 0);
 }
 
@@ -72,7 +72,7 @@ export async function getProgressForMonth(
                     personId: users.personId,
                     name: users.name,
                     email: users.email,
-                    doj: users.doj,
+                    merittoUserId: users.merittoUserId,
                     teamId: users.teamId,
                     teamName: teams.name,
                     agencyId: users.agencyId,

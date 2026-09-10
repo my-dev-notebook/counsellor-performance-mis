@@ -1,5 +1,5 @@
 import { summarize } from "@/lib/metrics/summarize";
-import type { CanonicalTeam, Counsellor, DeclaredTotal, TeamAggregate, Warning } from "./schemas";
+import type { CanonicalTeam, Counsellor, DeclaredTotal, TeamAggregate, Warning } from "@/schemas/parser";
 import { makeWarning } from "./warnings";
 
 const RECONCILE_EPSILON = 0.01;

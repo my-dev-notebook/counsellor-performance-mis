@@ -1,11 +1,10 @@
-import { formatDate, formatInt, formatPct, formatText } from "@/lib/format";
-import type { Counsellor } from "@/lib/parser/schemas";
+import { formatInt, formatPct, formatText } from "@/lib/format";
+import type { Counsellor } from "@/schemas/parser";
 import { StatusPill } from "@/components/StatusPill";
 
 const FIELDS: { label: string; render: (c: Counsellor) => string }[] = [
     { label: "Team", render: (c) => c.team },
     { label: "Agency", render: (c) => formatText(c.agency) },
-    { label: "DOJ", render: (c) => formatDate(c.doj) },
     { label: "Target", render: (c) => formatInt(c.target) },
     { label: "Non-Negotiable", render: (c) => formatInt(c.nonNegotiable) },
     { label: "Achieved", render: (c) => formatInt(c.achieved) },

@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import type { ProgressRow } from "@/db/types";
-import { formatDate, formatInt, formatText } from "@/lib/format";
+import { formatInt, formatText } from "@/lib/format";
 import { saveEntryAction, getPrefillAction } from "@/app/entry/actions";
 
 export function EntryRow({ row, date }: { row: ProgressRow; date: string }) {
@@ -92,9 +92,9 @@ export function EntryRow({ row, date }: { row: ProgressRow; date: string }) {
                             </div>
                             <div className="text-sm text-muted-foreground">
                                 <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                                    DOJ
+                                    Meritto ID
                                 </p>
-                                <p>{counsellor.doj ? formatDate(new Date(counsellor.doj)) : "—"}</p>
+                                <p>{counsellor.merittoUserId}</p>
                             </div>
                             <div className="text-sm text-muted-foreground">
                                 <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">

@@ -3,7 +3,7 @@
 import { Fragment, useMemo, useState, type CSSProperties } from "react";
 import { FiChevronDown, FiChevronUp } from "react-icons/fi";
 import { formatInt, formatPct, formatText } from "@/lib/format";
-import type { Counsellor, Status } from "@/lib/parser/schemas";
+import type { Counsellor, Status } from "@/schemas/parser";
 import { DrillDownPanel } from "@/components/drilldown/DrillDownPanel";
 
 type SortKey = "rank" | "name" | "team" | "agency" | "target" | "nonNegotiable" | "achieved" | "pctAchieved";

@@ -1,4 +1,4 @@
-import type { Warning, WarningLevel, WarningScope } from "./schemas";
+import type { Warning, WarningLevel, WarningScope } from "@/schemas/parser";
 
 /** Builds a `Warning`, only including `sheet`/`row`/`column` when present (exactOptionalPropertyTypes). */
 export function makeWarning(

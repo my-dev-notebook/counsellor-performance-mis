@@ -1,18 +1,7 @@
 import { listCounsellors } from "@/db/queries/counsellors";
 import { getDailyAdmissionsForMonth } from "@/db/queries/dailyAdmissions";
 import { DailyEntryView } from "@/components/entry/DailyEntryView";
-
-const MONTH_DATE_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
-
-function currentMonthDate(): string {
-    const now = new Date();
-    return `${String(now.getFullYear())}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-}
-
-function parseDateParam(value: string | string[] | undefined): string {
-    if (typeof value === "string" && MONTH_DATE_RE.test(value)) return value;
-    return currentMonthDate();
-}
+import { parseMonthDateParam } from "@/schemas/dates";
 
 function parseUserIdParam(value: string | string[] | undefined): number | null {
     if (typeof value !== "string") return null;
@@ -23,10 +12,10 @@ function parseUserIdParam(value: string | string[] | undefined): number | null {
 export default async function DailyEntryPage({
     searchParams,
 }: {
-    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+    searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
     const params = await searchParams;
-    const date = parseDateParam(params.date);
+    const date = parseMonthDateParam(params.date);
     const userId = parseUserIdParam(params.userId);
 
     const counsellors = await listCounsellors({ includeInactive: false });

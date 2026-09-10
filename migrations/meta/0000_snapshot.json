@@ -1,317 +1,438 @@
 {
-    "version": "6",
-    "dialect": "sqlite",
-    "id": "0d50f740-d8ff-40b4-b5a1-39262d116e03",
-    "prevId": "00000000-0000-0000-0000-000000000000",
-    "tables": {
-        "agencies": {
-            "name": "agencies",
-            "columns": {
-                "id": {
-                    "name": "id",
-                    "type": "integer",
-                    "primaryKey": true,
-                    "notNull": true,
-                    "autoincrement": true
-                },
-                "name": {
-                    "name": "name",
-                    "type": "text",
-                    "primaryKey": false,
-                    "notNull": true,
-                    "autoincrement": false
-                }
-            },
-            "indexes": {
-                "agencies_name_unique": {
-                    "name": "agencies_name_unique",
-                    "columns": ["name"],
-                    "isUnique": true
-                }
-            },
-            "foreignKeys": {},
-            "compositePrimaryKeys": {},
-            "uniqueConstraints": {},
-            "checkConstraints": {}
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "cc666692-f51f-463e-a9a0-02f6de8d8447",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "tables": {
+    "admissions": {
+      "name": "admissions",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
         },
-        "counsellor_performance": {
-            "name": "counsellor_performance",
-            "columns": {
-                "id": {
-                    "name": "id",
-                    "type": "integer",
-                    "primaryKey": true,
-                    "notNull": true,
-                    "autoincrement": true
-                },
-                "user_id": {
-                    "name": "user_id",
-                    "type": "integer",
-                    "primaryKey": false,
-                    "notNull": true,
-                    "autoincrement": false
-                },
-                "year": {
-                    "name": "year",
-                    "type": "integer",
-                    "primaryKey": false,
-                    "notNull": true,
-                    "autoincrement": false
-                },
-                "month": {
-                    "name": "month",
-                    "type": "integer",
-                    "primaryKey": false,
-                    "notNull": true,
-                    "autoincrement": false
-                },
-                "overall": {
-                    "name": "overall",
-                    "type": "integer",
-                    "primaryKey": false,
-                    "notNull": false,
-                    "autoincrement": false
-                },
-                "non_negotiable": {
-                    "name": "non_negotiable",
-                    "type": "integer",
-                    "primaryKey": false,
-                    "notNull": false,
-                    "autoincrement": false
-                },
-                "achieved": {
-                    "name": "achieved",
-                    "type": "integer",
-                    "primaryKey": false,
-                    "notNull": false,
-                    "autoincrement": false
-                },
-                "achieved_flagged": {
-                    "name": "achieved_flagged",
-                    "type": "integer",
-                    "primaryKey": false,
-                    "notNull": true,
-                    "autoincrement": false,
-                    "default": 0
-                },
-                "acknowledgment": {
-                    "name": "acknowledgment",
-                    "type": "integer",
-                    "primaryKey": false,
-                    "notNull": false,
-                    "autoincrement": false
-                },
-                "feedback": {
-                    "name": "feedback",
-                    "type": "text",
-                    "primaryKey": false,
-                    "notNull": false,
-                    "autoincrement": false
-                },
-                "created_at": {
-                    "name": "created_at",
-                    "type": "text",
-                    "primaryKey": false,
-                    "notNull": true,
-                    "autoincrement": false,
-                    "default": "(datetime('now'))"
-                },
-                "updated_at": {
-                    "name": "updated_at",
-                    "type": "text",
-                    "primaryKey": false,
-                    "notNull": true,
-                    "autoincrement": false,
-                    "default": "(datetime('now'))"
-                }
-            },
-            "indexes": {
-                "idx_counsellor_performance_user_year_month": {
-                    "name": "idx_counsellor_performance_user_year_month",
-                    "columns": ["user_id", "year", "month"],
-                    "isUnique": true
-                }
-            },
-            "foreignKeys": {
-                "counsellor_performance_user_id_users_id_fk": {
-                    "name": "counsellor_performance_user_id_users_id_fk",
-                    "tableFrom": "counsellor_performance",
-                    "tableTo": "users",
-                    "columnsFrom": ["user_id"],
-                    "columnsTo": ["id"],
-                    "onDelete": "no action",
-                    "onUpdate": "no action"
-                }
-            },
-            "compositePrimaryKeys": {},
-            "uniqueConstraints": {},
-            "checkConstraints": {
-                "chk_month_range": {
-                    "name": "chk_month_range",
-                    "value": "\"counsellor_performance\".\"month\" BETWEEN 1 AND 12"
-                },
-                "chk_overall_non_negative": {
-                    "name": "chk_overall_non_negative",
-                    "value": "\"counsellor_performance\".\"overall\" IS NULL OR \"counsellor_performance\".\"overall\" >= 0"
-                },
-                "chk_non_negotiable_non_negative": {
-                    "name": "chk_non_negotiable_non_negative",
-                    "value": "\"counsellor_performance\".\"non_negotiable\" IS NULL OR \"counsellor_performance\".\"non_negotiable\" >= 0"
-                },
-                "chk_achieved_non_negative": {
-                    "name": "chk_achieved_non_negative",
-                    "value": "\"counsellor_performance\".\"achieved\" IS NULL OR \"counsellor_performance\".\"achieved\" >= 0"
-                }
-            }
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
         },
-        "teams": {
-            "name": "teams",
-            "columns": {
-                "id": {
-                    "name": "id",
-                    "type": "integer",
-                    "primaryKey": true,
-                    "notNull": true,
-                    "autoincrement": true
-                },
-                "name": {
-                    "name": "name",
-                    "type": "text",
-                    "primaryKey": false,
-                    "notNull": true,
-                    "autoincrement": false
-                }
-            },
-            "indexes": {
-                "teams_name_unique": {
-                    "name": "teams_name_unique",
-                    "columns": ["name"],
-                    "isUnique": true
-                }
-            },
-            "foreignKeys": {},
-            "compositePrimaryKeys": {},
-            "uniqueConstraints": {},
-            "checkConstraints": {}
+        "date": {
+          "name": "date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
         },
-        "users": {
-            "name": "users",
-            "columns": {
-                "id": {
-                    "name": "id",
-                    "type": "integer",
-                    "primaryKey": true,
-                    "notNull": true,
-                    "autoincrement": true
-                },
-                "name": {
-                    "name": "name",
-                    "type": "text",
-                    "primaryKey": false,
-                    "notNull": true,
-                    "autoincrement": false
-                },
-                "email": {
-                    "name": "email",
-                    "type": "text",
-                    "primaryKey": false,
-                    "notNull": false,
-                    "autoincrement": false
-                },
-                "doj": {
-                    "name": "doj",
-                    "type": "text",
-                    "primaryKey": false,
-                    "notNull": false,
-                    "autoincrement": false
-                },
-                "team_id": {
-                    "name": "team_id",
-                    "type": "integer",
-                    "primaryKey": false,
-                    "notNull": true,
-                    "autoincrement": false
-                },
-                "agency_id": {
-                    "name": "agency_id",
-                    "type": "integer",
-                    "primaryKey": false,
-                    "notNull": false,
-                    "autoincrement": false
-                },
-                "is_active": {
-                    "name": "is_active",
-                    "type": "integer",
-                    "primaryKey": false,
-                    "notNull": true,
-                    "autoincrement": false,
-                    "default": 1
-                },
-                "person_id": {
-                    "name": "person_id",
-                    "type": "integer",
-                    "primaryKey": false,
-                    "notNull": true,
-                    "autoincrement": false
-                },
-                "created_at": {
-                    "name": "created_at",
-                    "type": "text",
-                    "primaryKey": false,
-                    "notNull": true,
-                    "autoincrement": false,
-                    "default": "(datetime('now'))"
-                },
-                "updated_at": {
-                    "name": "updated_at",
-                    "type": "text",
-                    "primaryKey": false,
-                    "notNull": true,
-                    "autoincrement": false,
-                    "default": "(datetime('now'))"
-                }
-            },
-            "indexes": {
-                "idx_users_one_active_per_person": {
-                    "name": "idx_users_one_active_per_person",
-                    "columns": ["person_id"],
-                    "isUnique": true,
-                    "where": "\"users\".\"is_active\" = 1"
-                }
-            },
-            "foreignKeys": {
-                "users_team_id_teams_id_fk": {
-                    "name": "users_team_id_teams_id_fk",
-                    "tableFrom": "users",
-                    "tableTo": "teams",
-                    "columnsFrom": ["team_id"],
-                    "columnsTo": ["id"],
-                    "onDelete": "no action",
-                    "onUpdate": "no action"
-                },
-                "users_agency_id_agencies_id_fk": {
-                    "name": "users_agency_id_agencies_id_fk",
-                    "tableFrom": "users",
-                    "tableTo": "agencies",
-                    "columnsFrom": ["agency_id"],
-                    "columnsTo": ["id"],
-                    "onDelete": "no action",
-                    "onUpdate": "no action"
-                }
-            },
-            "compositePrimaryKeys": {},
-            "uniqueConstraints": {},
-            "checkConstraints": {}
+        "application_number": {
+          "name": "application_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "applicant_user_id": {
+          "name": "applicant_user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "applicant_name": {
+          "name": "applicant_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "form_id": {
+          "name": "form_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "form_name": {
+          "name": "form_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(datetime('now'))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(datetime('now'))"
         }
+      },
+      "indexes": {
+        "admissions_application_number_unique": {
+          "name": "admissions_application_number_unique",
+          "columns": [
+            "application_number"
+          ],
+          "isUnique": true
+        },
+        "idx_admissions_user_date": {
+          "name": "idx_admissions_user_date",
+          "columns": [
+            "user_id",
+            "date"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "admissions_user_id_users_id_fk": {
+          "name": "admissions_user_id_users_id_fk",
+          "tableFrom": "admissions",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "chk_admissions_date_format": {
+          "name": "chk_admissions_date_format",
+          "value": "\"admissions\".\"date\" GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'"
+        },
+        "chk_admissions_applicant_user_id_positive": {
+          "name": "chk_admissions_applicant_user_id_positive",
+          "value": "\"admissions\".\"applicant_user_id\" > 0"
+        },
+        "chk_admissions_form_id_positive": {
+          "name": "chk_admissions_form_id_positive",
+          "value": "\"admissions\".\"form_id\" > 0"
+        }
+      }
     },
-    "views": {},
-    "enums": {},
-    "_meta": {
-        "schemas": {},
-        "tables": {},
-        "columns": {}
+    "agencies": {
+      "name": "agencies",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "agencies_name_unique": {
+          "name": "agencies_name_unique",
+          "columns": [
+            "name"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
     },
-    "internal": {
-        "indexes": {}
+    "counsellor_perf_monthly": {
+      "name": "counsellor_perf_monthly",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "date": {
+          "name": "date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "overall": {
+          "name": "overall",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "non_negotiable": {
+          "name": "non_negotiable",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "achieved": {
+          "name": "achieved",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(datetime('now'))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(datetime('now'))"
+        }
+      },
+      "indexes": {
+        "idx_counsellor_perf_monthly_user_date": {
+          "name": "idx_counsellor_perf_monthly_user_date",
+          "columns": [
+            "user_id",
+            "date"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "counsellor_perf_monthly_user_id_users_id_fk": {
+          "name": "counsellor_perf_monthly_user_id_users_id_fk",
+          "tableFrom": "counsellor_perf_monthly",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "chk_overall_non_negative": {
+          "name": "chk_overall_non_negative",
+          "value": "\"counsellor_perf_monthly\".\"overall\" IS NULL OR \"counsellor_perf_monthly\".\"overall\" >= 0"
+        },
+        "chk_non_negotiable_non_negative": {
+          "name": "chk_non_negotiable_non_negative",
+          "value": "\"counsellor_perf_monthly\".\"non_negotiable\" IS NULL OR \"counsellor_perf_monthly\".\"non_negotiable\" >= 0"
+        },
+        "chk_achieved_non_negative": {
+          "name": "chk_achieved_non_negative",
+          "value": "\"counsellor_perf_monthly\".\"achieved\" IS NULL OR \"counsellor_perf_monthly\".\"achieved\" >= 0"
+        }
+      }
+    },
+    "teams": {
+      "name": "teams",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "teams_name_unique": {
+          "name": "teams_name_unique",
+          "columns": [
+            "name"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "users": {
+      "name": "users",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "meritto_user_id": {
+          "name": "meritto_user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "team_id": {
+          "name": "team_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "agency_id": {
+          "name": "agency_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "person_id": {
+          "name": "person_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(datetime('now'))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(datetime('now'))"
+        }
+      },
+      "indexes": {
+        "idx_users_one_active_per_person": {
+          "name": "idx_users_one_active_per_person",
+          "columns": [
+            "person_id"
+          ],
+          "isUnique": true,
+          "where": "\"users\".\"is_active\" = 1"
+        },
+        "idx_users_one_active_per_meritto_id": {
+          "name": "idx_users_one_active_per_meritto_id",
+          "columns": [
+            "meritto_user_id"
+          ],
+          "isUnique": true,
+          "where": "\"users\".\"is_active\" = 1"
+        }
+      },
+      "foreignKeys": {
+        "users_team_id_teams_id_fk": {
+          "name": "users_team_id_teams_id_fk",
+          "tableFrom": "users",
+          "tableTo": "teams",
+          "columnsFrom": [
+            "team_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "users_agency_id_agencies_id_fk": {
+          "name": "users_agency_id_agencies_id_fk",
+          "tableFrom": "users",
+          "tableTo": "agencies",
+          "columnsFrom": [
+            "agency_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
     }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
 }

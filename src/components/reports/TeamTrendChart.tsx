@@ -59,7 +59,7 @@ export function TeamTrendChart({ series }: { series: TeamSeries[] }) {
                         tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
                         tickFormatter={(v: number) => formatPct(v)}
                     />
-                    <Tooltip formatter={(v: number) => formatPct(v)} contentStyle={TOOLTIP_STYLE} />
+                    <Tooltip formatter={(v) => formatPct(Number(v ?? 0))} contentStyle={TOOLTIP_STYLE} />
                     <Legend wrapperStyle={{ color: "var(--foreground)", fontSize: 12 }} />
                     {series.map(({ team }) => (
                         <Line

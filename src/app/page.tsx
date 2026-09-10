@@ -3,18 +3,7 @@ import { listMonthsWithData } from "@/db/queries/performance";
 import { Header } from "@/components/Header";
 import { Dashboard } from "@/components/Dashboard";
 import { MonthPicker } from "@/components/MonthPicker";
-
-const MONTH_DATE_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
-
-function currentMonthDate(): string {
-    const now = new Date();
-    return `${String(now.getFullYear())}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-}
-
-function parseDateParam(value: string | string[] | undefined, fallback: string): string {
-    if (typeof value === "string" && MONTH_DATE_RE.test(value)) return value;
-    return fallback;
-}
+import { currentMonthDate, parseMonthDateParam } from "@/schemas/dates";
 
 export default async function LiveDashboardPage({
     searchParams,
@@ -24,7 +13,7 @@ export default async function LiveDashboardPage({
     const params = await searchParams;
     const months = await listMonthsWithData();
     const latest = months[0];
-    const date = parseDateParam(params.date, latest ?? currentMonthDate());
+    const date = parseMonthDateParam(params.date, latest ?? currentMonthDate());
 
     const workbook = await getMonthlyWorkbook(date);
 

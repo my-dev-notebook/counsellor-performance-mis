@@ -1,5 +1,5 @@
-import type { CanonicalTeam } from "./schemas";
-import { CANONICAL_TEAMS } from "./schemas";
+import type { CanonicalTeam } from "@/schemas/parser";
+import { CANONICAL_TEAMS } from "@/schemas/parser";
 
 /**
  * Fuzzy / semantic sheet-name → team matcher (PLAN.md §2.4). Sheet names are

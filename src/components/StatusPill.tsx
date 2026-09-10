@@ -1,4 +1,4 @@
-import type { Status } from "@/lib/parser/schemas";
+import type { Status } from "@/schemas/parser";
 
 const STYLES: Record<Status, string> = {
     Green: "bg-success/15 text-success ring-success/30",

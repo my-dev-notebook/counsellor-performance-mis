@@ -1,17 +1,6 @@
 import { getProgressForMonth, getMonthSummary, listMonthsWithData } from "@/db/queries/performance";
 import { EntryView } from "@/components/entry/EntryView";
-
-const MONTH_DATE_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
-
-function currentMonthDate(): string {
-    const now = new Date();
-    return `${String(now.getFullYear())}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-}
-
-function parseDateParam(value: string | string[] | undefined): string {
-    if (typeof value === "string" && MONTH_DATE_RE.test(value)) return value;
-    return currentMonthDate();
-}
+import { parseMonthDateParam } from "@/schemas/dates";
 
 export default async function EntryPage({
     searchParams,
@@ -19,7 +8,7 @@ export default async function EntryPage({
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
     const params = await searchParams;
-    const date = parseDateParam(params.date);
+    const date = parseMonthDateParam(params.date);
 
     const [progress, summary, months] = await Promise.all([
         getProgressForMonth(date, { includeInactive: true }),
