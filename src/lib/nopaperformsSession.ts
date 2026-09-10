@@ -1,6 +1,6 @@
 /**
  * Persists the last-known-working nopaperforms.io request headers/cookies
- * (as captured from a curl and verified via the curl-parser test-fetch) in
+ * (as captured from a curl and verified via the Meritto Auth tool) in
  * localStorage, so other tools that call `fetchApplicants` can reuse them
  * instead of asking the user to paste a curl again. Only credentials are
  * stored — `fetchApplicants` builds its own request body, so the captured

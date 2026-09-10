@@ -47,7 +47,7 @@ export async function saveDailyAdmissionAction(userId: number, date: string, rec
 
 /**
  * Auto-fetch from the daily-entry page: reuses the url/headers captured
- * earlier via the curl-parser tool and asks Meritto for the applicants that
+ * earlier via the Meritto Auth tool and asks Meritto for the applicants that
  * `userId`'s counsellor closed on `date` (YYYY-MM-DD). The request body is
  * built from scratch by `fetchApplicants`, so only the session's credentials
  * are reused, not its filters. The caller merges the result into the day's

@@ -12,7 +12,7 @@ const LINKS = [
     { href: "/agencies", label: "Agencies" },
     { href: "/reports", label: "Reports" },
     { href: "/upload", label: "Upload & Preview" },
-    { href: "/tools/curl-parser", label: "Curl Parser" },
+    { href: "/tools/meritto-auth", label: "Meritto Auth" },
 ];
 
 export function NavBar() {
