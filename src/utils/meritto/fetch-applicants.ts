@@ -12,7 +12,7 @@ export async function fetchApplicants({ url, headers, date, counsellorId }: {
     url: string;
     headers: Record<string, string>;
     date: Date
-    counsellorId: string;
+    counsellorId: number;
 }): Promise<Applicant[]> {
 
     const headersWithCsrfToken = withCsrfToken(headers);
@@ -75,7 +75,7 @@ export function parseApplicants(html: string): Applicant[] {
         .filter((row) => row.userId !== "" || row.applicationNumber !== "");
 }
 
-export function buildRequestBody({ date, counsellorId, csrfToken }: { date: Date, counsellorId: string; csrfToken: string; }): string {
+export function buildRequestBody({ date, counsellorId, csrfToken }: { date: Date, counsellorId: number; csrfToken: string; }): string {
     const snapshotFormList = 1410;
     const checksum = "f9008bc4ece8c7931ce654299e9861df";
 
