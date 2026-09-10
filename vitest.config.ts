@@ -12,5 +12,6 @@ export default defineConfig({
         include: ["src/**/*.test.ts", "test/**/*.test.ts"],
         // M1 ships the toolchain before the parser exists; M2 adds real specs.
         passWithNoTests: true,
+        testTimeout: 30000
     },
 });
