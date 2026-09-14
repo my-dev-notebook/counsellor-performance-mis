@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Poppins } from "next/font/google";
 import Script from "next/script";
-import { NavBar } from "@/components/NavBar";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import "./globals.css";
 
@@ -34,10 +33,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                     strategy="beforeInteractive"
                     dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }}
                 />
-                <ThemeProvider>
-                    <NavBar />
-                    {children}
-                </ThemeProvider>
+                <ThemeProvider>{children}</ThemeProvider>
             </body>
         </html>
     );

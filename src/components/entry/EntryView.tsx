@@ -52,7 +52,7 @@ export function EntryView({
             if (
                 q !== "" &&
                 !row.counsellor.name.toLowerCase().includes(q) &&
-                !row.counsellor.teamName.toLowerCase().includes(q) &&
+                !(row.teamName?.toLowerCase().includes(q) ?? false) &&
                 !(row.counsellor.agencyName?.toLowerCase().includes(q) ?? false)
             ) {
                 return false;

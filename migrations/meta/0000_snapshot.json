@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "cc666692-f51f-463e-a9a0-02f6de8d8447",
+  "id": "b0d255b4-8f94-4643-a762-9ee9637e1d73",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "admissions": {
@@ -19,6 +19,20 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "team_id": {
+          "name": "team_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "agency_id": {
+          "name": "agency_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         },
         "date": {
@@ -95,6 +109,29 @@
             "date"
           ],
           "isUnique": false
+        },
+        "idx_admissions_date": {
+          "name": "idx_admissions_date",
+          "columns": [
+            "date"
+          ],
+          "isUnique": false
+        },
+        "idx_admissions_team_date": {
+          "name": "idx_admissions_team_date",
+          "columns": [
+            "team_id",
+            "date"
+          ],
+          "isUnique": false
+        },
+        "idx_admissions_agency_date": {
+          "name": "idx_admissions_agency_date",
+          "columns": [
+            "agency_id",
+            "date"
+          ],
+          "isUnique": false
         }
       },
       "foreignKeys": {
@@ -104,6 +141,32 @@
           "tableTo": "users",
           "columnsFrom": [
             "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "admissions_team_id_teams_id_fk": {
+          "name": "admissions_team_id_teams_id_fk",
+          "tableFrom": "admissions",
+          "tableTo": "teams",
+          "columnsFrom": [
+            "team_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "admissions_agency_id_agencies_id_fk": {
+          "name": "admissions_agency_id_agencies_id_fk",
+          "tableFrom": "admissions",
+          "tableTo": "agencies",
+          "columnsFrom": [
+            "agency_id"
           ],
           "columnsTo": [
             "id"
@@ -178,6 +241,20 @@
           "notNull": true,
           "autoincrement": false
         },
+        "team_id": {
+          "name": "team_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "agency_id": {
+          "name": "agency_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "date": {
           "name": "date",
           "type": "text",
@@ -231,6 +308,14 @@
             "date"
           ],
           "isUnique": true
+        },
+        "idx_counsellor_perf_monthly_team_date": {
+          "name": "idx_counsellor_perf_monthly_team_date",
+          "columns": [
+            "team_id",
+            "date"
+          ],
+          "isUnique": false
         }
       },
       "foreignKeys": {
@@ -240,6 +325,32 @@
           "tableTo": "users",
           "columnsFrom": [
             "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "counsellor_perf_monthly_team_id_teams_id_fk": {
+          "name": "counsellor_perf_monthly_team_id_teams_id_fk",
+          "tableFrom": "counsellor_perf_monthly",
+          "tableTo": "teams",
+          "columnsFrom": [
+            "team_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "counsellor_perf_monthly_agency_id_agencies_id_fk": {
+          "name": "counsellor_perf_monthly_agency_id_agencies_id_fk",
+          "tableFrom": "counsellor_perf_monthly",
+          "tableTo": "agencies",
+          "columnsFrom": [
+            "agency_id"
           ],
           "columnsTo": [
             "id"
@@ -264,6 +375,99 @@
           "value": "\"counsellor_perf_monthly\".\"achieved\" IS NULL OR \"counsellor_perf_monthly\".\"achieved\" >= 0"
         }
       }
+    },
+    "roles": {
+      "name": "roles",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "roles_name_unique": {
+          "name": "roles_name_unique",
+          "columns": [
+            "name"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "sessions": {
+      "name": "sessions",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(datetime('now'))"
+        }
+      },
+      "indexes": {
+        "idx_sessions_user": {
+          "name": "idx_sessions_user",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "sessions_user_id_users_id_fk": {
+          "name": "sessions_user_id_users_id_fk",
+          "tableFrom": "sessions",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
     },
     "teams": {
       "name": "teams",
@@ -297,6 +501,107 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
+    "user_changes": {
+      "name": "user_changes",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "field": {
+          "name": "field",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "old_value": {
+          "name": "old_value",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "new_value": {
+          "name": "new_value",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "changed_by": {
+          "name": "changed_by",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "changed_at": {
+          "name": "changed_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(datetime('now'))"
+        }
+      },
+      "indexes": {
+        "idx_user_changes_user": {
+          "name": "idx_user_changes_user",
+          "columns": [
+            "user_id",
+            "changed_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "user_changes_user_id_users_id_fk": {
+          "name": "user_changes_user_id_users_id_fk",
+          "tableFrom": "user_changes",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "user_changes_changed_by_users_id_fk": {
+          "name": "user_changes_changed_by_users_id_fk",
+          "tableFrom": "user_changes",
+          "tableTo": "users",
+          "columnsFrom": [
+            "changed_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "chk_user_changes_field": {
+          "name": "chk_user_changes_field",
+          "value": "\"user_changes\".\"field\" IN ('team_id', 'role_id', 'agency_id', 'is_active')"
+        }
+      }
+    },
     "users": {
       "name": "users",
       "columns": {
@@ -318,11 +623,18 @@
           "name": "email",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "meritto_user_id": {
           "name": "meritto_user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "role_id": {
+          "name": "role_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
@@ -332,7 +644,7 @@
           "name": "team_id",
           "type": "integer",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "agency_id": {
@@ -350,11 +662,18 @@
           "autoincrement": false,
           "default": 1
         },
-        "person_id": {
-          "name": "person_id",
-          "type": "integer",
+        "password_hash": {
+          "name": "password_hash",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "password_changed_at": {
+          "name": "password_changed_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         },
         "created_at": {
@@ -375,24 +694,49 @@
         }
       },
       "indexes": {
-        "idx_users_one_active_per_person": {
-          "name": "idx_users_one_active_per_person",
+        "users_email_unique": {
+          "name": "users_email_unique",
           "columns": [
-            "person_id"
+            "email"
           ],
-          "isUnique": true,
-          "where": "\"users\".\"is_active\" = 1"
+          "isUnique": true
         },
-        "idx_users_one_active_per_meritto_id": {
-          "name": "idx_users_one_active_per_meritto_id",
+        "users_meritto_user_id_unique": {
+          "name": "users_meritto_user_id_unique",
           "columns": [
             "meritto_user_id"
           ],
-          "isUnique": true,
-          "where": "\"users\".\"is_active\" = 1"
+          "isUnique": true
+        },
+        "idx_users_team": {
+          "name": "idx_users_team",
+          "columns": [
+            "team_id"
+          ],
+          "isUnique": false
+        },
+        "idx_users_role": {
+          "name": "idx_users_role",
+          "columns": [
+            "role_id"
+          ],
+          "isUnique": false
         }
       },
       "foreignKeys": {
+        "users_role_id_roles_id_fk": {
+          "name": "users_role_id_roles_id_fk",
+          "tableFrom": "users",
+          "tableTo": "roles",
+          "columnsFrom": [
+            "role_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
         "users_team_id_teams_id_fk": {
           "name": "users_team_id_teams_id_fk",
           "tableFrom": "users",

@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { parseWorkbook } from "@/lib/parser/parse-workbook";
-import type { ParsedWorkbook } from "@/lib/parser/schemas";
+import type { ParsedWorkbook } from "@/schemas/parser";
 
 const FIXTURES_DIR = path.resolve(__dirname, "../fixtures");
 

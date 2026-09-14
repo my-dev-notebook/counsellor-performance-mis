@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import type { AdmissionRecord, AdmissionRow, CounsellorRow } from "@/db/types";
+import type { AdmissionRecord, AdmissionRow, UserRow } from "@/db/types";
 import { MONTH_NAMES } from "@/lib/format";
-import { saveDailyAdmissionAction, autoFetchApplicantsAction } from "@/app/entry/actions";
+import { saveDailyAdmissionAction, autoFetchApplicantsAction } from "@/app/(app)/entry/actions";
 import { loadNpfSession } from "@/lib/nopaperformsSession";
 
 /** Days in the "YYYY-MM" month, via vanilla Date (day 0 of next month = last day of this month). */
@@ -38,7 +38,7 @@ function toMonthDate(year: number, month: number): string {
     return `${String(year)}-${String(month).padStart(2, "0")}`;
 }
 
-function CounsellorPicker({ counsellors, date }: { counsellors: CounsellorRow[]; date: string }) {
+function CounsellorPicker({ counsellors, date }: { counsellors: UserRow[]; date: string }) {
     const router = useRouter();
     const [search, setSearch] = useState("");
 
@@ -48,7 +48,7 @@ function CounsellorPicker({ counsellors, date }: { counsellors: CounsellorRow[];
         return counsellors.filter(
             (c) =>
                 c.name.toLowerCase().includes(q) ||
-                c.teamName.toLowerCase().includes(q) ||
+                (c.teamName?.toLowerCase().includes(q) ?? false) ||
                 (c.agencyName?.toLowerCase().includes(q) ?? false),
         );
     }, [counsellors, search]);
@@ -87,7 +87,7 @@ function CounsellorPicker({ counsellors, date }: { counsellors: CounsellorRow[];
                                 className="cursor-pointer hover:bg-accent/50"
                             >
                                 <td className="px-3 py-2 font-medium text-foreground">{c.name}</td>
-                                <td className="px-3 py-2 text-muted-foreground">{c.teamName}</td>
+                                <td className="px-3 py-2 text-muted-foreground">{c.teamName ?? "—"}</td>
                                 <td className="px-3 py-2 text-muted-foreground">{c.agencyName ?? "—"}</td>
                             </tr>
                         ))}
@@ -556,7 +556,7 @@ export function DailyEntryView({
     admissions,
 }: {
     date: string;
-    counsellors: CounsellorRow[];
+    counsellors: UserRow[];
     selectedUserId: number | null;
     counsellorName: string | null;
     admissions: AdmissionRow[];

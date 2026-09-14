@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import type { Applicant } from "@/utils/meritto/fetch-applicants";
-import { verifyMerittoSessionAction } from "@/app/tools/meritto-auth/actions";
+import { verifyMerittoSessionAction } from "@/app/(app)/tools/meritto-auth/actions";
 import { saveNpfSession } from "@/lib/nopaperformsSession";
 
 /** Only the credentials matter here — the request body is rebuilt server-side. */

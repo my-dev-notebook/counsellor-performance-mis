@@ -1,0 +1,515 @@
+[
+    {
+        "id": 1,
+        "name": "Abhishek Kumar",
+        "email": "c-abhishek.singh@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Engineering",
+        "agency": null,
+        "merittoUserId": 13092325
+    },
+    {
+        "id": 2,
+        "name": "Arvind Kumar",
+        "email": "c-arvind.kumar@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Management",
+        "agency": null,
+        "merittoUserId": 13092476
+    },
+    {
+        "id": 3,
+        "name": "Sanjana Pal",
+        "email": "c-sanjana.pal@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Engineering",
+        "agency": null,
+        "merittoUserId": 13102706
+    },
+    {
+        "id": 4,
+        "name": "AJIT SINGH",
+        "email": "ajit.singh@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Management",
+        "agency": null,
+        "merittoUserId": 13103853
+    },
+    {
+        "id": 5,
+        "name": "PARTHA PARTIM DHARA",
+        "email": "partha.dhara@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Management",
+        "agency": null,
+        "merittoUserId": 13106715
+    },
+    {
+        "id": 6,
+        "name": "Nidhi Khandelwal",
+        "email": "c-nidhi.khandelwal@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Media/Liberal Arts",
+        "agency": null,
+        "merittoUserId": 16044516
+    },
+    {
+        "id": 7,
+        "name": "Ritika Dakolia",
+        "email": "c-ritika.dakolia@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Engineering",
+        "agency": null,
+        "merittoUserId": 16044517
+    },
+    {
+        "id": 8,
+        "name": "Jyoti Chauhan",
+        "email": "c-jyoti.chauhan@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Inbound",
+        "agency": null,
+        "merittoUserId": 16058172
+    },
+    {
+        "id": 9,
+        "name": "Tanushree Bansal",
+        "email": "c-tanushree.bansal@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Management",
+        "agency": null,
+        "merittoUserId": 16063206
+    },
+    {
+        "id": 10,
+        "name": "Riya Chugh",
+        "email": "c-riya.chugh@bennett.edu.in",
+        "role": "mis_executive",
+        "team": "Inbound",
+        "agency": null,
+        "merittoUserId": 16063244
+    },
+    {
+        "id": 11,
+        "name": "Kuljeet Kaur",
+        "email": "c-kuljeet.kaur@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Inbound",
+        "agency": null,
+        "merittoUserId": 16077523
+    },
+    {
+        "id": 12,
+        "name": "Harsh Vardhan",
+        "email": "c-harsh.vardhan@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Inbound",
+        "agency": null,
+        "merittoUserId": 16078227
+    },
+    {
+        "id": 13,
+        "name": "Hemant singh",
+        "email": "c-hemant.singh@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Management",
+        "agency": null,
+        "merittoUserId": 16078230
+    },
+    {
+        "id": 14,
+        "name": "Sumitra",
+        "email": "c-sumitra.bharti@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Inbound",
+        "agency": null,
+        "merittoUserId": 16088891
+    },
+    {
+        "id": 15,
+        "name": "Shraddha Sharma",
+        "email": "c-shraddha.sharma@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Media/Liberal Arts",
+        "agency": null,
+        "merittoUserId": 16088893
+    },
+    {
+        "id": 16,
+        "name": "Ankita Yadav",
+        "email": "c-ankita.yadav@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Inbound",
+        "agency": null,
+        "merittoUserId": 16088894
+    },
+    {
+        "id": 17,
+        "name": "Mishika Jindal",
+        "email": "c-mishika.jindal@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Engineering",
+        "agency": null,
+        "merittoUserId": 16088898
+    },
+    {
+        "id": 18,
+        "name": "Amrit Verma",
+        "email": "c-amrit.verma@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Engineering",
+        "agency": null,
+        "merittoUserId": 16088900
+    },
+    {
+        "id": 19,
+        "name": "Agrim Chaudhary",
+        "email": "c-agrim.chaudhary@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Inbound",
+        "agency": null,
+        "merittoUserId": 16090025
+    },
+    {
+        "id": 20,
+        "name": "Debanjani Saha",
+        "email": "c-debanjani.saha@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Law",
+        "agency": null,
+        "merittoUserId": 16091091
+    },
+    {
+        "id": 21,
+        "name": "Shalini Panjiyar",
+        "email": "c-shalini.paniyar@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Management",
+        "agency": null,
+        "merittoUserId": 16091096
+    },
+    {
+        "id": 22,
+        "name": "Ashutosh Pandey",
+        "email": "c-ashutosh.pandey@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Media/Liberal Arts",
+        "agency": null,
+        "merittoUserId": 16091100
+    },
+    {
+        "id": 23,
+        "name": "Taniya Adhikari",
+        "email": "c-tanya.adhikari@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Media/Liberal Arts",
+        "agency": null,
+        "merittoUserId": 16091101
+    },
+    {
+        "id": 24,
+        "name": "Shalini Kumari",
+        "email": "c-shalini.kumari@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Inbound",
+        "agency": null,
+        "merittoUserId": 16091104
+    },
+    {
+        "id": 25,
+        "name": "Shweta Gupta",
+        "email": "c-shweta.gupta@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Engineering",
+        "agency": null,
+        "merittoUserId": 16092313
+    },
+    {
+        "id": 26,
+        "name": "Adiba Farid",
+        "email": "c-abida.farid@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Inbound",
+        "agency": null,
+        "merittoUserId": 16092314
+    },
+    {
+        "id": 27,
+        "name": "Shahid Mirza",
+        "email": "c-shahid.mirza@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Inbound",
+        "agency": null,
+        "merittoUserId": 16092316
+    },
+    {
+        "id": 28,
+        "name": "Vishwadeep Saxena",
+        "email": "c-vishwadeep.saxena@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Engineering",
+        "agency": null,
+        "merittoUserId": 16092318
+    },
+    {
+        "id": 29,
+        "name": "Alok Raj",
+        "email": "c-alok.raj@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Engineering",
+        "agency": null,
+        "merittoUserId": 16094075
+    },
+    {
+        "id": 30,
+        "name": "Nikhil Pal",
+        "email": "c-nikhil.pal@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Management",
+        "agency": null,
+        "merittoUserId": 16094403
+    },
+    {
+        "id": 31,
+        "name": "Abhinav Kumar",
+        "email": "c-abhinav.kumar@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Management",
+        "agency": null,
+        "merittoUserId": 16094405
+    },
+    {
+        "id": 32,
+        "name": "Anshika Garg",
+        "email": "c-anshika.garg@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Inbound",
+        "agency": null,
+        "merittoUserId": 16094406
+    },
+    {
+        "id": 33,
+        "name": "Bashar Nasir",
+        "email": "c-bashar.nasir@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Engineering",
+        "agency": null,
+        "merittoUserId": 16095366
+    },
+    {
+        "id": 34,
+        "name": "himanshu shahi",
+        "email": "c-himanshu.shahi@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Law",
+        "agency": null,
+        "merittoUserId": 16100476
+    },
+    {
+        "id": 35,
+        "name": "Surbhi Yadav",
+        "email": "c-surbhi.yadav@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Engineering",
+        "agency": null,
+        "merittoUserId": 16100477
+    },
+    {
+        "id": 36,
+        "name": "Abquari Akhtar",
+        "email": "c-abquar.akhtar@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Media/Liberal Arts",
+        "agency": null,
+        "merittoUserId": 16101107
+    },
+    {
+        "id": 37,
+        "name": "Karnika Sharma",
+        "email": "c-karnika.sharma@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Inbound",
+        "agency": null,
+        "merittoUserId": 16101111
+    },
+    {
+        "id": 38,
+        "name": "Prajukta Kashyap",
+        "email": "c-prajukta.kashyap@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Media/Liberal Arts",
+        "agency": null,
+        "merittoUserId": 16101114
+    },
+    {
+        "id": 39,
+        "name": "Sanjay Rawat",
+        "email": "c-sanjay.rawat@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Engineering",
+        "agency": null,
+        "merittoUserId": 16101117
+    },
+    {
+        "id": 40,
+        "name": "Deepali Yadav",
+        "email": "c-deepali.yadav@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Engineering",
+        "agency": null,
+        "merittoUserId": 16101699
+    },
+    {
+        "id": 41,
+        "name": "Supriya Singh",
+        "email": "c-supriya.singh@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Engineering",
+        "agency": null,
+        "merittoUserId": 16101702
+    },
+    {
+        "id": 42,
+        "name": "Shivansh Tyagi",
+        "email": "c-shivansh.tyagi@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Management",
+        "agency": null,
+        "merittoUserId": 16101703
+    },
+    {
+        "id": 43,
+        "name": "Sukriti Shukla",
+        "email": "c-sukriti.shukla@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Inbound",
+        "agency": null,
+        "merittoUserId": 16101709
+    },
+    {
+        "id": 44,
+        "name": "Sneha Gupta",
+        "email": "c-sneha.gupta@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Inbound",
+        "agency": null,
+        "merittoUserId": 16101712
+    },
+    {
+        "id": 45,
+        "name": "Roshan Singh",
+        "email": "c-roshan.singh@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Engineering",
+        "agency": null,
+        "merittoUserId": 16101714
+    },
+    {
+        "id": 46,
+        "name": "Vikash Pal",
+        "email": "c-vikas.pal@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Engineering",
+        "agency": null,
+        "merittoUserId": 16101715
+    },
+    {
+        "id": 47,
+        "name": "Sneha Kumari",
+        "email": "c-sneha.kumarri@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Engineering",
+        "agency": null,
+        "merittoUserId": 16101721
+    },
+    {
+        "id": 48,
+        "name": "Yash Chaudhary",
+        "email": "c-yash.chaudhary@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Inbound",
+        "agency": null,
+        "merittoUserId": 16101727
+    },
+    {
+        "id": 49,
+        "name": "Tanya Yadav",
+        "email": "c-tanya.yadav@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Management",
+        "agency": null,
+        "merittoUserId": 16101730
+    },
+    {
+        "id": 50,
+        "name": "Ishika Singh",
+        "email": "c-ishika.singh@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Media/Liberal Arts",
+        "agency": null,
+        "merittoUserId": 16101732
+    },
+    {
+        "id": 51,
+        "name": "Sakshi Singh",
+        "email": "c-sakshi.singh@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Engineering",
+        "agency": null,
+        "merittoUserId": 16101735
+    },
+    {
+        "id": 52,
+        "name": "Mihir Kumar",
+        "email": "cc-mihir.kumar@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Law",
+        "agency": null,
+        "merittoUserId": 16101737
+    },
+    {
+        "id": 53,
+        "name": "Sakaar Srivastava",
+        "email": "c-sakaar.srivastava@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Inbound",
+        "agency": null,
+        "merittoUserId": 16102196
+    },
+    {
+        "id": 54,
+        "name": "Palki Mittal",
+        "email": "c-palki.mittal@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Media/Liberal Arts",
+        "agency": null,
+        "merittoUserId": 16102197
+    },
+    {
+        "id": 55,
+        "name": "Akansha sanger",
+        "email": "c-akanksha.sengar@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Inbound",
+        "agency": null,
+        "merittoUserId": 16104477
+    },
+    {
+        "id": 56,
+        "name": "Bhumika Kohli",
+        "email": "c-bhumika.kohli@bennett.edu.in",
+        "role": "counsellor",
+        "team": "Engineering",
+        "agency": null,
+        "merittoUserId": 16104478
+    },
+    {
+        "id": 57,
+        "name": "Ishan Kapoor",
+        "email": "ishan.kapoor@bennett.edu.in",
+        "role": "admin",
+        "team": null,
+        "agency": null,
+        "merittoUserId": null
+    }
+]

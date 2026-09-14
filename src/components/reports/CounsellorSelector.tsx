@@ -5,10 +5,10 @@ import type { PersonOption } from "@/db/queries/reports";
 
 export function CounsellorSelector({
     people,
-    selectedPersonId,
+    selectedUserId,
 }: {
     people: PersonOption[];
-    selectedPersonId: number | undefined;
+    selectedUserId: number | undefined;
 }) {
     const router = useRouter();
 
@@ -17,14 +17,14 @@ export function CounsellorSelector({
             <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 Counsellor
                 <select
-                    value={selectedPersonId ?? ""}
+                    value={selectedUserId ?? ""}
                     onChange={(e) => {
-                        router.push(`/reports/counsellor?personId=${e.target.value}`);
+                        router.push(`/reports/counsellor?userId=${e.target.value}`);
                     }}
                     className="min-w-56 rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
                 >
                     {people.map((p) => (
-                        <option key={p.personId} value={p.personId}>
+                        <option key={p.userId} value={p.userId}>
                             {p.name}
                         </option>
                     ))}

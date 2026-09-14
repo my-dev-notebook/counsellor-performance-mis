@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { FiDownload } from "react-icons/fi";
-import { getExportDataAction } from "@/app/entry/actions";
+import { getExportDataAction } from "@/app/(app)/entry/actions";
 import { derivePending, derivePctAchieved } from "@/lib/metrics/derive";
 import { formatMonthLabel } from "@/lib/format";
 
@@ -28,9 +28,10 @@ export function ExportButton({ date }: { date: string }) {
 
             const byTeam = new Map<string, typeof rows>();
             for (const row of rows) {
-                const list = byTeam.get(row.counsellor.teamName) ?? [];
+                const teamName = row.teamName ?? "No team";
+                const list = byTeam.get(teamName) ?? [];
                 list.push(row);
-                byTeam.set(row.counsellor.teamName, list);
+                byTeam.set(teamName, list);
             }
 
             for (const [teamName, teamRows] of [...byTeam.entries()].sort(([a], [b]) => a.localeCompare(b))) {
@@ -58,8 +59,8 @@ export function ExportButton({ date }: { date: string }) {
                             sNo: index + 1,
                             name: row.counsellor.name,
                             agency: row.counsellor.agencyName ?? "",
-                            merittoUserId: row.counsellor.merittoUserId,
-                            email: row.counsellor.email ?? "",
+                            merittoUserId: row.counsellor.merittoUserId ?? "",
+                            email: row.counsellor.email,
                             target,
                             nonNegotiable: row.entry?.nonNegotiable ?? null,
                             achieved,

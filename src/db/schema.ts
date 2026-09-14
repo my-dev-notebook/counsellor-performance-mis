@@ -2,8 +2,15 @@ import { sql } from "drizzle-orm";
 import { sqliteTable, integer, text, index, uniqueIndex, check } from "drizzle-orm/sqlite-core";
 
 /**
- * DATA_ENTRY_INTERFACE.md §3 — authoritative schema. Comments here mirror
- * the rationale in that doc; read it before changing table shapes.
+ * Authoritative schema. History is kept the "snapshot + changelog" way:
+ *
+ *   - `users` is one row per real person, for life. A team/role/agency change
+ *     is a direct UPDATE of that row.
+ *   - Every `admissions` and `counsellor_perf_monthly` row carries the
+ *     `team_id`/`agency_id` the counsellor belonged to when the row was
+ *     created, so historical reads never depend on the user's current row.
+ *   - `user_changes` is an append-only log of every team/role/agency/active
+ *     change, so "who was where when" can always be reconstructed.
  */
 
 export const teams = sqliteTable("teams", {
@@ -16,27 +23,39 @@ export const agencies = sqliteTable("agencies", {
     name: text("name").notNull().unique(),
 });
 
-// One row per ASSIGNMENT PERIOD, not one row per person for life — see
-// `person_id` below and §4.1's add/edit/reassign/delete mechanics.
+// Lookup table rather than a CHECK constraint so a new role is one INSERT.
+// The permission each role carries lives in code, keyed by `name`
+// (src/lib/auth/permissions.ts); a role unknown to the code gets no access.
+export const roles = sqliteTable("roles", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    name: text("name").notNull().unique(),
+});
+
+// One row per PERSON. `id` is the stable identity used by every FK.
 export const users = sqliteTable(
     "users",
     {
         id: integer("id").primaryKey({ autoIncrement: true }),
         name: text("name").notNull(),
-        email: text("email"),
-        // Meritto's own user id for this person (an int in their UI — 7-8 digits
-        // today, e.g. 16098382). Required: every counsellor has a Meritto
-        // account, and it's the join key for the admissions auto-fetch
-        // (`counsellorId` in src/utils/meritto/fetch-applicants.ts).
-        merittoUserId: integer("meritto_user_id").notNull(),
-        teamId: integer("team_id")
+        // Login identifier.
+        email: text("email").notNull().unique(),
+        // Meritto's own user id for this person (7-8 digits, e.g. 16098382).
+        // Required for counsellors -- it is the join key for the admissions
+        // auto-fetch (`counsellorId` in src/utils/meritto/fetch-applicants.ts)
+        // -- and optional for everyone else. Enforced in the action layer.
+        merittoUserId: integer("meritto_user_id").unique(),
+        roleId: integer("role_id")
             .notNull()
-            .references(() => teams.id),
+            .references(() => roles.id),
+        // NULL for admins; counsellors and team leaders always have one.
+        teamId: integer("team_id").references(() => teams.id),
         agencyId: integer("agency_id").references(() => agencies.id),
         isActive: integer("is_active").notNull().default(1),
-        // Stable across every reassignment of the same human — set to this row's
-        // own `id` on creation, copied forward (not regenerated) on reassignment.
-        personId: integer("person_id").notNull(),
+        // PBKDF2 digest (src/lib/auth/password.ts). Never a plaintext password.
+        passwordHash: text("password_hash").notNull(),
+        // NULL means the seeded default password is still in place and the
+        // user must change it before doing anything else.
+        passwordChangedAt: text("password_changed_at"),
         createdAt: text("created_at")
             .notNull()
             .default(sql`(datetime('now'))`),
@@ -44,33 +63,66 @@ export const users = sqliteTable(
             .notNull()
             .default(sql`(datetime('now'))`),
     },
+    (table) => [index("idx_users_team").on(table.teamId), index("idx_users_role").on(table.roleId)],
+);
+
+// Append-only. One row per changed field per mutation; `old_value` is NULL
+// on creation. Never updated or deleted.
+export const userChanges = sqliteTable(
+    "user_changes",
+    {
+        id: integer("id").primaryKey({ autoIncrement: true }),
+        userId: integer("user_id")
+            .notNull()
+            .references(() => users.id),
+        // 'team_id' | 'role_id' | 'agency_id' | 'is_active'
+        field: text("field").notNull(),
+        oldValue: integer("old_value"),
+        newValue: integer("new_value"),
+        // NULL when the change was made by a migration/seed rather than a user.
+        changedBy: integer("changed_by").references(() => users.id),
+        changedAt: text("changed_at")
+            .notNull()
+            .default(sql`(datetime('now'))`),
+    },
     (table) => [
-        // Enforces "at most one active assignment per person at a time" — the
-        // reassignment mechanic in §4.1 depends on this invariant holding.
-        uniqueIndex("idx_users_one_active_per_person")
-            .on(table.personId)
-            .where(sql`${table.isActive} = 1`),
-        // Identifies the HUMAN, not the assignment, so it repeats across a
-        // person's rows exactly like `person_id` — hence the same active-only
-        // scoping, which lets the successor row claim the id once the previous
-        // one is deactivated.
-        uniqueIndex("idx_users_one_active_per_meritto_id")
-            .on(table.merittoUserId)
-            .where(sql`${table.isActive} = 1`),
+        index("idx_user_changes_user").on(table.userId, table.changedAt),
+        check("chk_user_changes_field", sql`${table.field} IN ('team_id', 'role_id', 'agency_id', 'is_active')`),
     ],
+);
+
+// Server-side login sessions. The cookie holds only `id`; every request looks
+// the row up (src/lib/auth/session.ts), so revoking access is a DELETE here or
+// setting `users.is_active = 0`. `expires_at` slides forward on activity.
+export const sessions = sqliteTable(
+    "sessions",
+    {
+        id: text("id").primaryKey(),
+        userId: integer("user_id")
+            .notNull()
+            .references(() => users.id),
+        expiresAt: text("expires_at").notNull(),
+        createdAt: text("created_at")
+            .notNull()
+            .default(sql`(datetime('now'))`),
+    },
+    (table) => [index("idx_sessions_user").on(table.userId)],
 );
 
 // One row per counsellor per month. `pending`/`% achieved`/`status` are
 // never stored here — always recomputed at read time via the existing
-// src/lib/metrics/derive.ts + buckets.ts logic (§3, §6).
+// src/lib/metrics/derive.ts + buckets.ts logic.
 //
-// `date` is a "YYYY-MM" string (e.g. "2026-09") — replaces the old
-// year/month int pair. `achieved` is nullable: NULL means "not yet
-// finalized" — for the live/current month it's computed on the fly from
-// `admissions` at read time (see getAchievedForMonth /
+// `date` is a "YYYY-MM" string (e.g. "2026-09"). `achieved` is nullable:
+// NULL means "not yet finalized" — for the live/current month it's computed
+// on the fly from `admissions` at read time (see getAchievedForMonth /
 // getAchievedForCounsellors in src/db/queries/performance.ts); for a
 // closed/past month it's written in by the finalize job
 // (src/db/queries/finalize.ts) so history reads stay a single cheap lookup.
+//
+// `team_id`/`agency_id` are the counsellor's team/agency when the row was
+// first created (the "team at month start" rule) and are never touched by
+// later upserts, so a mid-month team change does not rewrite the month.
 export const counsellorPerfMonthly = sqliteTable(
     "counsellor_perf_monthly",
     {
@@ -78,6 +130,10 @@ export const counsellorPerfMonthly = sqliteTable(
         userId: integer("user_id")
             .notNull()
             .references(() => users.id),
+        teamId: integer("team_id")
+            .notNull()
+            .references(() => teams.id),
+        agencyId: integer("agency_id").references(() => agencies.id),
         date: text("date").notNull(),
         overall: integer("overall"),
         nonNegotiable: integer("non_negotiable"),
@@ -91,6 +147,7 @@ export const counsellorPerfMonthly = sqliteTable(
     },
     (table) => [
         uniqueIndex("idx_counsellor_perf_monthly_user_date").on(table.userId, table.date),
+        index("idx_counsellor_perf_monthly_team_date").on(table.teamId, table.date),
         check("chk_overall_non_negative", sql`${table.overall} IS NULL OR ${table.overall} >= 0`),
         check("chk_non_negotiable_non_negative", sql`${table.nonNegotiable} IS NULL OR ${table.nonNegotiable} >= 0`),
         check("chk_achieved_non_negative", sql`${table.achieved} IS NULL OR ${table.achieved} >= 0`),
@@ -107,16 +164,13 @@ export const counsellorPerfMonthly = sqliteTable(
 // from the admissions auto-fetch. The scraper yields strings; `applicant_user_id`
 // and `form_id` are integers here, coerced at the action-layer boundary.
 //
-// Every field is mandatory, and notNull columns enforce that directly -- which
-// is the reason this is a table rather than a JSON blob on the daily row.
-// SQLite prohibits subqueries in CHECK constraints, so `json_each` cannot be
-// used there and a CHECK over a JSON array could only ever assert the envelope
-// (valid JSON, non-empty array), never the per-element fields.
-//
 // `application_number` is UNIQUE across the whole table: one admission belongs
 // to exactly one counsellor on exactly one day. This is the guarantee that
-// makes the auto-fetch safe to re-run, and it is impossible to express on a
-// JSON blob.
+// makes the auto-fetch safe to re-run.
+//
+// `team_id`/`agency_id` are snapshots of the counsellor's assignment at insert
+// time, so team-level range queries (`WHERE team_id = ? AND date BETWEEN ...`)
+// never join through the user's current row.
 export const admissions = sqliteTable(
     "admissions",
     {
@@ -124,6 +178,10 @@ export const admissions = sqliteTable(
         userId: integer("user_id")
             .notNull()
             .references(() => users.id),
+        teamId: integer("team_id")
+            .notNull()
+            .references(() => teams.id),
+        agencyId: integer("agency_id").references(() => agencies.id),
         date: text("date").notNull(),
         applicationNumber: text("application_number").notNull().unique(),
         applicantUserId: integer("applicant_user_id").notNull(),
@@ -139,9 +197,12 @@ export const admissions = sqliteTable(
     },
     (table) => [
         // The daily-entry page reads one counsellor's whole month, and
-        // getAchievedForCounsellors groups a month by user -- both are covered
-        // by this leading (user_id, date) pair.
+        // getAchievedForCounsellors groups a month by user.
         index("idx_admissions_user_date").on(table.userId, table.date),
+        // Date range queries: company-wide, per team, per agency.
+        index("idx_admissions_date").on(table.date),
+        index("idx_admissions_team_date").on(table.teamId, table.date),
+        index("idx_admissions_agency_date").on(table.agencyId, table.date),
         check("chk_admissions_date_format", sql`${table.date} GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'`),
         check("chk_admissions_applicant_user_id_positive", sql`${table.applicantUserId} > 0`),
         check("chk_admissions_form_id_positive", sql`${table.formId} > 0`),

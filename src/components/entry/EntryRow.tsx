@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import type { ProgressRow } from "@/db/types";
 import { formatInt, formatText } from "@/lib/format";
-import { saveEntryAction, getPrefillAction } from "@/app/entry/actions";
+import { saveEntryAction, getPrefillAction } from "@/app/(app)/entry/actions";
 
 export function EntryRow({ row, date }: { row: ProgressRow; date: string }) {
     const { counsellor, entry } = row;
@@ -66,7 +66,7 @@ export function EntryRow({ row, date }: { row: ProgressRow; date: string }) {
                 className={`cursor-pointer hover:bg-accent/50 ${open ? "bg-accent/50" : ""} ${counsellor.isActive ? "" : "opacity-50"}`}
             >
                 <td className="px-3 py-2 font-medium text-foreground">{counsellor.name}</td>
-                <td className="px-3 py-2 text-muted-foreground">{counsellor.teamName}</td>
+                <td className="px-3 py-2 text-muted-foreground">{formatText(row.teamName)}</td>
                 <td className="px-3 py-2 text-muted-foreground">{formatText(counsellor.agencyName)}</td>
                 <td className="px-3 py-2">
                     <span
@@ -94,13 +94,13 @@ export function EntryRow({ row, date }: { row: ProgressRow; date: string }) {
                                 <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                                     Meritto ID
                                 </p>
-                                <p>{counsellor.merittoUserId}</p>
+                                <p>{counsellor.merittoUserId ?? "—"}</p>
                             </div>
                             <div className="text-sm text-muted-foreground">
                                 <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                                     Team
                                 </p>
-                                <p>{counsellor.teamName}</p>
+                                <p>{formatText(row.teamName)}</p>
                             </div>
                             <div className="text-sm text-muted-foreground">
                                 <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">

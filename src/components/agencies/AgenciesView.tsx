@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import type { Agency } from "@/db/types";
-import { createAgencyAction } from "@/app/agencies/actions";
+import { createAgencyAction } from "@/app/(app)/agencies/actions";
 
 export function AgenciesView({ agencies }: { agencies: Agency[] }) {
     const [name, setName] = useState("");

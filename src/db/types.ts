@@ -1,4 +1,4 @@
-import type { teams, agencies, counsellorPerfMonthly, admissions } from "@/db/schema";
+import type { teams, agencies, roles, counsellorPerfMonthly, admissions, userChanges } from "@/db/schema";
 
 /**
  * Row shapes for what the query layer RETURNS — deliberately not zod.
@@ -18,25 +18,35 @@ export type Team = typeof teams.$inferSelect;
 
 export type Agency = typeof agencies.$inferSelect;
 
+export type Role = typeof roles.$inferSelect;
+
 /**
- * A counsellor as the roster/entry screens see them: one `users` row with its
+ * A user as the roster/entry screens see them: one `users` row with its role,
  * team and agency names joined in, and `is_active` narrowed from SQLite's
  * integer to a real boolean at the query boundary.
  *
- * `createdAt`/`updatedAt` are omitted — no screen shows them.
+ * Password columns and `createdAt`/`updatedAt` are deliberately absent — no
+ * screen shows them, and the hash must never leave the query layer.
  */
-export interface CounsellorRow {
+export interface UserRow {
     id: number;
-    personId: number;
     name: string;
-    email: string | null;
-    merittoUserId: number;
-    teamId: number;
-    teamName: string;
+    email: string;
+    merittoUserId: number | null;
+    roleId: number;
+    roleName: string;
+    teamId: number | null;
+    teamName: string | null;
     agencyId: number | null;
     agencyName: string | null;
     isActive: boolean;
 }
+
+/** One `user_changes` row, with the actor's name joined in. */
+export type UserChangeRow = Omit<typeof userChanges.$inferSelect, "changedBy"> & {
+    changedBy: number | null;
+    changedByName: string | null;
+};
 
 /** One `counsellor_perf_monthly` row, without the timestamps no screen reads. */
 export type PerformanceEntry = Omit<typeof counsellorPerfMonthly.$inferSelect, "createdAt" | "updatedAt">;
@@ -47,9 +57,16 @@ export type PerformanceEntry = Omit<typeof counsellorPerfMonthly.$inferSelect, "
  */
 export type AdmissionRow = Omit<typeof admissions.$inferSelect, "createdAt" | "updatedAt">;
 
+/**
+ * One counsellor's month. `teamId`/`teamName` are the month's SNAPSHOT team
+ * when an entry exists (`entry.teamId`), and the user's current team when the
+ * month has no entry yet.
+ */
 export interface ProgressRow {
-    counsellor: CounsellorRow;
+    counsellor: UserRow;
     entry: PerformanceEntry | null;
+    teamId: number | null;
+    teamName: string | null;
 }
 
 export interface MonthSummary {

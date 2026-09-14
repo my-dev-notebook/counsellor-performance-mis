@@ -5,8 +5,10 @@ import { CANONICAL_TEAMS } from "@/schemas/parser";
 import type { Status } from "@/schemas/parser";
 import { derivePctAchieved } from "@/lib/metrics/derive";
 import { deriveStatus } from "@/lib/metrics/buckets";
-import { summarize, summarizeByTeam } from "@/lib/metrics/summarize";
+import { summarize } from "@/lib/metrics/summarize";
 import { formatMonthLabel } from "@/lib/format";
+import type { Scope } from "@/lib/auth/permissions";
+import { combine, scopeRowCondition } from "@/lib/auth/permissions";
 import { getMonthlyWorkbook } from "./dashboard";
 import { listMonthsWithData, getAchievedForMonth } from "./performance";
 
@@ -20,17 +22,21 @@ export interface MonthlyPoint {
     pctAchieved: number | null;
 }
 
-async function chronologicalMonths(): Promise<string[]> {
-    const months = await listMonthsWithData();
+async function chronologicalMonths(scope: Scope): Promise<string[]> {
+    const months = await listMonthsWithData(scope);
     return [...months].sort((a, b) => a.localeCompare(b));
 }
 
-/** Company-wide Target/Achieved/Non-Negotiable across every month with data. */
-export async function getCompanyMonthlySeries(): Promise<MonthlyPoint[]> {
-    const months = await chronologicalMonths();
+/**
+ * Target/Achieved/Non-Negotiable across every month with data, summed over
+ * the counsellor rows the scope may see individually (company-wide for
+ * all-team readers, own team for a team leader, own rows for a counsellor).
+ */
+export async function getCompanyMonthlySeries(scope: Scope): Promise<MonthlyPoint[]> {
+    const months = await chronologicalMonths(scope);
     return Promise.all(
         months.map(async (date) => {
-            const workbook = await getMonthlyWorkbook(date);
+            const workbook = await getMonthlyWorkbook(date, scope);
             const s = summarize(workbook.counsellors);
             return {
                 date,
@@ -50,25 +56,27 @@ export interface TeamSeries {
     points: MonthlyPoint[];
 }
 
-/** Per-team Achievement % (and raw totals) across every month with data. */
-export async function getTeamMonthlySeries(): Promise<TeamSeries[]> {
-    const months = await chronologicalMonths();
+/** Per-team Achievement % (and raw totals) across every month with data — from the scope's team aggregates. */
+export async function getTeamMonthlySeries(scope: Scope): Promise<TeamSeries[]> {
+    const months = await chronologicalMonths(scope);
     const byTeam = new Map<string, MonthlyPoint[]>(CANONICAL_TEAMS.map((t) => [t, []]));
 
     for (const date of months) {
-        const workbook = await getMonthlyWorkbook(date);
+        const workbook = await getMonthlyWorkbook(date, scope);
         const monthLabel = formatMonthLabel(date);
-        for (const { team, summary } of summarizeByTeam(workbook.counsellors)) {
-            const points = byTeam.get(team);
+        // Team totals come from the workbook's aggregates, which are built
+        // over the whole team even when the reader may only see their own row.
+        for (const aggregate of workbook.teams) {
+            const points = byTeam.get(aggregate.team);
             if (!points) continue;
             points.push({
                 date,
                 monthLabel,
-                headcount: summary.headcount,
-                target: summary.target,
-                achieved: summary.achieved,
-                nonNegotiable: summary.nonNegotiable,
-                pctAchieved: summary.pctAchieved,
+                headcount: aggregate.headcount,
+                target: aggregate.target,
+                achieved: aggregate.achieved,
+                nonNegotiable: aggregate.nonNegotiable,
+                pctAchieved: aggregate.pctAchieved,
             });
         }
     }
@@ -77,28 +85,20 @@ export async function getTeamMonthlySeries(): Promise<TeamSeries[]> {
 }
 
 export interface PersonOption {
-    personId: number;
+    userId: number;
     name: string;
 }
 
-/** One entry per distinct human (by person_id), preferring their active assignment's name. */
-export async function listPeopleForSelector(): Promise<PersonOption[]> {
+/** Every user whose individual history the scope may open, active or not. */
+export async function listPeopleForSelector(scope: Scope): Promise<PersonOption[]> {
     const db = await getDb();
     const rows = await db
-        .select({ id: users.id, personId: users.personId, name: users.name, isActive: users.isActive })
-        .from(users);
-
-    const best = new Map<number, { id: number; name: string; isActive: number }>();
-    for (const row of rows) {
-        const current = best.get(row.personId);
-        if (!current || (row.isActive === 1 && current.isActive !== 1) || row.id > current.id) {
-            best.set(row.personId, row);
-        }
-    }
-
-    return Array.from(best.entries())
-        .map(([personId, row]) => ({ personId, name: row.name }))
-        .sort((a, b) => a.name.localeCompare(b.name));
+        .selectDistinct({ userId: users.id, name: users.name })
+        .from(users)
+        .innerJoin(counsellorPerfMonthly, eq(counsellorPerfMonthly.userId, users.id))
+        .where(scopeRowCondition(scope, users.id, counsellorPerfMonthly.teamId))
+        .orderBy(asc(users.name));
+    return rows;
 }
 
 export interface PersonHistoryPoint {
@@ -113,13 +113,14 @@ export interface PersonHistoryPoint {
 }
 
 /**
- * One person's full recorded history across every assignment period they've
- * held (joined via `person_id`, not just their current `users` row) — every
- * `counsellor_perf_monthly` entry ever attached to any of their periods, in
- * chronological order. `achieved` falls back to the live daily-sum for any
- * month whose monthly row hasn't been finalized yet.
+ * One user's full recorded history — every `counsellor_perf_monthly` row for
+ * them, in chronological order, each labelled with the SNAPSHOT team it was
+ * recorded under (so a team change shows up as a change in the series, and a
+ * team leader only receives the months the person spent on their team).
+ * `achieved` falls back to the live daily-sum for any month whose monthly
+ * row hasn't been finalized yet.
  */
-export async function getPersonHistory(personId: number): Promise<PersonHistoryPoint[]> {
+export async function getPersonHistory(userId: number, scope: Scope): Promise<PersonHistoryPoint[]> {
     const db = await getDb();
     const rows = await db
         .select({
@@ -131,9 +132,13 @@ export async function getPersonHistory(personId: number): Promise<PersonHistoryP
             teamName: teams.name,
         })
         .from(counsellorPerfMonthly)
-        .innerJoin(users, eq(counsellorPerfMonthly.userId, users.id))
-        .innerJoin(teams, eq(users.teamId, teams.id))
-        .where(eq(users.personId, personId))
+        .innerJoin(teams, eq(counsellorPerfMonthly.teamId, teams.id))
+        .where(
+            combine(
+                eq(counsellorPerfMonthly.userId, userId),
+                scopeRowCondition(scope, counsellorPerfMonthly.userId, counsellorPerfMonthly.teamId),
+            ),
+        )
         .orderBy(asc(counsellorPerfMonthly.date));
 
     return Promise.all(
