@@ -101,6 +101,7 @@ export async function getProgressForMonth(
                     agencyId: users.agencyId,
                     agencyName: agencies.name,
                     isActive: users.isActive,
+                    dateOfJoining: users.dateOfJoining,
                 },
                 entry: {
                     id: counsellorPerfMonthly.id,
