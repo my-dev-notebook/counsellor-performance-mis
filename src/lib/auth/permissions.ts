@@ -29,6 +29,8 @@ export interface Permissions {
     /** Change roles, activate/deactivate, reset passwords, create non-counsellor users. */
     manageUsers: boolean;
     manageAgencies: boolean;
+    /** Create, rename and delete teams. Teams define visibility scopes, so admin-only. */
+    manageTeams: boolean;
     /** Meritto session tools, upload & preview. */
     useTools: boolean;
 }
@@ -40,6 +42,7 @@ export const NO_PERMISSIONS: Permissions = {
     manageRoster: false,
     manageUsers: false,
     manageAgencies: false,
+    manageTeams: false,
     useTools: false,
 };
 
@@ -57,6 +60,7 @@ export const PERMISSIONS: Record<RoleName, Permissions> = {
         manageRoster: true,
         manageUsers: false,
         manageAgencies: true,
+        manageTeams: false,
         useTools: true,
     },
     admin: {
@@ -66,6 +70,7 @@ export const PERMISSIONS: Record<RoleName, Permissions> = {
         manageRoster: true,
         manageUsers: true,
         manageAgencies: true,
+        manageTeams: true,
         useTools: true,
     },
 };

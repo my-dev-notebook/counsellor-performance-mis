@@ -1,9 +1,9 @@
-import { CanonicalTeam, CANONICAL_TEAMS } from "@/schemas/parser";
 import type { Counsellor, ParsedWorkbook, TeamAggregate } from "@/schemas/parser";
 import { aggregateTeam } from "@/lib/parser/aggregate";
 import { deriveBelowNonNegotiable, derivePctAchieved, derivePending } from "@/lib/metrics/derive";
 import { deriveStatus } from "@/lib/metrics/buckets";
 import { formatMonthLabel } from "@/lib/format";
+import { teamOptions } from "@/lib/filters";
 import { getProgressForMonth } from "./performance";
 import type { PerformanceEntry, ProgressRow } from "@/db/types";
 import type { Scope } from "@/lib/auth/permissions";
@@ -39,8 +39,9 @@ export async function getMonthlyWorkbook(date: string, scope: Scope): Promise<Pa
 
     for (const row of progress) {
         if (!hasEntry(row)) continue;
-        const parsedTeam = CanonicalTeam.safeParse(row.teamName);
-        if (!parsedTeam.success) continue;
+        // The snapshot team was deleted (only possible when nothing referenced it), so this can't happen in practice.
+        if (row.teamName === null) continue;
+        const team = row.teamName;
 
         const target = row.entry.overall;
         const nonNegotiable = row.entry.nonNegotiable;
@@ -57,7 +58,7 @@ export async function getMonthlyWorkbook(date: string, scope: Scope): Promise<Pa
         counsellors.push({
             id: String(row.counsellor.id),
             name: row.counsellor.name,
-            team: parsedTeam.data,
+            team,
             agency: row.counsellor.agencyName,
             // Always null — `doj` is not stored. The parser's `Counsellor`
             // shape keeps the field because Excel sheets still carry a DOJ
@@ -73,12 +74,12 @@ export async function getMonthlyWorkbook(date: string, scope: Scope): Promise<Pa
             pctAchieved,
             status: deriveStatus(pctAchieved),
             belowNonNegotiable: deriveBelowNonNegotiable(nonNegotiable, achieved),
-            source: { sheet: parsedTeam.data, row: row.counsellor.id },
+            source: { sheet: team, row: row.counsellor.id },
             issues: [],
         });
     }
 
-    const teams: TeamAggregate[] = CANONICAL_TEAMS.map(
+    const teams: TeamAggregate[] = teamOptions(counsellors).map(
         (team) =>
             aggregateTeam(
                 team,
@@ -86,7 +87,7 @@ export async function getMonthlyWorkbook(date: string, scope: Scope): Promise<Pa
                 undefined,
                 team,
             ).aggregate,
-    ).filter((t) => t.headcount > 0);
+    );
 
     const visibleIds = new Set(
         progress

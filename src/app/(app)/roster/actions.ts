@@ -11,7 +11,7 @@ import {
     updateUserProfile,
 } from "@/db/queries/users";
 import { deleteSessionsForUser } from "@/db/queries/sessions";
-import { AddUserInput, AssignmentChangeInput, ProfileInput } from "@/schemas/roster";
+import { AddUserInput, AssignmentChangeInput, EditUserInput, ProfileInput } from "@/schemas/roster";
 import { assertPermission } from "@/lib/auth/session";
 import { hashPassword } from "@/lib/auth/password";
 import { roleRequiresMeritto, roleRequiresTeam, userInScope } from "@/lib/auth/permissions";
@@ -56,6 +56,40 @@ export async function updateProfileAction(id: number, input: ProfileInput) {
 }
 
 /**
+ * Profile + assignment in one save (the Users page's edit form). Profile
+ * fields need manageRoster; a role change additionally needs manageUsers and
+ * is never allowed on yourself. Cross-field rules are checked against the
+ * combined new state, so e.g. clearing the Meritto id and switching role to
+ * counsellor in the same save is rejected as a whole.
+ */
+export async function editUserAction(id: number, input: EditUserInput) {
+    const parsed = EditUserInput.parse(input);
+    const actor = await assertPermission("manageRoster");
+    const target = await getUserById(id);
+    if (!target || !userInScope(actor.scope, target)) throw new Error("User not found");
+
+    const roleChanged = parsed.roleId !== undefined && parsed.roleId !== target.roleId;
+    if (roleChanged) {
+        if (!actor.permissions.manageUsers) throw new Error("Not allowed");
+        if (actor.id === id) throw new Error("You cannot change your own role.");
+    }
+    const roleName = roleChanged && parsed.roleId !== undefined ? await roleNameFor(parsed.roleId) : target.roleName;
+    assertRoleConstraints(roleName, { merittoUserId: parsed.merittoUserId, teamId: parsed.teamId });
+
+    await updateUserProfile(id, { name: parsed.name, email: parsed.email, merittoUserId: parsed.merittoUserId });
+    await applyAssignmentChanges(
+        id,
+        {
+            ...(roleChanged ? { roleId: parsed.roleId } : {}),
+            teamId: parsed.teamId,
+            agencyId: parsed.agencyId,
+        },
+        actor.id,
+    );
+    refresh();
+}
+
+/**
  * The one entry point for team / agency / role / active changes. Every field
  * lands in `user_changes` with the acting user's id.
  */
@@ -65,6 +99,10 @@ export async function changeAssignmentAction(id: number, input: AssignmentChange
     const actor = await assertPermission(touchesUsers ? "manageUsers" : "manageRoster");
     const target = await getUserById(id);
     if (!target || !userInScope(actor.scope, target)) throw new Error("User not found");
+    // Nobody may touch their own role or deactivate themselves -- not even an admin.
+    if (actor.id === id && (parsed.roleId !== undefined || parsed.isActive === false)) {
+        throw new Error("You cannot change your own role or deactivate yourself.");
+    }
 
     const roleName = parsed.roleId === undefined ? target.roleName : await roleNameFor(parsed.roleId);
     const teamId = parsed.teamId === undefined ? target.teamId : parsed.teamId;

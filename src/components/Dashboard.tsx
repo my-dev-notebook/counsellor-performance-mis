@@ -13,7 +13,6 @@ import { CounsellorTable } from "@/components/table/CounsellorTable";
 
 export function Dashboard({ workbook }: { workbook: ParsedWorkbook }) {
     const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
-    const [selectedId, setSelectedId] = useState<string | null>(null);
 
     const filtered = useMemo(() => applyFilters(workbook.counsellors, filters), [workbook, filters]);
     const summary = useMemo(() => summarize(filtered), [filtered]);
@@ -21,10 +20,6 @@ export function Dashboard({ workbook }: { workbook: ParsedWorkbook }) {
     const resetFilters = () => {
         setFilters(DEFAULT_FILTERS);
         setSelectedId(null);
-    };
-
-    const toggleSelected = (id: string) => {
-        setSelectedId((prev) => (prev === id ? null : id));
     };
 
     return (
@@ -49,7 +44,7 @@ export function Dashboard({ workbook }: { workbook: ParsedWorkbook }) {
             </div>
             <section>
                 <h2 className="mb-3 text-sm font-semibold text-foreground">Counsellors</h2>
-                <CounsellorTable counsellors={filtered} selectedId={selectedId} onSelect={toggleSelected} />
+                <CounsellorTable counsellors={filtered} />
             </section>
         </div>
     );

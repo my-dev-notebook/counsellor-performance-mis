@@ -2,15 +2,19 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { FiPlus } from "react-icons/fi";
+import { RowMenu } from "@/components/RowMenu";
+import type { MenuItem } from "@/components/RowMenu";
+import { DataTable } from "@/components/DataTable";
+import type { Column, RowState } from "@/components/DataTable";
 import type { UserRow, Team, Agency, Role } from "@/db/types";
 import type { Permissions } from "@/lib/auth/permissions";
 import { roleRequiresMeritto, roleRequiresTeam } from "@/lib/auth/permissions";
 import { formatText } from "@/lib/format";
 import {
     addUserAction,
-    updateProfileAction,
     changeAssignmentAction,
     deactivateUserAction,
+    editUserAction,
     resetPasswordAction,
 } from "@/app/(app)/roster/actions";
 
@@ -38,14 +42,10 @@ function parseMerittoId(text: string): number | null | undefined {
 }
 
 const inputClass = "mt-1 rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground";
-const cellInputClass = "w-full rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground";
 const primaryButton =
     "rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50";
-const smallPrimaryButton =
-    "rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50";
-const ghostButton = "rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground";
-const smallGhostButton = "rounded-md px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground";
-const linkButton = "text-xs font-medium text-muted-foreground hover:text-foreground hover:underline disabled:opacity-50";
+const ghostButton =
+    "rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground";
 
 function AddUserForm({
     roles,
@@ -193,7 +193,7 @@ function AddUserForm({
                 </label>
             )}
             <label className="flex flex-col text-xs font-medium text-muted-foreground">
-                Team
+                {roleName === "team_leader" ? "Leads team" : "Team"}
                 <select
                     value={teamId}
                     onChange={(e) => {
@@ -246,22 +246,25 @@ function AddUserForm({
     );
 }
 
-function RosterRow({
+const fieldLabel = "flex flex-col gap-1 text-xs font-medium text-muted-foreground";
+const panelInput = "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground";
+
+/** The full-width edit form shown under a clicked row. Mounted fresh each time a row opens, so its state starts from the row. */
+function UserEditPanel({
     user,
     roles,
     teams,
     agencies,
-    isSelf,
-    permissions,
+    canChangeRole,
+    onClose,
 }: {
     user: UserRow;
     roles: Role[];
     teams: Team[];
     agencies: Agency[];
-    isSelf: boolean;
-    permissions: Permissions;
+    canChangeRole: boolean;
+    onClose: () => void;
 }) {
-    const [mode, setMode] = useState<"view" | "edit-profile" | "change-assignment">("view");
     const [name, setName] = useState(user.name);
     const [email, setEmail] = useState(user.email);
     const [merittoUserId, setMerittoUserId] = useState(user.merittoUserId === null ? "" : String(user.merittoUserId));
@@ -270,129 +273,101 @@ function RosterRow({
     const [agencyId, setAgencyId] = useState<number | "">(user.agencyId ?? "");
     const [error, setError] = useState<string | null>(null);
     const [pending, startTransition] = useTransition();
-
-    const canManage = permissions.manageRoster;
-    const canManageUsers = permissions.manageUsers;
     const draftRoleName = roles.find((r) => r.id === roleId)?.name ?? user.roleName;
 
-    const resetProfileFields = () => {
-        setName(user.name);
-        setEmail(user.email);
-        setMerittoUserId(user.merittoUserId === null ? "" : String(user.merittoUserId));
+    const save = () => {
+        const parsedMerittoUserId = parseMerittoId(merittoUserId);
+        if (parsedMerittoUserId === undefined) {
+            setError("Meritto User ID must be a positive whole number.");
+            return;
+        }
+        if (roleRequiresMeritto(draftRoleName) && parsedMerittoUserId === null) {
+            setError("A counsellor must have a Meritto User ID.");
+            return;
+        }
+        if (roleRequiresTeam(draftRoleName) && teamId === "") {
+            setError(`A ${roleLabel(draftRoleName).toLowerCase()} must belong to a team.`);
+            return;
+        }
+        if (email.trim() === "") {
+            setError("Email is required.");
+            return;
+        }
         setError(null);
+        startTransition(async () => {
+            try {
+                await editUserAction(user.id, {
+                    name,
+                    email: email.trim(),
+                    merittoUserId: parsedMerittoUserId,
+                    ...(canChangeRole ? { roleId } : {}),
+                    teamId: teamId === "" ? null : teamId,
+                    agencyId: agencyId === "" ? null : agencyId,
+                });
+                onClose();
+            } catch (e) {
+                setError(errorMessage(e, "Failed to save."));
+            }
+        });
     };
 
-    const resetAssignmentFields = () => {
-        setRoleId(user.roleId);
-        setTeamId(user.teamId ?? "");
-        setAgencyId(user.agencyId ?? "");
-        setError(null);
-    };
-
-    const statusCell = <td className="px-3 py-2 text-muted-foreground">{user.isActive ? "Active" : "Inactive"}</td>;
-
-    if (mode === "edit-profile") {
-        return (
-            <tr data-component="RosterRow" className="bg-warning/10">
-                <td className="px-3 py-2">
+    return (
+        <form
+            data-component="UserEditPanel"
+            onSubmit={(e) => {
+                e.preventDefault();
+                save();
+            }}
+            onKeyDown={(e) => {
+                if (e.key === "Escape") onClose();
+            }}
+            className="space-y-5"
+        >
+            <p className="text-sm font-semibold text-foreground">Edit {user.name}</p>
+            <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+                <label className={fieldLabel}>
+                    Name
                     <input
+                        autoFocus
                         value={name}
                         onChange={(e) => {
                             setName(e.target.value);
                         }}
-                        className={cellInputClass}
+                        className={panelInput}
                     />
-                </td>
-                <td className="px-3 py-2 text-muted-foreground">{roleLabel(user.roleName)}</td>
-                <td className="px-3 py-2 text-muted-foreground">{formatText(user.teamName)}</td>
-                <td className="px-3 py-2 text-muted-foreground">{formatText(user.agencyName)}</td>
-                <td className="px-3 py-2">
+                </label>
+                <label className={fieldLabel}>
+                    Email
                     <input
                         type="email"
                         value={email}
                         onChange={(e) => {
                             setEmail(e.target.value);
                         }}
-                        placeholder="email"
-                        className={cellInputClass}
+                        className={panelInput}
                     />
-                </td>
-                <td className="px-3 py-2">
+                </label>
+                <label className={fieldLabel}>
+                    Meritto User ID
                     <input
                         inputMode="numeric"
                         value={merittoUserId}
                         onChange={(e) => {
                             setMerittoUserId(e.target.value);
                         }}
-                        placeholder="Meritto User ID"
-                        className={cellInputClass}
+                        placeholder="16098382"
+                        className={panelInput}
                     />
-                    {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
-                </td>
-                {statusCell}
-                <td className="px-3 py-2">
-                    <div className="flex gap-2">
-                        <button
-                            disabled={pending}
-                            onClick={() => {
-                                const parsedMerittoUserId = parseMerittoId(merittoUserId);
-                                if (parsedMerittoUserId === undefined) {
-                                    setError("Meritto User ID must be a positive whole number.");
-                                    return;
-                                }
-                                if (roleRequiresMeritto(user.roleName) && parsedMerittoUserId === null) {
-                                    setError("A counsellor must have a Meritto User ID.");
-                                    return;
-                                }
-                                if (email.trim() === "") {
-                                    setError("Email is required.");
-                                    return;
-                                }
-                                setError(null);
-                                startTransition(async () => {
-                                    try {
-                                        await updateProfileAction(user.id, {
-                                            name,
-                                            email: email.trim(),
-                                            merittoUserId: parsedMerittoUserId,
-                                        });
-                                        setMode("view");
-                                    } catch (e) {
-                                        setError(errorMessage(e, "Failed to save profile."));
-                                    }
-                                });
-                            }}
-                            className={smallPrimaryButton}
-                        >
-                            Save
-                        </button>
-                        <button
-                            onClick={() => {
-                                resetProfileFields();
-                                setMode("view");
-                            }}
-                            className={smallGhostButton}
-                        >
-                            Cancel
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        );
-    }
-
-    if (mode === "change-assignment") {
-        return (
-            <tr data-component="RosterRow" className="bg-info/10">
-                <td className="px-3 py-2 font-medium text-foreground">{user.name}</td>
-                <td className="px-3 py-2">
-                    {canManageUsers ? (
+                </label>
+                <label className={fieldLabel}>
+                    Role
+                    {canChangeRole ? (
                         <select
                             value={roleId}
                             onChange={(e) => {
                                 setRoleId(Number(e.target.value));
                             }}
-                            className={cellInputClass}
+                            className={panelInput}
                         >
                             {roles.map((r) => (
                                 <option key={r.id} value={r.id}>
@@ -401,16 +376,19 @@ function RosterRow({
                             ))}
                         </select>
                     ) : (
-                        <span className="text-muted-foreground">{roleLabel(user.roleName)}</span>
+                        <span className={`${panelInput} border-transparent bg-transparent px-0`}>
+                            {roleLabel(user.roleName)}
+                        </span>
                     )}
-                </td>
-                <td className="px-3 py-2">
+                </label>
+                <label className={fieldLabel}>
+                    {draftRoleName === "team_leader" ? "Leads team" : "Team"}
                     <select
                         value={teamId}
                         onChange={(e) => {
                             setTeamId(e.target.value === "" ? "" : Number(e.target.value));
                         }}
-                        className={cellInputClass}
+                        className={panelInput}
                     >
                         {!roleRequiresTeam(draftRoleName) && <option value="">—</option>}
                         {teams.map((t) => (
@@ -419,14 +397,15 @@ function RosterRow({
                             </option>
                         ))}
                     </select>
-                </td>
-                <td className="px-3 py-2">
+                </label>
+                <label className={fieldLabel}>
+                    Agency
                     <select
                         value={agencyId}
                         onChange={(e) => {
                             setAgencyId(e.target.value === "" ? "" : Number(e.target.value));
                         }}
-                        className={cellInputClass}
+                        className={panelInput}
                     >
                         <option value="">—</option>
                         {agencies.map((a) => (
@@ -435,128 +414,87 @@ function RosterRow({
                             </option>
                         ))}
                     </select>
-                    {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
-                </td>
-                <td className="px-3 py-2 text-muted-foreground">{user.email}</td>
-                <td className="px-3 py-2 text-muted-foreground">{user.merittoUserId ?? "—"}</td>
-                {statusCell}
-                <td className="px-3 py-2">
-                    <div className="flex gap-2">
-                        <button
-                            disabled={pending}
-                            onClick={() => {
-                                if (roleRequiresTeam(draftRoleName) && teamId === "") {
-                                    setError(`A ${roleLabel(draftRoleName).toLowerCase()} must belong to a team.`);
-                                    return;
-                                }
-                                if (roleRequiresMeritto(draftRoleName) && user.merittoUserId === null) {
-                                    setError("Set a Meritto User ID (Edit profile) before making this user a counsellor.");
-                                    return;
-                                }
-                                setError(null);
-                                startTransition(async () => {
-                                    try {
-                                        await changeAssignmentAction(user.id, {
-                                            ...(canManageUsers ? { roleId } : {}),
-                                            teamId: teamId === "" ? null : teamId,
-                                            agencyId: agencyId === "" ? null : agencyId,
-                                        });
-                                        setMode("view");
-                                    } catch (e) {
-                                        setError(errorMessage(e, "Failed to save assignment."));
-                                    }
-                                });
-                            }}
-                            className={smallPrimaryButton}
-                        >
-                            Save
-                        </button>
-                        <button
-                            onClick={() => {
-                                resetAssignmentFields();
-                                setMode("view");
-                            }}
-                            className={smallGhostButton}
-                        >
-                            Cancel
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        );
+                </label>
+            </div>
+            {error && <p className="text-xs text-destructive">{error}</p>}
+            <div className="flex items-center gap-3 border-t border-border pt-4">
+                <button type="submit" disabled={pending} className={primaryButton}>
+                    {pending ? "Saving…" : "Save changes"}
+                </button>
+                <button type="button" onClick={onClose} className={ghostButton}>
+                    Cancel
+                </button>
+            </div>
+        </form>
+    );
+}
+
+/** The ⋯ menu in a user's actions cell. */
+function RosterActions({
+    user,
+    isSelf,
+    permissions,
+    state,
+}: {
+    user: UserRow;
+    isSelf: boolean;
+    permissions: Permissions;
+    state: RowState;
+}) {
+    const [pending, startTransition] = useTransition();
+    const canManageUsers = permissions.manageUsers;
+    const editable = permissions.manageRoster && user.isActive;
+
+    const run = (action: () => Promise<unknown>, fallback: string) => {
+        startTransition(async () => {
+            try {
+                await action();
+            } catch (e) {
+                alert(errorMessage(e, fallback));
+            }
+        });
+    };
+
+    const menuItems: MenuItem[] = [];
+    if (editable) menuItems.push({ label: state.expanded ? "Close" : "Edit", onSelect: state.toggle });
+    if (canManageUsers && user.isActive) {
+        menuItems.push({
+            label: "Reset password",
+            disabled: pending,
+            onSelect: () => {
+                if (!confirm(`Reset ${user.name}'s password to the default? They will be signed out.`)) return;
+                run(() => resetPasswordAction(user.id), "Failed to reset password.");
+            },
+        });
+    }
+    if (canManageUsers && !isSelf) {
+        if (user.isActive) {
+            menuItems.push({
+                label: "Deactivate",
+                destructive: true,
+                disabled: pending,
+                onSelect: () => {
+                    if (!confirm(`Deactivate ${user.name}?`)) return;
+                    run(() => deactivateUserAction(user.id), "Failed to deactivate.");
+                },
+            });
+        } else {
+            menuItems.push({
+                label: "Reactivate",
+                disabled: pending,
+                onSelect: () => {
+                    if (!confirm(`Reactivate ${user.name}? They will be able to sign in again.`)) return;
+                    run(() => changeAssignmentAction(user.id, { isActive: true }), "Failed to reactivate.");
+                },
+            });
+        }
     }
 
+    if (menuItems.length === 0) return null;
     return (
-        <tr data-component="RosterRow" className={user.isActive ? "" : "opacity-50"}>
-            <td className="px-3 py-2 font-medium text-foreground">
-                {user.name}
-                {isSelf && <span className="ml-1 text-xs text-muted-foreground">(you)</span>}
-            </td>
-            <td className="px-3 py-2 text-muted-foreground">{roleLabel(user.roleName)}</td>
-            <td className="px-3 py-2 text-muted-foreground">{formatText(user.teamName)}</td>
-            <td className="px-3 py-2 text-muted-foreground">{formatText(user.agencyName)}</td>
-            <td className="px-3 py-2 text-muted-foreground">{user.email}</td>
-            <td className="px-3 py-2 text-muted-foreground">{user.merittoUserId ?? "—"}</td>
-            {statusCell}
-            <td className="px-3 py-2">
-                {canManage && user.isActive && (
-                    <div className="flex flex-wrap gap-2">
-                        <button
-                            onClick={() => {
-                                setMode("edit-profile");
-                            }}
-                            className={linkButton}
-                        >
-                            Edit profile
-                        </button>
-                        <button
-                            onClick={() => {
-                                setMode("change-assignment");
-                            }}
-                            className={linkButton}
-                        >
-                            {canManageUsers ? "Change role/team/agency" : "Change team/agency"}
-                        </button>
-                        {canManageUsers && (
-                            <button
-                                disabled={pending}
-                                onClick={() => {
-                                    if (!confirm(`Reset ${user.name}'s password to the default? They will be signed out.`)) return;
-                                    startTransition(async () => {
-                                        try {
-                                            await resetPasswordAction(user.id);
-                                        } catch (e) {
-                                            alert(errorMessage(e, "Failed to reset password."));
-                                        }
-                                    });
-                                }}
-                                className={linkButton}
-                            >
-                                Reset password
-                            </button>
-                        )}
-                        {canManageUsers && !isSelf && (
-                            <button
-                                disabled={pending}
-                                onClick={() => {
-                                    if (!confirm(`Deactivate ${user.name}?`)) return;
-                                    startTransition(async () => {
-                                        try {
-                                            await deactivateUserAction(user.id);
-                                        } catch (e) {
-                                            alert(errorMessage(e, "Failed to deactivate."));
-                                        }
-                                    });
-                                }}
-                                className="text-xs font-medium text-destructive hover:underline disabled:opacity-50"
-                            >
-                                Deactivate
-                            </button>
-                        )}
-                    </div>
-                )}
-            </td>
-        </tr>
+        <div data-component="RosterActions" className="text-right">
+            <RowMenu items={menuItems} label={`Actions for ${user.name}`} />
+        </div>
     );
 }
 
@@ -592,6 +530,49 @@ export function RosterView({
             return true;
         });
     }, [users, search, roleFilter, teamFilter, agencyFilter, showInactive]);
+
+    const columns: Column<UserRow>[] = [
+        {
+            key: "name",
+            header: "Name",
+            className: "font-medium text-foreground",
+            render: (u) => (
+                <>
+                    {u.name}
+                    {u.id === currentUserId && <span className="ml-1 text-xs text-muted-foreground">(you)</span>}
+                </>
+            ),
+        },
+        { key: "role", header: "Role", className: "text-muted-foreground", render: (u) => roleLabel(u.roleName) },
+        { key: "team", header: "Team", className: "text-muted-foreground", render: (u) => formatText(u.teamName) },
+        {
+            key: "agency",
+            header: "Agency",
+            className: "text-muted-foreground",
+            render: (u) => formatText(u.agencyName),
+        },
+        { key: "email", header: "Email", className: "text-muted-foreground", render: (u) => u.email },
+        {
+            key: "meritto",
+            header: "Meritto ID",
+            className: "text-muted-foreground",
+            render: (u) => u.merittoUserId ?? "—",
+        },
+        {
+            key: "status",
+            header: "Status",
+            className: "text-muted-foreground",
+            render: (u) => (u.isActive ? "Active" : "Inactive"),
+        },
+        {
+            key: "actions",
+            header: "",
+            srLabel: "Actions",
+            render: (u, state) => (
+                <RosterActions user={u} isSelf={u.id === currentUserId} permissions={permissions} state={state} />
+            ),
+        },
+    ];
 
     return (
         <div data-component="RosterView" className="space-y-4">
@@ -662,41 +643,24 @@ export function RosterView({
                 </label>
             </div>
 
-            {filtered.length === 0 ? (
-                <p data-component="RosterView" className="py-8 text-center text-sm text-muted-foreground">
-                    No users match the current filters.
-                </p>
-            ) : (
-                <div className="overflow-x-auto rounded-lg border border-border bg-card">
-                    <table className="min-w-full divide-y divide-border text-sm">
-                        <thead className="bg-muted/50">
-                            <tr>
-                                {["Name", "Role", "Team", "Agency", "Email", "Meritto ID", "Status", "Actions"].map((h) => (
-                                    <th
-                                        key={h}
-                                        className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase"
-                                    >
-                                        {h}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border">
-                            {filtered.map((u) => (
-                                <RosterRow
-                                    key={u.id}
-                                    user={u}
-                                    roles={roles}
-                                    teams={teams}
-                                    agencies={agencies}
-                                    isSelf={u.id === currentUserId}
-                                    permissions={permissions}
-                                />
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )}
+            <DataTable
+                columns={columns}
+                rows={filtered}
+                rowKey={(u) => u.id}
+                emptyMessage="No users match the current filters."
+                rowClassName={(u) => (u.isActive ? "" : "opacity-50")}
+                expandable={(u) => permissions.manageRoster && u.isActive}
+                renderExpanded={(u, state) => (
+                    <UserEditPanel
+                        user={u}
+                        roles={roles}
+                        teams={teams}
+                        agencies={agencies}
+                        canChangeRole={permissions.manageUsers && u.id !== currentUserId}
+                        onClose={state.close}
+                    />
+                )}
+            />
         </div>
     );
 }

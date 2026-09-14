@@ -1,7 +1,6 @@
 import { asc, eq } from "drizzle-orm";
 import { getDb } from "@/db/client";
 import { users, teams, counsellorPerfMonthly } from "@/db/schema";
-import { CANONICAL_TEAMS } from "@/schemas/parser";
 import type { Status } from "@/schemas/parser";
 import { derivePctAchieved } from "@/lib/metrics/derive";
 import { deriveStatus } from "@/lib/metrics/buckets";
@@ -59,7 +58,7 @@ export interface TeamSeries {
 /** Per-team Achievement % (and raw totals) across every month with data — from the scope's team aggregates. */
 export async function getTeamMonthlySeries(scope: Scope): Promise<TeamSeries[]> {
     const months = await chronologicalMonths(scope);
-    const byTeam = new Map<string, MonthlyPoint[]>(CANONICAL_TEAMS.map((t) => [t, []]));
+    const byTeam = new Map<string, MonthlyPoint[]>();
 
     for (const date of months) {
         const workbook = await getMonthlyWorkbook(date, scope);
@@ -67,8 +66,11 @@ export async function getTeamMonthlySeries(scope: Scope): Promise<TeamSeries[]> 
         // Team totals come from the workbook's aggregates, which are built
         // over the whole team even when the reader may only see their own row.
         for (const aggregate of workbook.teams) {
-            const points = byTeam.get(aggregate.team);
-            if (!points) continue;
+            let points = byTeam.get(aggregate.team);
+            if (!points) {
+                points = [];
+                byTeam.set(aggregate.team, points);
+            }
             points.push({
                 date,
                 monthLabel,
@@ -81,7 +83,7 @@ export async function getTeamMonthlySeries(scope: Scope): Promise<TeamSeries[]> 
         }
     }
 
-    return CANONICAL_TEAMS.map((team) => ({ team, points: byTeam.get(team) ?? [] })).filter((t) => t.points.length > 0);
+    return Array.from(byTeam, ([team, points]) => ({ team, points })).sort((a, b) => a.team.localeCompare(b.team));
 }
 
 export interface PersonOption {

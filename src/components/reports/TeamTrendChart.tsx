@@ -13,6 +13,13 @@ const TEAM_COLORS: Record<string, string> = {
     "Media/Liberal Arts": "#ef4444",
 };
 
+/** Teams added after the fixed map above cycle through these, by position in the series. */
+const EXTRA_COLORS = ["#0891b2", "#65a30d", "#d946ef", "#ea580c", "#0d9488", "#7c3aed"];
+
+function teamColor(team: string, index: number): string {
+    return TEAM_COLORS[team] ?? EXTRA_COLORS[index % EXTRA_COLORS.length] ?? "var(--muted-foreground)";
+}
+
 const TOOLTIP_STYLE = {
     backgroundColor: "var(--popover)",
     borderColor: "var(--border)",
@@ -61,13 +68,13 @@ export function TeamTrendChart({ series }: { series: TeamSeries[] }) {
                     />
                     <Tooltip formatter={(v) => formatPct(Number(v ?? 0))} contentStyle={TOOLTIP_STYLE} />
                     <Legend wrapperStyle={{ color: "var(--foreground)", fontSize: 12 }} />
-                    {series.map(({ team }) => (
+                    {series.map(({ team }, index) => (
                         <Line
                             key={team}
                             type="monotone"
                             dataKey={team}
                             name={team}
-                            stroke={TEAM_COLORS[team] ?? "var(--muted-foreground)"}
+                            stroke={teamColor(team, index)}
                             strokeWidth={2}
                             connectNulls
                         />

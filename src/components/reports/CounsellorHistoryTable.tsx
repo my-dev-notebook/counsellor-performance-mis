@@ -1,44 +1,25 @@
+"use client";
+
 import { formatInt, formatPct } from "@/lib/format";
 import type { PersonHistoryPoint } from "@/db/queries/reports";
+import { DataTable } from "@/components/DataTable";
+import type { Column } from "@/components/DataTable";
 import { StatusPill } from "@/components/StatusPill";
 
-const COLUMNS = ["Month", "Team", "Target", "Non-Neg", "Achieved", "Ach %", "Status"];
+const COLUMNS: Column<PersonHistoryPoint>[] = [
+    { key: "month", header: "Month", className: "text-muted-foreground", render: (p) => p.monthLabel },
+    { key: "team", header: "Team", className: "text-muted-foreground", render: (p) => p.team },
+    { key: "target", header: "Target", className: "text-muted-foreground", render: (p) => formatInt(p.target) },
+    { key: "nonNeg", header: "Non-Neg", className: "text-muted-foreground", render: (p) => formatInt(p.nonNegotiable) },
+    { key: "achieved", header: "Achieved", className: "text-muted-foreground", render: (p) => formatInt(p.achieved) },
+    { key: "pct", header: "Ach %", className: "text-muted-foreground", render: (p) => formatPct(p.pctAchieved) },
+    { key: "status", header: "Status", render: (p) => <StatusPill status={p.status} /> },
+];
 
 export function CounsellorHistoryTable({ points }: { points: PersonHistoryPoint[] }) {
     return (
-        <div
-            data-component="CounsellorHistoryTable"
-            className="overflow-x-auto rounded-lg border border-border bg-card"
-        >
-            <table className="min-w-full divide-y divide-border text-sm">
-                <thead className="bg-muted/50">
-                    <tr>
-                        {COLUMNS.map((h) => (
-                            <th
-                                key={h}
-                                className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase"
-                            >
-                                {h}
-                            </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                    {points.map((p) => (
-                        <tr key={p.date}>
-                            <td className="px-3 py-2 text-muted-foreground">{p.monthLabel}</td>
-                            <td className="px-3 py-2 text-muted-foreground">{p.team}</td>
-                            <td className="px-3 py-2 text-muted-foreground">{formatInt(p.target)}</td>
-                            <td className="px-3 py-2 text-muted-foreground">{formatInt(p.nonNegotiable)}</td>
-                            <td className="px-3 py-2 text-muted-foreground">{formatInt(p.achieved)}</td>
-                            <td className="px-3 py-2 text-muted-foreground">{formatPct(p.pctAchieved)}</td>
-                            <td className="px-3 py-2">
-                                <StatusPill status={p.status} />
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+        <div data-component="CounsellorHistoryTable">
+            <DataTable columns={COLUMNS} rows={points} rowKey={(p) => p.date} emptyMessage="No history yet." />
         </div>
     );
 }

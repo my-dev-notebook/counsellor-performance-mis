@@ -1,7 +1,7 @@
-import type { CanonicalTeam, Counsellor, Status } from "@/schemas/parser";
+import type { Counsellor, Status } from "@/schemas/parser";
 
 export interface Filters {
-    team: CanonicalTeam | "All";
+    team: string;
     agency: string;
     counsellor: string;
     status: Status | "All";
@@ -29,6 +29,11 @@ export function applyFilters(counsellors: readonly Counsellor[], filters: Filter
 export function counsellorOptions(counsellors: readonly Counsellor[], filters: Filters): string[] {
     const scoped = applyFilters(counsellors, { ...filters, counsellor: "All" });
     return Array.from(new Set(scoped.map((c) => c.name))).sort();
+}
+
+/** Every team present in the data, alphabetically. */
+export function teamOptions(counsellors: readonly Counsellor[]): string[] {
+    return Array.from(new Set(counsellors.map((c) => c.team))).sort();
 }
 
 export function agencyOptions(counsellors: readonly Counsellor[]): string[] {

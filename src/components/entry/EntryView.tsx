@@ -2,12 +2,43 @@
 
 import { useMemo, useState } from "react";
 import type { MonthSummary, ProgressRow } from "@/db/types";
-import { formatInt } from "@/lib/format";
+import { formatInt, formatText } from "@/lib/format";
 import { MonthPicker } from "@/components/MonthPicker";
-import { EntryRow } from "@/components/entry/EntryRow";
+import { DataTable } from "@/components/DataTable";
+import type { Column } from "@/components/DataTable";
+import { EntryPanel } from "@/components/entry/EntryPanel";
 import { ExportButton } from "@/components/entry/ExportButton";
 
 type StatusFilter = "all" | "filled" | "pending";
+
+const COLUMNS: Column<ProgressRow>[] = [
+    {
+        key: "name",
+        header: "Counsellor",
+        render: (r) => <span className="font-medium text-foreground">{r.counsellor.name}</span>,
+    },
+    { key: "team", header: "Team", className: "text-muted-foreground", render: (r) => formatText(r.teamName) },
+    {
+        key: "agency",
+        header: "Agency",
+        className: "text-muted-foreground",
+        render: (r) => formatText(r.counsellor.agencyName),
+    },
+    {
+        key: "status",
+        header: "Status",
+        render: (r) =>
+            r.entry === null ? (
+                <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground ring-1 ring-border">
+                    Pending
+                </span>
+            ) : (
+                <span className="inline-flex items-center rounded-full bg-success/15 px-2 py-0.5 text-xs font-semibold text-success ring-1 ring-success/30">
+                    Filled
+                </span>
+            ),
+    },
+];
 
 function SummaryBar({ summary }: { summary: MonthSummary }) {
     return (
@@ -111,33 +142,14 @@ export function EntryView({
                 </label>
             </div>
 
-            {filtered.length === 0 ? (
-                <p data-component="EntryView" className="py-8 text-center text-sm text-muted-foreground">
-                    No counsellors match the current filters.
-                </p>
-            ) : (
-                <div className="overflow-x-auto rounded-lg border border-border bg-card">
-                    <table className="min-w-full divide-y divide-border text-sm">
-                        <thead className="bg-muted/50">
-                            <tr>
-                                {["Counsellor", "Team", "Agency", "Status"].map((h) => (
-                                    <th
-                                        key={h}
-                                        className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase"
-                                    >
-                                        {h}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border">
-                            {filtered.map((row) => (
-                                <EntryRow key={row.counsellor.id} row={row} date={date} />
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )}
+            <DataTable
+                columns={COLUMNS}
+                rows={filtered}
+                rowKey={(r) => r.counsellor.id}
+                emptyMessage="No counsellors match the current filters."
+                rowClassName={(r) => (r.counsellor.isActive ? "" : "opacity-50")}
+                renderExpanded={(r) => <EntryPanel row={r} date={date} />}
+            />
         </div>
     );
 }

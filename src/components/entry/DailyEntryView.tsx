@@ -6,6 +6,8 @@ import type { AdmissionRecord, AdmissionRow, UserRow } from "@/db/types";
 import { MONTH_NAMES } from "@/lib/format";
 import { saveDailyAdmissionAction, autoFetchApplicantsAction } from "@/app/(app)/entry/actions";
 import { loadNpfSession } from "@/lib/nopaperformsSession";
+import { DataTable } from "@/components/DataTable";
+import type { Column } from "@/components/DataTable";
 
 /** Days in the "YYYY-MM" month, via vanilla Date (day 0 of next month = last day of this month). */
 function daysInMonth(date: string): number {
@@ -28,6 +30,12 @@ function firstWeekday(date: string): number {
 }
 
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+const PICKER_COLUMNS: Column<UserRow>[] = [
+    { key: "name", header: "Counsellor", className: "font-medium text-foreground", render: (c) => c.name },
+    { key: "team", header: "Team", className: "text-muted-foreground", render: (c) => c.teamName ?? "—" },
+    { key: "agency", header: "Agency", className: "text-muted-foreground", render: (c) => c.agencyName ?? "—" },
+];
 
 function parseMonthDate(date: string): { year: number; month: number } {
     const [yearStr, monthStr] = date.split("-");
@@ -63,37 +71,15 @@ function CounsellorPicker({ counsellors, date }: { counsellors: UserRow[]; date:
                 }}
                 className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm text-foreground sm:w-80"
             />
-            <div className="overflow-hidden rounded-lg border border-border bg-card">
-                <table className="min-w-full divide-y divide-border text-sm">
-                    <thead className="bg-muted/50">
-                        <tr>
-                            {["Counsellor", "Team", "Agency"].map((h) => (
-                                <th
-                                    key={h}
-                                    className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase"
-                                >
-                                    {h}
-                                </th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                        {filtered.map((c) => (
-                            <tr
-                                key={c.id}
-                                onClick={() => {
-                                    router.push(`/entry/daily?userId=${String(c.id)}&date=${date}`);
-                                }}
-                                className="cursor-pointer hover:bg-accent/50"
-                            >
-                                <td className="px-3 py-2 font-medium text-foreground">{c.name}</td>
-                                <td className="px-3 py-2 text-muted-foreground">{c.teamName ?? "—"}</td>
-                                <td className="px-3 py-2 text-muted-foreground">{c.agencyName ?? "—"}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+            <DataTable
+                columns={PICKER_COLUMNS}
+                rows={filtered}
+                rowKey={(c) => c.id}
+                emptyMessage="No counsellors match the search."
+                onRowClick={(c) => {
+                    router.push(`/entry/daily?userId=${String(c.id)}&date=${date}`);
+                }}
+            />
         </div>
     );
 }
@@ -444,14 +430,16 @@ function DayEditor({
                 <table className="min-w-full divide-y divide-border text-sm">
                     <thead>
                         <tr>
-                            {["Application no", "Applicant ID", "Applicant name", "Form ID", "Form name", ""].map((h) => (
-                                <th
-                                    key={h}
-                                    className="px-2 py-1.5 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase"
-                                >
-                                    {h}
-                                </th>
-                            ))}
+                            {["Application no", "Applicant ID", "Applicant name", "Form ID", "Form name", ""].map(
+                                (h) => (
+                                    <th
+                                        key={h}
+                                        className="px-2 py-1.5 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                                    >
+                                        {h}
+                                    </th>
+                                ),
+                            )}
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-border">

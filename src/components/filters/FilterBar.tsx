@@ -1,8 +1,7 @@
 "use client";
 
-import { CANONICAL_TEAMS } from "@/schemas/parser";
 import type { Counsellor } from "@/schemas/parser";
-import { counsellorOptions } from "@/lib/filters";
+import { counsellorOptions, teamOptions } from "@/lib/filters";
 import type { Filters } from "@/lib/filters";
 
 const STATUS_OPTIONS = ["Green", "Yellow", "Red"] as const;
@@ -71,9 +70,9 @@ export function FilterBar({
                 <Select
                     label="Team"
                     value={filters.team}
-                    options={CANONICAL_TEAMS}
+                    options={teamOptions(counsellors)}
                     onChange={(team) => {
-                        onChange({ ...filters, team: team as Filters["team"], counsellor: "All" });
+                        onChange({ ...filters, team, counsellor: "All" });
                     }}
                 />
                 <Select

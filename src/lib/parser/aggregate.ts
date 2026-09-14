@@ -1,5 +1,5 @@
 import { summarize } from "@/lib/metrics/summarize";
-import type { CanonicalTeam, Counsellor, DeclaredTotal, TeamAggregate, Warning } from "@/schemas/parser";
+import type { Counsellor, DeclaredTotal, TeamAggregate, Warning } from "@/schemas/parser";
 import { makeWarning } from "./warnings";
 
 const RECONCILE_EPSILON = 0.01;
@@ -15,7 +15,7 @@ export interface AggregateOutcome {
  * rows at all → `reconciles: null` ("not checked"), not a failure.
  */
 export function aggregateTeam(
-    team: CanonicalTeam,
+    team: string,
     counsellors: readonly Counsellor[],
     declaredTotal: DeclaredTotal | undefined,
     sheetName: string,

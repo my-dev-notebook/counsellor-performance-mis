@@ -23,6 +23,14 @@ export const AddUserInput = ProfileInput.extend({
 });
 export type AddUserInput = z.infer<typeof AddUserInput>;
 
+/** The single edit form on the Users page: profile fields plus the assignment, saved together. */
+export const EditUserInput = ProfileInput.extend({
+    roleId: z.number().int().positive().optional(),
+    teamId: z.number().int().positive().nullable(),
+    agencyId: z.number().int().positive().nullable(),
+});
+export type EditUserInput = z.infer<typeof EditUserInput>;
+
 /** Any subset of the four logged fields. */
 export const AssignmentChangeInput = z.object({
     roleId: z.number().int().positive().optional(),

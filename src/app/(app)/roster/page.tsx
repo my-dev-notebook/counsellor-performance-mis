@@ -21,9 +21,11 @@ export default async function RosterPage() {
             <div>
                 <h1 className="text-xl font-semibold tracking-tight text-foreground">Users</h1>
                 <p className="mt-1 text-sm text-muted-foreground">
-                    {user.permissions.manageRoster
-                        ? "Manage the roster: add users, edit profiles, change team/agency/role, and deactivate. Every assignment change is logged."
-                        : "Everyone on your team."}
+                    {user.permissions.manageUsers
+                        ? "Manage every account — counsellors, team leaders, MIS executives and admins: add users, edit profiles, change role/team/agency, reset passwords, deactivate and reactivate. Every assignment change is logged."
+                        : user.permissions.manageRoster
+                          ? "Manage the roster: add counsellors, edit profiles, and change team/agency. Every assignment change is logged."
+                          : "Everyone on your team."}
                 </p>
             </div>
             <RosterView

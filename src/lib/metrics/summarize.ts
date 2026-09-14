@@ -1,5 +1,5 @@
-import type { CanonicalTeam, Counsellor } from "@/schemas/parser";
-import { CANONICAL_TEAMS } from "@/schemas/parser";
+import type { Counsellor } from "@/schemas/parser";
+import { teamOptions } from "@/lib/filters";
 
 export interface Summary {
     headcount: number;
@@ -51,9 +51,9 @@ export function summarize(counsellors: readonly Counsellor[]): Summary {
 }
 
 /** Groups counsellors by team, alphabetically, skipping teams absent from the current filter (PLAN.md §5.4). */
-export function summarizeByTeam(counsellors: readonly Counsellor[]): { team: CanonicalTeam; summary: Summary }[] {
-    return CANONICAL_TEAMS.map((team) => ({
+export function summarizeByTeam(counsellors: readonly Counsellor[]): { team: string; summary: Summary }[] {
+    return teamOptions(counsellors).map((team) => ({
         team,
         summary: summarize(counsellors.filter((c) => c.team === team)),
-    })).filter((entry) => entry.summary.headcount > 0);
+    }));
 }

@@ -5,6 +5,11 @@ import { z } from "zod";
  * types below are derived via `z.infer`, never hand-written separately.
  */
 
+/**
+ * Teams the Excel parser knows how to recognise from sheet names
+ * (src/lib/parser/match-team.ts). Only the upload/preview path uses this;
+ * live data reads team names from the `teams` table, which admins manage.
+ */
 export const CanonicalTeam = z.enum(["Design", "Engineering", "Inbound", "Law", "Management", "Media/Liberal Arts"]);
 export type CanonicalTeam = z.infer<typeof CanonicalTeam>;
 
@@ -39,7 +44,7 @@ export type CounsellorSource = z.infer<typeof CounsellorSource>;
 export const Counsellor = z.object({
     id: z.string(),
     name: z.string().min(1),
-    team: CanonicalTeam,
+    team: z.string().min(1),
     agency: z.string().nullable(),
     doj: z.date().nullable(),
     email: z.string().nullable(),
@@ -65,7 +70,7 @@ export const DeclaredTotal = z.object({
 export type DeclaredTotal = z.infer<typeof DeclaredTotal>;
 
 export const TeamAggregate = z.object({
-    team: CanonicalTeam,
+    team: z.string().min(1),
     headcount: z.number(),
     target: z.number(),
     nonNegotiable: z.number().nullable(),

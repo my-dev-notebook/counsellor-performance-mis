@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { NavBar } from "@/components/NavBar";
+import { Sidebar } from "@/components/Sidebar";
 import { requireUser } from "@/lib/auth/session";
 
 /**
@@ -10,12 +10,12 @@ import { requireUser } from "@/lib/auth/session";
 export default async function AppLayout({ children }: { children: ReactNode }) {
     const user = await requireUser();
     return (
-        <>
-            <NavBar
+        <div data-component="AppLayout" className="flex min-h-full flex-1 flex-col lg:flex-row">
+            <Sidebar
                 user={{ name: user.name, roleName: user.roleName, teamName: user.teamName }}
                 permissions={user.permissions}
             />
-            {children}
-        </>
+            <div className="flex min-w-0 flex-1 flex-col">{children}</div>
+        </div>
     );
 }
