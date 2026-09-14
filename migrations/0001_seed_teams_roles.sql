@@ -17,4 +17,5 @@ INSERT INTO roles (id, name) VALUES
   (1, 'counsellor'),
   (2, 'team_leader'),
   (3, 'mis_executive'),
-  (4, 'admin');
+  (4, 'admin'),
+  (5, 'quality_analyst');

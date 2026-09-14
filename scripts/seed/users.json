@@ -6,7 +6,8 @@
         "role": "counsellor",
         "team": "Engineering",
         "agency": "SKS Enterprises",
-        "merittoUserId": 13092325
+        "merittoUserId": 13092325,
+        "isActive": true
     },
     {
         "id": 2,
@@ -15,7 +16,8 @@
         "role": "counsellor",
         "team": "Management",
         "agency": "SKS Enterprises",
-        "merittoUserId": 13092476
+        "merittoUserId": 13092476,
+        "isActive": true
     },
     {
         "id": 3,
@@ -24,7 +26,8 @@
         "role": "counsellor",
         "team": "Engineering",
         "agency": "AM2PM",
-        "merittoUserId": 13102706
+        "merittoUserId": 13102706,
+        "isActive": true
     },
     {
         "id": 4,
@@ -33,7 +36,8 @@
         "role": "counsellor",
         "team": "Management",
         "agency": null,
-        "merittoUserId": 13103853
+        "merittoUserId": 13103853,
+        "isActive": false
     },
     {
         "id": 5,
@@ -42,16 +46,18 @@
         "role": "counsellor",
         "team": "Management",
         "agency": null,
-        "merittoUserId": 13106715
+        "merittoUserId": 13106715,
+        "isActive": false
     },
     {
         "id": 6,
         "name": "Nidhi Khandelwal",
         "email": "c-nidhi.khandelwal@bennett.edu.in",
         "role": "counsellor",
-        "team": "Media/Liberal Arts",
+        "team": "Design",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16044516
+        "merittoUserId": 16044516,
+        "isActive": true
     },
     {
         "id": 7,
@@ -60,7 +66,8 @@
         "role": "counsellor",
         "team": "Engineering",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16044517
+        "merittoUserId": 16044517,
+        "isActive": true
     },
     {
         "id": 8,
@@ -69,7 +76,8 @@
         "role": "counsellor",
         "team": "Inbound",
         "agency": null,
-        "merittoUserId": 16058172
+        "merittoUserId": 16058172,
+        "isActive": false
     },
     {
         "id": 9,
@@ -78,7 +86,8 @@
         "role": "counsellor",
         "team": "Management",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16063206
+        "merittoUserId": 16063206,
+        "isActive": true
     },
     {
         "id": 10,
@@ -87,7 +96,8 @@
         "role": "mis_executive",
         "team": "Inbound",
         "agency": null,
-        "merittoUserId": 16063244
+        "merittoUserId": 16063244,
+        "isActive": true
     },
     {
         "id": 11,
@@ -96,7 +106,8 @@
         "role": "counsellor",
         "team": "Inbound",
         "agency": null,
-        "merittoUserId": 16077523
+        "merittoUserId": 16077523,
+        "isActive": false
     },
     {
         "id": 12,
@@ -105,7 +116,8 @@
         "role": "counsellor",
         "team": "Inbound",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16078227
+        "merittoUserId": 16078227,
+        "isActive": true
     },
     {
         "id": 13,
@@ -114,16 +126,18 @@
         "role": "counsellor",
         "team": "Management",
         "agency": "AM2PM",
-        "merittoUserId": 16078230
+        "merittoUserId": 16078230,
+        "isActive": true
     },
     {
         "id": 14,
         "name": "Sumitra",
         "email": "c-sumitra.bharti@bennett.edu.in",
         "role": "counsellor",
-        "team": "Inbound",
+        "team": "Law",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16088891
+        "merittoUserId": 16088891,
+        "isActive": true
     },
     {
         "id": 15,
@@ -132,7 +146,8 @@
         "role": "counsellor",
         "team": "Media/Liberal Arts",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16088893
+        "merittoUserId": 16088893,
+        "isActive": true
     },
     {
         "id": 16,
@@ -141,7 +156,8 @@
         "role": "counsellor",
         "team": "Inbound",
         "agency": "AM2PM",
-        "merittoUserId": 16088894
+        "merittoUserId": 16088894,
+        "isActive": true
     },
     {
         "id": 17,
@@ -150,7 +166,8 @@
         "role": "counsellor",
         "team": "Engineering",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16088898
+        "merittoUserId": 16088898,
+        "isActive": true
     },
     {
         "id": 18,
@@ -159,7 +176,8 @@
         "role": "counsellor",
         "team": "Engineering",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16088900
+        "merittoUserId": 16088900,
+        "isActive": true
     },
     {
         "id": 19,
@@ -168,7 +186,8 @@
         "role": "counsellor",
         "team": "Inbound",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16090025
+        "merittoUserId": 16090025,
+        "isActive": true
     },
     {
         "id": 20,
@@ -177,7 +196,8 @@
         "role": "counsellor",
         "team": "Law",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16091091
+        "merittoUserId": 16091091,
+        "isActive": false
     },
     {
         "id": 21,
@@ -186,7 +206,8 @@
         "role": "counsellor",
         "team": "Management",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16091096
+        "merittoUserId": 16091096,
+        "isActive": true
     },
     {
         "id": 22,
@@ -195,7 +216,8 @@
         "role": "counsellor",
         "team": "Media/Liberal Arts",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16091100
+        "merittoUserId": 16091100,
+        "isActive": true
     },
     {
         "id": 23,
@@ -204,7 +226,8 @@
         "role": "counsellor",
         "team": "Media/Liberal Arts",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16091101
+        "merittoUserId": 16091101,
+        "isActive": true
     },
     {
         "id": 24,
@@ -213,7 +236,8 @@
         "role": "counsellor",
         "team": "Inbound",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16091104
+        "merittoUserId": 16091104,
+        "isActive": true
     },
     {
         "id": 25,
@@ -222,7 +246,8 @@
         "role": "counsellor",
         "team": "Engineering",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16092313
+        "merittoUserId": 16092313,
+        "isActive": true
     },
     {
         "id": 26,
@@ -231,16 +256,18 @@
         "role": "counsellor",
         "team": "Inbound",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16092314
+        "merittoUserId": 16092314,
+        "isActive": true
     },
     {
         "id": 27,
         "name": "Shahid Mirza",
         "email": "c-shahid.mirza@bennett.edu.in",
-        "role": "counsellor",
-        "team": "Inbound",
+        "role": "quality_analyst",
+        "team": null,
         "agency": null,
-        "merittoUserId": 16092316
+        "merittoUserId": 16092316,
+        "isActive": true
     },
     {
         "id": 28,
@@ -249,7 +276,8 @@
         "role": "counsellor",
         "team": "Engineering",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16092318
+        "merittoUserId": 16092318,
+        "isActive": true
     },
     {
         "id": 29,
@@ -258,7 +286,8 @@
         "role": "counsellor",
         "team": "Engineering",
         "agency": null,
-        "merittoUserId": 16094075
+        "merittoUserId": 16094075,
+        "isActive": false
     },
     {
         "id": 30,
@@ -267,7 +296,8 @@
         "role": "counsellor",
         "team": "Management",
         "agency": "AM2PM",
-        "merittoUserId": 16094403
+        "merittoUserId": 16094403,
+        "isActive": true
     },
     {
         "id": 31,
@@ -276,7 +306,8 @@
         "role": "counsellor",
         "team": "Management",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16094405
+        "merittoUserId": 16094405,
+        "isActive": true
     },
     {
         "id": 32,
@@ -285,16 +316,18 @@
         "role": "counsellor",
         "team": "Inbound",
         "agency": "AM2PM",
-        "merittoUserId": 16094406
+        "merittoUserId": 16094406,
+        "isActive": true
     },
     {
         "id": 33,
         "name": "Bashar Nasir",
         "email": "c-bashar.nasir@bennett.edu.in",
         "role": "counsellor",
-        "team": "Engineering",
+        "team": "Management",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16095366
+        "merittoUserId": 16095366,
+        "isActive": true
     },
     {
         "id": 34,
@@ -303,7 +336,8 @@
         "role": "counsellor",
         "team": "Law",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16100476
+        "merittoUserId": 16100476,
+        "isActive": true
     },
     {
         "id": 35,
@@ -312,7 +346,8 @@
         "role": "counsellor",
         "team": "Engineering",
         "agency": "AM2PM",
-        "merittoUserId": 16100477
+        "merittoUserId": 16100477,
+        "isActive": true
     },
     {
         "id": 36,
@@ -321,16 +356,18 @@
         "role": "counsellor",
         "team": "Media/Liberal Arts",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16101107
+        "merittoUserId": 16101107,
+        "isActive": false
     },
     {
         "id": 37,
         "name": "Karnika Sharma",
         "email": "c-karnika.sharma@bennett.edu.in",
         "role": "counsellor",
-        "team": "Inbound",
+        "team": "Law",
         "agency": "AM2PM",
-        "merittoUserId": 16101111
+        "merittoUserId": 16101111,
+        "isActive": true
     },
     {
         "id": 38,
@@ -339,7 +376,8 @@
         "role": "counsellor",
         "team": "Media/Liberal Arts",
         "agency": "AM2PM",
-        "merittoUserId": 16101114
+        "merittoUserId": 16101114,
+        "isActive": true
     },
     {
         "id": 39,
@@ -348,7 +386,8 @@
         "role": "counsellor",
         "team": "Engineering",
         "agency": "AM2PM",
-        "merittoUserId": 16101117
+        "merittoUserId": 16101117,
+        "isActive": false
     },
     {
         "id": 40,
@@ -357,7 +396,8 @@
         "role": "counsellor",
         "team": "Engineering",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16101699
+        "merittoUserId": 16101699,
+        "isActive": true
     },
     {
         "id": 41,
@@ -366,7 +406,8 @@
         "role": "counsellor",
         "team": "Engineering",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16101702
+        "merittoUserId": 16101702,
+        "isActive": true
     },
     {
         "id": 42,
@@ -375,7 +416,8 @@
         "role": "counsellor",
         "team": "Management",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16101703
+        "merittoUserId": 16101703,
+        "isActive": true
     },
     {
         "id": 43,
@@ -384,7 +426,8 @@
         "role": "counsellor",
         "team": "Inbound",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16101709
+        "merittoUserId": 16101709,
+        "isActive": true
     },
     {
         "id": 44,
@@ -393,7 +436,8 @@
         "role": "counsellor",
         "team": "Inbound",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16101712
+        "merittoUserId": 16101712,
+        "isActive": true
     },
     {
         "id": 45,
@@ -402,7 +446,8 @@
         "role": "counsellor",
         "team": "Engineering",
         "agency": "AM2PM",
-        "merittoUserId": 16101714
+        "merittoUserId": 16101714,
+        "isActive": true
     },
     {
         "id": 46,
@@ -411,7 +456,8 @@
         "role": "counsellor",
         "team": "Engineering",
         "agency": "AM2PM",
-        "merittoUserId": 16101715
+        "merittoUserId": 16101715,
+        "isActive": true
     },
     {
         "id": 47,
@@ -420,7 +466,8 @@
         "role": "counsellor",
         "team": "Engineering",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16101721
+        "merittoUserId": 16101721,
+        "isActive": true
     },
     {
         "id": 48,
@@ -429,7 +476,8 @@
         "role": "counsellor",
         "team": "Inbound",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16101727
+        "merittoUserId": 16101727,
+        "isActive": true
     },
     {
         "id": 49,
@@ -438,16 +486,18 @@
         "role": "counsellor",
         "team": "Management",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16101730
+        "merittoUserId": 16101730,
+        "isActive": true
     },
     {
         "id": 50,
         "name": "Ishika Singh",
         "email": "c-ishika.singh@bennett.edu.in",
         "role": "counsellor",
-        "team": "Media/Liberal Arts",
+        "team": "Engineering",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16101732
+        "merittoUserId": 16101732,
+        "isActive": true
     },
     {
         "id": 51,
@@ -456,7 +506,8 @@
         "role": "counsellor",
         "team": "Engineering",
         "agency": "AM2PM",
-        "merittoUserId": 16101735
+        "merittoUserId": 16101735,
+        "isActive": true
     },
     {
         "id": 52,
@@ -465,7 +516,8 @@
         "role": "counsellor",
         "team": "Law",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16101737
+        "merittoUserId": 16101737,
+        "isActive": true
     },
     {
         "id": 53,
@@ -474,16 +526,18 @@
         "role": "counsellor",
         "team": "Inbound",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16102196
+        "merittoUserId": 16102196,
+        "isActive": false
     },
     {
         "id": 54,
         "name": "Palki Mittal",
         "email": "c-palki.mittal@bennett.edu.in",
         "role": "counsellor",
-        "team": "Media/Liberal Arts",
+        "team": "Engineering",
         "agency": "AM2PM",
-        "merittoUserId": 16102197
+        "merittoUserId": 16102197,
+        "isActive": true
     },
     {
         "id": 55,
@@ -492,7 +546,8 @@
         "role": "counsellor",
         "team": "Inbound",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16104477
+        "merittoUserId": 16104477,
+        "isActive": true
     },
     {
         "id": 56,
@@ -501,7 +556,8 @@
         "role": "counsellor",
         "team": "Engineering",
         "agency": "SKS Enterprises",
-        "merittoUserId": 16104478
+        "merittoUserId": 16104478,
+        "isActive": true
     },
     {
         "id": 57,
@@ -510,6 +566,7 @@
         "role": "admin",
         "team": null,
         "agency": null,
-        "merittoUserId": null
+        "merittoUserId": null,
+        "isActive": true
     }
 ]

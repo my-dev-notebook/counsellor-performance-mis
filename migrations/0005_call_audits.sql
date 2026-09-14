@@ -1,8 +1,7 @@
 -- Migration number: 0005 	 2026-09-14T18:00:00.000Z
 
--- Quality analysts audit calls, nothing else: no monthly/daily entries, no
--- dashboards. The role gets its permissions in src/lib/auth/permissions.ts.
-INSERT INTO roles (id, name) VALUES (5, 'quality_analyst');
+-- Quality analysts (role 5, seeded in 0001) audit calls, nothing else: no
+-- monthly/daily entries, no dashboards. Permissions: src/lib/auth/permissions.ts.
 
 -- One row per AUDITED CALL. A quality analyst picks one of a counsellor's
 -- calls every few days and scores it on eight fixed parameters (A-H, labels

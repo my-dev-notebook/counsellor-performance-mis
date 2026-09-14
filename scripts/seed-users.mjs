@@ -23,7 +23,7 @@ const ROSTER_PATH = "scripts/seed/users.json";
 const OUT_PATH = "migrations/0002_seed_users.sql";
 
 const TEAMS = { Design: 1, Engineering: 2, Inbound: 3, Law: 4, Management: 5, "Media/Liberal Arts": 6 };
-const ROLES = { counsellor: 1, team_leader: 2, mis_executive: 3, admin: 4 };
+const ROLES = { counsellor: 1, team_leader: 2, mis_executive: 3, admin: 4, quality_analyst: 5 };
 // Insert order is the id: AM2PM = 1, SKS Enterprises = 2.
 const AGENCIES = ["AM2PM", "SKS Enterprises"];
 const agencyId = (name) => {
@@ -58,10 +58,12 @@ async function main() {
         if ((user.role === "counsellor" || user.role === "team_leader") && user.team === null) {
             throw new Error(`${user.name}: ${user.role} without a team`);
         }
+        if (typeof user.isActive !== "boolean") throw new Error(`${user.name}: isActive must be a boolean`);
     }
 
     const counts = {};
     for (const user of roster) counts[user.role] = (counts[user.role] ?? 0) + 1;
+    const inactiveCount = roster.filter((user) => !user.isActive).length;
 
     const out = [];
     out.push(`-- Migration number: 0002 \t ${new Date().toISOString()}`);
@@ -75,7 +77,7 @@ async function main() {
     out.push("-- trailing \" Team\", which maps 1:1 onto the teams in 0001; users listed under");
     out.push("-- several teams take the first canonical one.");
     out.push("--");
-    out.push(`-- ${Object.entries(counts).map(([role, n]) => `${String(n)} ${role}`).join(", ")}.`);
+    out.push(`-- ${Object.entries(counts).map(([role, n]) => `${String(n)} ${role}`).join(", ")}; ${String(inactiveCount)} seeded inactive.`);
     out.push("--");
     out.push(`-- Every user starts with the same default password and password_changed_at`);
     out.push("-- NULL, so the app forces a change on first login. Each hash carries its own");
@@ -84,6 +86,9 @@ async function main() {
     out.push("-- agency_id comes from the \"Agency Name\" column of the monthly performance");
     out.push("-- workbooks (the Meritto dump carries no agency field); users the workbooks");
     out.push("-- never list keep NULL and get assigned through the roster UI.");
+    out.push("--");
+    out.push("-- is_active is 0 for counsellors missing from the Counsellors_Team_Wise.csv");
+    out.push("-- roster (they left); the changelog carries their 1 -> 0 deactivation.");
     out.push("");
     out.push("INSERT INTO agencies (name) VALUES");
     out.push(AGENCIES.map((name) => `  (${quote(name)})`).join(",\n") + ";");
@@ -96,7 +101,7 @@ async function main() {
         rows.push(
             `  (${String(user.id)}, ${quote(user.name)}, ${quote(user.email)}, ${nullable(user.merittoUserId)}, ` +
                 `${String(ROLES[user.role])}, ${nullable(user.team === null ? null : TEAMS[user.team])}, ` +
-                `${nullable(agencyId(user.agency))}, 1, ${quote(hash)}, NULL)`,
+                `${nullable(agencyId(user.agency))}, ${user.isActive ? "1" : "0"}, ${quote(hash)}, NULL)`,
         );
     }
     out.push(rows.join(",\n") + ";");
@@ -110,6 +115,7 @@ async function main() {
         changes.push(`  (${String(user.id)}, 'role_id', NULL, ${String(ROLES[user.role])}, NULL)`);
         if (user.team !== null) changes.push(`  (${String(user.id)}, 'team_id', NULL, ${String(TEAMS[user.team])}, NULL)`);
         if (user.agency !== null) changes.push(`  (${String(user.id)}, 'agency_id', NULL, ${String(agencyId(user.agency))}, NULL)`);
+        if (!user.isActive) changes.push(`  (${String(user.id)}, 'is_active', 1, 0, NULL)`);
     }
     out.push(changes.join(",\n") + ";");
     out.push("");
