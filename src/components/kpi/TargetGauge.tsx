@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import type { Summary } from "@/lib/metrics/summarize";
 import type { Status } from "@/schemas/parser";
 import { deriveStatus } from "@/lib/metrics/buckets";
@@ -10,6 +11,73 @@ const STATUS_STROKE: Record<Status, string> = {
     Red: "var(--destructive)",
     Unknown: "var(--muted-foreground)",
 };
+
+const CONFETTI_COLORS = ["var(--success)", "var(--info)", "var(--warning)", "var(--destructive)", "var(--primary)"];
+
+/**
+ * Deterministic pseudo-random (LCG) so the server and client render identical
+ * pieces — `Math.random()` here would be a hydration mismatch.
+ */
+function seededRandom(seed: number): () => number {
+    let state = seed;
+    return () => {
+        state = (state * 1664525 + 1013904223) % 4294967296;
+        return state / 4294967296;
+    };
+}
+
+interface ConfettiPiece {
+    dx: string;
+    dy: string;
+    rot: string;
+    delay: string;
+    color: string;
+    round: boolean;
+}
+
+/** 28 pieces fanned across the top half-circle, so they burst up and out from the needle hub. */
+const CONFETTI_PIECES: ConfettiPiece[] = (() => {
+    const rand = seededRandom(7);
+    return Array.from({ length: 28 }, (_, i) => {
+        const angle = Math.PI * (0.1 + 0.8 * rand());
+        const distance = 70 + 80 * rand();
+        return {
+            dx: `${(Math.cos(angle) * distance).toFixed(0)}px`,
+            dy: `${(-Math.sin(angle) * distance).toFixed(0)}px`,
+            rot: `${(360 + 540 * rand()).toFixed(0)}deg`,
+            delay: `${(rand() * 0.25).toFixed(2)}s`,
+            color: CONFETTI_COLORS[i % CONFETTI_COLORS.length] ?? "var(--success)",
+            round: i % 4 === 0,
+        };
+    });
+})();
+
+/** Bursts on a loop for as long as the gauge is Green. Hidden for reduced-motion users. */
+function Confetti() {
+    return (
+        <div
+            data-component="Confetti"
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 overflow-hidden motion-reduce:hidden"
+        >
+            {CONFETTI_PIECES.map((piece, i) => (
+                <span
+                    key={i}
+                    className={`confetti-piece absolute top-[62%] left-1/2 block ${piece.round ? "h-2 w-2 rounded-full" : "h-2.5 w-1.5 rounded-[1px]"}`}
+                    style={
+                        {
+                            backgroundColor: piece.color,
+                            "--dx": piece.dx,
+                            "--dy": piece.dy,
+                            "--rot": piece.rot,
+                            "--delay": piece.delay,
+                        } as CSSProperties
+                    }
+                />
+            ))}
+        </div>
+    );
+}
 
 const CX = 100;
 const CY = 100;
@@ -42,8 +110,9 @@ export function TargetGauge({ summary }: { summary: Summary }) {
     return (
         <div
             data-component="TargetGauge"
-            className="flex flex-col items-center rounded-lg border border-border bg-card p-4"
+            className="relative flex flex-col items-center overflow-hidden rounded-lg border border-border bg-card p-4"
         >
+            {status === "Green" && <Confetti />}
             <p className="self-start text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                 Target vs Achieved
             </p>

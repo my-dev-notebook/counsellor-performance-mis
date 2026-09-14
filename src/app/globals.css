@@ -140,3 +140,27 @@ body {
 ::-webkit-scrollbar-corner {
     background: transparent;
 }
+
+/*
+ * Looping confetti over the Target-vs-Achieved gauge while the band is Green (TargetGauge.tsx).
+ * Each 3s cycle is a ~1.7s burst followed by a rest with the pieces hidden, so it
+ * reads as repeated bursts rather than a constant shower.
+ */
+@keyframes confetti-burst {
+    0% {
+        transform: translate(0, 0) rotate(0deg) scale(0.4);
+        opacity: 1;
+    }
+    40% {
+        transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(1);
+        opacity: 1;
+    }
+    56%,
+    100% {
+        transform: translate(var(--dx), calc(var(--dy) + 32px)) rotate(calc(var(--rot) * 1.4)) scale(1);
+        opacity: 0;
+    }
+}
+.confetti-piece {
+    animation: confetti-burst 3s cubic-bezier(0.2, 0.7, 0.3, 1) var(--delay) infinite both;
+}
