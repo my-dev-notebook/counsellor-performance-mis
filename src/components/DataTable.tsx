@@ -143,6 +143,9 @@ export function DataTable<Row>({
                     })}
                 </tbody>
             </table>
+            <p className="border-t border-border bg-muted/30 px-3 py-1.5 text-xs text-muted-foreground">
+                {rows.length} {rows.length === 1 ? "row" : "rows"}
+            </p>
         </div>
     );
 }

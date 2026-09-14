@@ -243,7 +243,12 @@ const COLUMNS: Column<TeamWithUsage>[] = [
         className: "text-muted-foreground",
         render: (t) => (t.leaders.length === 0 ? "—" : t.leaders.map((l) => l.name).join(", ")),
     },
-    { key: "members", header: "Members", className: "text-muted-foreground", render: (t) => t.memberCount },
+    {
+        key: "members",
+        header: "Members (active / total)",
+        className: "text-muted-foreground",
+        render: (t) => `${String(t.activeMemberCount)} / ${String(t.memberCount)}`,
+    },
     { key: "actions", header: "", srLabel: "Actions", render: (t, state) => <TeamActions team={t} state={state} /> },
 ];
 

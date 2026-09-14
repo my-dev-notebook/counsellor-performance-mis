@@ -1,4 +1,4 @@
-import { and, count, eq } from "drizzle-orm";
+import { and, count, eq, sql } from "drizzle-orm";
 import { getDb } from "@/db/client";
 import { admissions, counsellorPerfMonthly, roles, teams, users } from "@/db/schema";
 import type { Team } from "@/db/types";
@@ -18,6 +18,8 @@ export interface TeamWithUsage extends Team {
     leaders: TeamLeader[];
     /** Users (active or not) currently on the team. */
     memberCount: number;
+    /** Members with `is_active = 1`. */
+    activeMemberCount: number;
     /** Monthly entries + daily admission rows whose snapshot team is this one. */
     historyCount: number;
 }
@@ -33,7 +35,14 @@ export async function listTeamsWithUsage(): Promise<TeamWithUsage[]> {
             .innerJoin(roles, eq(users.roleId, roles.id))
             .where(and(eq(roles.name, "team_leader"), eq(users.isActive, 1)))
             .orderBy(users.name),
-        db.select({ teamId: users.teamId, n: count() }).from(users).groupBy(users.teamId),
+        db
+            .select({
+                teamId: users.teamId,
+                n: count(),
+                active: sql<number>`coalesce(sum(${users.isActive}), 0)`.mapWith(Number),
+            })
+            .from(users)
+            .groupBy(users.teamId),
         db
             .select({ teamId: counsellorPerfMonthly.teamId, n: count() })
             .from(counsellorPerfMonthly)
@@ -43,12 +52,14 @@ export async function listTeamsWithUsage(): Promise<TeamWithUsage[]> {
     const tally = (rows: { teamId: number | null; n: number }[]) =>
         new Map(rows.filter((r) => r.teamId !== null).map((r) => [r.teamId, r.n]));
     const memberBy = tally(members);
+    const activeBy = tally(members.map((r) => ({ teamId: r.teamId, n: r.active })));
     const monthlyBy = tally(monthly);
     const dailyBy = tally(daily);
     return all.map((team) => ({
         ...team,
         leaders: leaders.filter((l) => l.teamId === team.id).map(({ id, name }) => ({ id, name })),
         memberCount: memberBy.get(team.id) ?? 0,
+        activeMemberCount: activeBy.get(team.id) ?? 0,
         historyCount: (monthlyBy.get(team.id) ?? 0) + (dailyBy.get(team.id) ?? 0),
     }));
 }
