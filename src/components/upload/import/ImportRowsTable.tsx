@@ -132,12 +132,12 @@ export function ImportRowsTable({
             render: (v) => (
                 <div className="min-w-0">
                     <span className="font-medium text-foreground">{v.row.input.name}</span>
-                    <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+                    <div className="mt-0.5 flex items-center gap-x-2 text-xs whitespace-nowrap text-muted-foreground">
                         <StatusChip status={v.status} />
                         <span className="whitespace-nowrap">
                             {v.row.input.sheet} · r{String(v.row.input.row)}
                         </span>
-                        {v.row.input.email && <span className="break-all">{v.row.input.email}</span>}
+                        {v.row.input.email && <span className="truncate">{v.row.input.email}</span>}
                     </div>
                 </div>
             ),

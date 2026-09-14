@@ -132,7 +132,9 @@ export function DataTable<Row>({
                                 {state.expanded && renderExpanded && (
                                     <tr className="bg-info/10">
                                         <td colSpan={columns.length} className={panelClassName}>
-                                            {renderExpanded(row, state)}
+                                            {/* w-0 + min-w-full: the panel fills the row without contributing to the
+                                                auto-layout column widths, so opening it never resizes the other rows. */}
+                                            <div className="w-0 min-w-full">{renderExpanded(row, state)}</div>
                                         </td>
                                     </tr>
                                 )}
