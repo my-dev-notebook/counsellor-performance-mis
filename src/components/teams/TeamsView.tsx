@@ -7,14 +7,8 @@ import { Select } from "@/components/Select";
 import type { MenuItem } from "@/components/RowMenu";
 import { DataTable } from "@/components/DataTable";
 import type { Column, RowState } from "@/components/DataTable";
+import { roleLabel } from "@/lib/auth/permissions";
 import { createTeamAction, deleteTeamAction, updateTeamAction } from "@/app/(app)/teams/actions";
-
-const ROLE_LABELS: Record<string, string> = {
-    counsellor: "Counsellor",
-    team_leader: "Team Leader",
-    mis_executive: "MIS Executive",
-    admin: "Admin",
-};
 
 /** An active user who could be appointed as a leader. */
 export interface LeaderCandidate {
@@ -109,7 +103,7 @@ function TeamEditPanel({
             .map((c) => ({
                 id: c.id,
                 name: c.name,
-                note: `${ROLE_LABELS[c.roleName] ?? c.roleName}${c.teamId !== null && c.teamId !== team.id ? ` · ${c.teamName ?? "other team"}` : ""}`,
+                note: `${roleLabel(c.roleName)}${c.teamId !== null && c.teamId !== team.id ? ` · ${c.teamName ?? "other team"}` : ""}`,
             })),
     ];
 

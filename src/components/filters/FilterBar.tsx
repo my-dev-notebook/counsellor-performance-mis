@@ -41,59 +41,82 @@ function FilterSelect({
     );
 }
 
+export type FilterField = keyof Filters;
+
+export const ALL_FILTER_FIELDS: readonly FilterField[] = ["team", "agency", "status", "counsellor"];
+
+const GRID_COLUMNS: Record<number, string> = {
+    1: "sm:grid-cols-1",
+    2: "sm:grid-cols-2",
+    3: "sm:grid-cols-3",
+    4: "sm:grid-cols-4",
+};
+
+/** `fields` picks which selects to show — a single-team reader has no use for a Team filter. */
 export function FilterBar({
     counsellors,
     agencies,
     filters,
     onChange,
     onReset,
+    fields = ALL_FILTER_FIELDS,
 }: {
     counsellors: readonly Counsellor[];
     agencies: readonly string[];
     filters: Filters;
     onChange: (filters: Filters) => void;
     onReset: () => void;
+    fields?: readonly FilterField[];
 }) {
+    const show = (field: FilterField) => fields.includes(field);
     return (
         <div
             data-component="FilterBar"
             className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4 sm:flex-row sm:items-end sm:justify-between"
         >
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
-                <FilterSelect
-                    label="Team"
-                    value={filters.team}
-                    options={teamOptions(counsellors)}
-                    onChange={(team) => {
-                        onChange({ ...filters, team, counsellor: "All" });
-                    }}
-                />
-                <FilterSelect
-                    label="Agency"
-                    value={filters.agency}
-                    options={agencies}
-                    disabled={agencies.length === 0}
-                    disabledHint="Not in this file"
-                    onChange={(agency) => {
-                        onChange({ ...filters, agency, counsellor: "All" });
-                    }}
-                />
-                <FilterSelect
-                    label="Status"
-                    value={filters.status}
-                    options={STATUS_OPTIONS}
-                    onChange={(status) => {
-                        onChange({ ...filters, status: status as Filters["status"], counsellor: "All" });
-                    }}
-                />
-                <FilterSelect
-                    label="Counsellor"
-                    value={filters.counsellor}
-                    options={counsellorOptions(counsellors, filters)}
-                    onChange={(counsellor) => {
-                        onChange({ ...filters, counsellor });
-                    }}
-                />
+            <div className={`grid grid-cols-1 gap-4 ${GRID_COLUMNS[fields.length] ?? "sm:grid-cols-4"}`}>
+                {show("team") && (
+                    <FilterSelect
+                        label="Team"
+                        value={filters.team}
+                        options={teamOptions(counsellors)}
+                        onChange={(team) => {
+                            onChange({ ...filters, team, counsellor: "All" });
+                        }}
+                    />
+                )}
+                {show("agency") && (
+                    <FilterSelect
+                        label="Agency"
+                        value={filters.agency}
+                        options={agencies}
+                        disabled={agencies.length === 0}
+                        disabledHint="Not in this file"
+                        onChange={(agency) => {
+                            onChange({ ...filters, agency, counsellor: "All" });
+                        }}
+                    />
+                )}
+                {show("status") && (
+                    <FilterSelect
+                        label="Status"
+                        value={filters.status}
+                        options={STATUS_OPTIONS}
+                        onChange={(status) => {
+                            onChange({ ...filters, status: status as Filters["status"], counsellor: "All" });
+                        }}
+                    />
+                )}
+                {show("counsellor") && (
+                    <FilterSelect
+                        label="Counsellor"
+                        value={filters.counsellor}
+                        options={counsellorOptions(counsellors, filters)}
+                        onChange={(counsellor) => {
+                            onChange({ ...filters, counsellor });
+                        }}
+                    />
+                )}
             </div>
             <button
                 type="button"

@@ -17,6 +17,7 @@ const USER_COLUMNS = {
     agencyId: users.agencyId,
     agencyName: agencies.name,
     isActive: users.isActive,
+    dateOfJoining: users.dateOfJoining,
 };
 
 function toUserRow(row: Omit<UserRow, "isActive"> & { isActive: number }): UserRow {
@@ -175,6 +176,7 @@ export async function createUser(
         name: string;
         email: string;
         merittoUserId: number | null;
+        dateOfJoining: string | null;
         roleId: number;
         teamId: number | null;
         agencyId: number | null;
@@ -189,6 +191,7 @@ export async function createUser(
             name: input.name,
             email: input.email.trim().toLowerCase(),
             merittoUserId: input.merittoUserId,
+            dateOfJoining: input.dateOfJoining,
             roleId: input.roleId,
             teamId: input.teamId,
             agencyId: input.agencyId,
@@ -211,10 +214,10 @@ export async function createUser(
     return inserted.id;
 }
 
-/** Name / email / Meritto id only — not logged, none of them affect history. */
+/** Name / email / Meritto id / joining date only — not logged, none of them affect history. */
 export async function updateUserProfile(
     id: number,
-    input: { name: string; email: string; merittoUserId: number | null },
+    input: { name: string; email: string; merittoUserId: number | null; dateOfJoining: string | null },
 ): Promise<void> {
     const db = await getDb();
     await db
@@ -223,6 +226,7 @@ export async function updateUserProfile(
             name: input.name,
             email: input.email.trim().toLowerCase(),
             merittoUserId: input.merittoUserId,
+            dateOfJoining: input.dateOfJoining,
             updatedAt: new Date().toISOString(),
         })
         .where(eq(users.id, id));

@@ -66,7 +66,7 @@ function Figure({
     db: number | null | undefined;
     sheet: number | null;
     differs: boolean;
-    note?: string;
+    note?: string | undefined;
 }) {
     if (db === undefined) return <span data-component="Figure">{formatInt(sheet)}</span>;
     return (

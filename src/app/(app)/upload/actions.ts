@@ -19,7 +19,7 @@ export async function planImportAction(input: PlanImportInput): Promise<ImportPl
 /**
  * Write the operator's decisions. Creating users or moving them between
  * teams is roster management, so those rows additionally need
- * `manageRoster` (MIS executives and admins both have it).
+ * `manageRoster`; creating agencies needs `manageAgencies`.
  */
 export async function commitImportAction(input: CommitImportInput): Promise<CommitOutcome> {
     const parsed = CommitImportInput.parse(input);
@@ -29,6 +29,12 @@ export async function commitImportAction(input: CommitImportInput): Promise<Comm
     );
     if (touchesRoster && !actor.permissions.manageRoster) {
         return { ok: false, kind: "invalid", message: "You may not create users or change roster assignments." };
+    }
+    const createsAgencies = parsed.rows.some(
+        (row) => row.action !== "skip" && row.agency !== null && row.agency.kind === "new",
+    );
+    if (createsAgencies && !actor.permissions.manageAgencies) {
+        return { ok: false, kind: "invalid", message: "You may not create agencies." };
     }
     const outcome = await commitImport(parsed, actor);
     if (outcome.ok) refresh();

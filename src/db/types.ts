@@ -40,6 +40,8 @@ export interface UserRow {
     agencyId: number | null;
     agencyName: string | null;
     isActive: boolean;
+    /** "YYYY-MM-DD", or null when not recorded. */
+    dateOfJoining: string | null;
 }
 
 /** One `user_changes` row, with the actor's name joined in. */

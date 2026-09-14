@@ -10,7 +10,7 @@ import { and, eq, or, sql } from "drizzle-orm";
  * mis_executive (see `isModerator`).
  */
 
-export const ROLE_NAMES = ["counsellor", "team_leader", "mis_executive", "admin"] as const;
+export const ROLE_NAMES = ["counsellor", "team_leader", "mis_executive", "admin", "quality_analyst"] as const;
 export type RoleName = (typeof ROLE_NAMES)[number];
 
 export function isRoleName(name: string): name is RoleName {
@@ -22,6 +22,12 @@ export interface Permissions {
     readAllTeams: boolean;
     /** Read every counsellor row inside the readable teams (otherwise only own rows + team aggregates). */
     readTeamRows: boolean;
+    /** Dashboards and reports (monthly/yearly performance). Off only for the quality analyst. */
+    viewPerformance: boolean;
+    /** Call audits: the Quality section, create/edit/delete. Quality analysts only. */
+    auditCalls: boolean;
+    /** Open the Users page (read-only unless manageRoster / manageUsers). */
+    viewRoster: boolean;
     /** Monthly targets, daily admissions, finalize. */
     writeEntries: boolean;
     /** Add users, edit profiles, change team/agency. */
@@ -38,6 +44,9 @@ export interface Permissions {
 export const NO_PERMISSIONS: Permissions = {
     readAllTeams: false,
     readTeamRows: false,
+    viewPerformance: false,
+    auditCalls: false,
+    viewRoster: false,
     writeEntries: false,
     manageRoster: false,
     manageUsers: false,
@@ -48,24 +57,30 @@ export const NO_PERMISSIONS: Permissions = {
 
 export const PERMISSIONS: Record<RoleName, Permissions> = {
     // Own rows plus own team's aggregates. Read-only.
-    counsellor: { ...NO_PERMISSIONS },
+    counsellor: { ...NO_PERMISSIONS, viewPerformance: true },
     // Every row of own team. Read-only.
-    team_leader: { ...NO_PERMISSIONS, readTeamRows: true },
-    // Every team; identical for every MIS executive. Writes entries and the
-    // roster, but not roles/activation/passwords.
+    team_leader: { ...NO_PERMISSIONS, readTeamRows: true, viewPerformance: true, viewRoster: true },
+    // Every team; identical for every MIS executive. Writes entries (monthly,
+    // daily, upload) only -- no users, roster, teams or agencies.
     mis_executive: {
         readAllTeams: true,
         readTeamRows: true,
+        viewPerformance: true,
+        auditCalls: false,
+        viewRoster: false,
         writeEntries: true,
-        manageRoster: true,
+        manageRoster: false,
         manageUsers: false,
-        manageAgencies: true,
+        manageAgencies: false,
         manageTeams: false,
         useTools: true,
     },
     admin: {
         readAllTeams: true,
         readTeamRows: true,
+        viewPerformance: true,
+        auditCalls: false,
+        viewRoster: true,
         writeEntries: true,
         manageRoster: true,
         manageUsers: true,
@@ -73,7 +88,34 @@ export const PERMISSIONS: Record<RoleName, Permissions> = {
         manageTeams: true,
         useTools: true,
     },
+    // Audits calls across every team and sees nothing else: no dashboards,
+    // reports, entries, roster or tools. `readAllTeams` is only so the audit
+    // form can list every counsellor.
+    quality_analyst: { ...NO_PERMISSIONS, readAllTeams: true, readTeamRows: true, auditCalls: true },
 };
+
+/** Where a signed-in user lands: the dashboard, or the Quality section for a role that cannot see it. */
+export function homePathFor(permissions: Permissions): string {
+    if (permissions.viewPerformance) return "/";
+    if (permissions.auditCalls) return "/quality";
+    return "/";
+}
+
+/**
+ * Human label for any `roles.name`, known to the code or not: "mis_executive"
+ * -> "MIS Executive", "quality_analyst" -> "Quality Analyst". Roles are read
+ * from the DB wherever they are chosen, so a new role must get a sensible
+ * label without a code change; only acronyms need an override.
+ */
+const ROLE_WORD_OVERRIDES: Record<string, string> = { mis: "MIS" };
+
+export function roleLabel(roleName: string): string {
+    return roleName
+        .split("_")
+        .filter((word) => word !== "")
+        .map((word) => ROLE_WORD_OVERRIDES[word] ?? word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+}
 
 export function permissionsFor(roleName: string): Permissions {
     return isRoleName(roleName) ? PERMISSIONS[roleName] : NO_PERMISSIONS;

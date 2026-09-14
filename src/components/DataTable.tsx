@@ -120,8 +120,8 @@ export function DataTable<Row>({
                                     aria-expanded={canExpand ? state.expanded : undefined}
                                     style={rowStyle?.(row)}
                                     className={`${handleClick ? "cursor-pointer hover:bg-accent/40" : ""} ${
-                                        state.expanded ? "bg-info/10" : ""
-                                    } ${rowClassName?.(row, state) ?? ""}`}
+                                        rowClassName?.(row, state) ?? ""
+                                    }`}
                                 >
                                     {columns.map((col) => (
                                         <td key={col.key} className={`${BODY_CELL} ${col.className ?? ""}`}>
@@ -130,7 +130,7 @@ export function DataTable<Row>({
                                     ))}
                                 </tr>
                                 {state.expanded && renderExpanded && (
-                                    <tr className="bg-info/10">
+                                    <tr>
                                         <td colSpan={columns.length} className={panelClassName}>
                                             {/* w-0 + min-w-full: the panel fills the row without contributing to the
                                                 auto-layout column widths, so opening it never resizes the other rows. */}

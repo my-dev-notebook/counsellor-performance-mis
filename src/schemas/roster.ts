@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DayDate } from "@/schemas/dates";
 
 /**
  * The editable half of a user: name, login email, Meritto id. Team, agency,
@@ -12,6 +13,8 @@ export const ProfileInput = z.object({
     // here because non-counsellors may have no Meritto account; the action
     // layer enforces "required for counsellors" via `assertRoleConstraints`.
     merittoUserId: z.number().int().positive().nullable(),
+    // "YYYY-MM-DD"; null when unknown (every user seeded before the column existed).
+    dateOfJoining: DayDate.nullable(),
 });
 export type ProfileInput = z.infer<typeof ProfileInput>;
 

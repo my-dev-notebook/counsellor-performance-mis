@@ -73,7 +73,12 @@ export async function editUserAction(id: number, input: EditUserInput) {
     const roleName = roleChanged && parsed.roleId !== undefined ? await roleNameFor(parsed.roleId) : target.roleName;
     assertRoleConstraints(roleName, { merittoUserId: parsed.merittoUserId, teamId: parsed.teamId });
 
-    await updateUserProfile(id, { name: parsed.name, email: parsed.email, merittoUserId: parsed.merittoUserId });
+    await updateUserProfile(id, {
+        name: parsed.name,
+        email: parsed.email,
+        merittoUserId: parsed.merittoUserId,
+        dateOfJoining: parsed.dateOfJoining,
+    });
     await applyAssignmentChanges(
         id,
         {

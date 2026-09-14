@@ -1,8 +1,16 @@
 "use client";
 
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import type { MonthlyPoint } from "@/db/queries/reports";
 import { formatInt, formatPct } from "@/lib/format";
+
+/** The fields both a company/team `MonthlyPoint` and a `PersonHistoryPoint` carry. */
+export interface TrendPoint {
+    monthLabel: string;
+    target: number | null;
+    achieved: number | null;
+    nonNegotiable: number | null;
+    pctAchieved: number | null;
+}
 
 const TOOLTIP_STYLE = {
     backgroundColor: "var(--popover)",
@@ -12,21 +20,22 @@ const TOOLTIP_STYLE = {
     fontSize: 12,
 };
 
-export function CompanyTrendChart({ points }: { points: MonthlyPoint[] }) {
+/** Target vs Achieved (with Non-Negotiable) beside Achievement %, month by month. */
+export function TrendCharts({ points }: { points: readonly TrendPoint[] }) {
     if (points.length === 0) {
         return (
-            <p data-component="CompanyTrendChart" className="py-8 text-center text-sm text-muted-foreground">
+            <p data-component="TrendCharts" className="py-8 text-center text-sm text-muted-foreground">
                 No monthly data yet.
             </p>
         );
     }
 
     return (
-        <div data-component="CompanyTrendChart" className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div data-component="TrendCharts" className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <div className="rounded-lg border border-border bg-card p-4">
                 <h3 className="mb-3 text-sm font-semibold text-foreground">Target vs Achieved</h3>
                 <ResponsiveContainer width="100%" height={280}>
-                    <LineChart data={points}>
+                    <LineChart data={[...points]}>
                         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                         <XAxis dataKey="monthLabel" tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} />
                         <YAxis
@@ -66,7 +75,7 @@ export function CompanyTrendChart({ points }: { points: MonthlyPoint[] }) {
             <div className="rounded-lg border border-border bg-card p-4">
                 <h3 className="mb-3 text-sm font-semibold text-foreground">Achievement %</h3>
                 <ResponsiveContainer width="100%" height={280}>
-                    <LineChart data={points}>
+                    <LineChart data={[...points]}>
                         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                         <XAxis dataKey="monthLabel" tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} />
                         <YAxis

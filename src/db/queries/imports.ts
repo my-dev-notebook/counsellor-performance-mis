@@ -185,6 +185,7 @@ export async function commitImport(input: CommitImportInput, actor: { id: number
                 name: row.name,
                 email: row.email,
                 merittoUserId: null,
+                dateOfJoining: null,
                 roleId: counsellorRole.id,
                 teamId: row.teamId,
                 agencyId: agencyIdFor(row.agency),

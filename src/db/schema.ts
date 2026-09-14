@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import { sqliteTable, integer, text, index, uniqueIndex, check } from "drizzle-orm/sqlite-core";
 import { ACHIEVED_SOURCES } from "@/schemas/achieved-source";
+import { OVERALL_RATINGS, RATINGS } from "@/schemas/call-audit";
 
 /**
  * Authoritative schema. History is kept the "snapshot + changelog" way:
@@ -52,6 +53,8 @@ export const users = sqliteTable(
         teamId: integer("team_id").references(() => teams.id),
         agencyId: integer("agency_id").references(() => agencies.id),
         isActive: integer("is_active").notNull().default(1),
+        // ISO date (YYYY-MM-DD). NULL for users seeded before it was tracked.
+        dateOfJoining: text("date_of_joining"),
         // PBKDF2 digest (src/lib/auth/password.ts). Never a plaintext password.
         passwordHash: text("password_hash").notNull(),
         // NULL means the seeded default password is still in place and the
@@ -250,5 +253,100 @@ export const admissions = sqliteTable(
         check("chk_admissions_date_format", sql`${table.date} GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'`),
         check("chk_admissions_applicant_user_id_positive", sql`${table.applicantUserId} > 0`),
         check("chk_admissions_form_id_positive", sql`${table.formId} > 0`),
+    ],
+);
+
+// One row per AUDITED CALL (migrations/0005_call_audits.sql). A quality
+// analyst picks one of a counsellor's calls every few days and scores it on
+// eight fixed parameters, one rating_*/reason_* column pair each (keys and
+// labels in src/schemas/call-audit.ts; renamed from a..h in migration 0007).
+//
+// `period_start`/`period_end` is the date window the call was picked from.
+// Windows may overlap and nothing here is unique; the only rule is that
+// `call_at`'s date falls inside its window. AQS is never stored -- it is
+// (pass + na) / 8, recomputed at read time via `computeAqs`. `overall_rating`
+// is the analyst's own judgement, not derived from AQS.
+//
+// `team_id` snapshots the counsellor's team at audit time, like `admissions`.
+export const callAudits = sqliteTable(
+    "call_audits",
+    {
+        id: integer("id").primaryKey({ autoIncrement: true }),
+        userId: integer("user_id")
+            .notNull()
+            .references(() => users.id),
+        teamId: integer("team_id")
+            .notNull()
+            .references(() => teams.id),
+        auditedBy: integer("audited_by")
+            .notNull()
+            .references(() => users.id),
+        // "YYYY-MM-DD HH:MM", local wall-clock time the call started.
+        callAt: text("call_at").notNull(),
+        durationSeconds: integer("duration_seconds").notNull(),
+        phone: text("phone").notNull(),
+        applicationId: text("application_id"),
+        periodStart: text("period_start").notNull(),
+        periodEnd: text("period_end").notNull(),
+        ratingOpening: text("rating_opening", { enum: RATINGS }).notNull(),
+        ratingLanguage: text("rating_language", { enum: RATINGS }).notNull(),
+        ratingListening: text("rating_listening", { enum: RATINGS }).notNull(),
+        ratingPoliteness: text("rating_politeness", { enum: RATINGS }).notNull(),
+        ratingInformation: text("rating_information", { enum: RATINGS }).notNull(),
+        ratingUsp: text("rating_usp", { enum: RATINGS }).notNull(),
+        ratingClosure: text("rating_closure", { enum: RATINGS }).notNull(),
+        ratingConversion: text("rating_conversion", { enum: RATINGS }).notNull(),
+        reasonOpening: text("reason_opening"),
+        reasonLanguage: text("reason_language"),
+        reasonListening: text("reason_listening"),
+        reasonPoliteness: text("reason_politeness"),
+        reasonInformation: text("reason_information"),
+        reasonUsp: text("reason_usp"),
+        reasonClosure: text("reason_closure"),
+        reasonConversion: text("reason_conversion"),
+        overallRating: text("overall_rating", { enum: OVERALL_RATINGS }).notNull().default("meets_expectations"),
+        feedback: text("feedback").notNull().default(""),
+        createdAt: text("created_at")
+            .notNull()
+            .default(sql`(datetime('now'))`),
+        updatedAt: text("updated_at")
+            .notNull()
+            .default(sql`(datetime('now'))`),
+    },
+    (table) => [
+        index("idx_call_audits_user_call_at").on(table.userId, table.callAt),
+        index("idx_call_audits_team_call_at").on(table.teamId, table.callAt),
+        index("idx_call_audits_period").on(table.periodStart, table.periodEnd),
+        // Two short GLOBs: D1 rejects a GLOB pattern longer than 50 characters.
+        check(
+            "chk_call_audits_call_at_format",
+            sql`length(${table.callAt}) = 16 AND substr(${table.callAt}, 1, 10) GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' AND substr(${table.callAt}, 11, 6) GLOB ' [0-9][0-9]:[0-9][0-9]'`,
+        ),
+        check(
+            "chk_call_audits_period_start_format",
+            sql`${table.periodStart} GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'`,
+        ),
+        check(
+            "chk_call_audits_period_end_format",
+            sql`${table.periodEnd} GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'`,
+        ),
+        check("chk_call_audits_period_order", sql`${table.periodStart} <= ${table.periodEnd}`),
+        check(
+            "chk_call_audits_call_in_period",
+            sql`substr(${table.callAt}, 1, 10) BETWEEN ${table.periodStart} AND ${table.periodEnd}`,
+        ),
+        check("chk_call_audits_duration_non_negative", sql`${table.durationSeconds} >= 0`),
+        check("chk_call_audits_rating_opening", sql`${table.ratingOpening} IN ('pass', 'fail', 'na')`),
+        check("chk_call_audits_rating_language", sql`${table.ratingLanguage} IN ('pass', 'fail', 'na')`),
+        check("chk_call_audits_rating_listening", sql`${table.ratingListening} IN ('pass', 'fail', 'na')`),
+        check("chk_call_audits_rating_politeness", sql`${table.ratingPoliteness} IN ('pass', 'fail', 'na')`),
+        check("chk_call_audits_rating_information", sql`${table.ratingInformation} IN ('pass', 'fail', 'na')`),
+        check("chk_call_audits_rating_usp", sql`${table.ratingUsp} IN ('pass', 'fail', 'na')`),
+        check("chk_call_audits_rating_closure", sql`${table.ratingClosure} IN ('pass', 'fail', 'na')`),
+        check("chk_call_audits_rating_conversion", sql`${table.ratingConversion} IN ('pass', 'fail', 'na')`),
+        check(
+            "chk_call_audits_overall_rating",
+            sql`${table.overallRating} IN ('outstanding', 'exceeded_expectations', 'meets_expectations', 'needs_improvement')`,
+        ),
     ],
 );

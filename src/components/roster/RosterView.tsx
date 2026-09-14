@@ -4,12 +4,13 @@ import { useMemo, useState, useTransition } from "react";
 import { FiPlus } from "react-icons/fi";
 import { RowMenu } from "@/components/RowMenu";
 import { Select } from "@/components/Select";
+import { DatePicker } from "@/components/DatePicker";
 import type { MenuItem } from "@/components/RowMenu";
 import { DataTable } from "@/components/DataTable";
 import type { Column, RowState } from "@/components/DataTable";
 import type { UserRow, Team, Agency, Role } from "@/db/types";
 import type { Permissions } from "@/lib/auth/permissions";
-import { roleRequiresMeritto, roleRequiresTeam } from "@/lib/auth/permissions";
+import { roleLabel, roleRequiresMeritto, roleRequiresTeam } from "@/lib/auth/permissions";
 import { formatText } from "@/lib/format";
 import {
     addUserAction,
@@ -18,17 +19,6 @@ import {
     editUserAction,
     resetPasswordAction,
 } from "@/app/(app)/roster/actions";
-
-const ROLE_LABELS: Record<string, string> = {
-    counsellor: "Counsellor",
-    team_leader: "Team Leader",
-    mis_executive: "MIS Executive",
-    admin: "Admin",
-};
-
-function roleLabel(name: string): string {
-    return ROLE_LABELS[name] ?? name;
-}
 
 function errorMessage(error: unknown, fallback: string): string {
     return error instanceof Error && error.message !== "" ? error.message : fallback;
@@ -64,6 +54,7 @@ function AddUserForm({
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [merittoUserId, setMerittoUserId] = useState("");
+    const [dateOfJoining, setDateOfJoining] = useState("");
     const [roleId, setRoleId] = useState(counsellorRole?.id ?? roles[0]?.id ?? 0);
     const [teamId, setTeamId] = useState<number | "">(teams[0]?.id ?? "");
     const [agencyId, setAgencyId] = useState<number | "">("");
@@ -118,6 +109,7 @@ function AddUserForm({
                     name,
                     email: email.trim(),
                     merittoUserId: parsedMerittoUserId,
+                    dateOfJoining: dateOfJoining === "" ? null : dateOfJoining,
                     roleId,
                     teamId: teamId === "" ? null : teamId,
                     agencyId: agencyId === "" ? null : agencyId,
@@ -125,6 +117,7 @@ function AddUserForm({
                 setName("");
                 setEmail("");
                 setMerittoUserId("");
+                setDateOfJoining("");
                 setAgencyId("");
                 setOpen(false);
             } catch (e) {
@@ -175,6 +168,16 @@ function AddUserForm({
                     className={inputClass}
                 />
             </label>
+            <label className="flex flex-col text-xs font-medium text-muted-foreground">
+                Date of joining (optional)
+                <DatePicker
+                    size="sm"
+                    className="mt-1"
+                    value={dateOfJoining}
+                    onChange={setDateOfJoining}
+                    aria-label="Date of joining"
+                />
+            </label>
             {canManageUsers && (
                 <label className="flex flex-col text-xs font-medium text-muted-foreground">
                     Role
@@ -213,7 +216,10 @@ function AddUserForm({
                     onChange={(value) => {
                         setAgencyId(value === "" ? "" : Number(value));
                     }}
-                    options={[{ value: "", label: "—" }, ...agencies.map((a) => ({ value: String(a.id), label: a.name }))]}
+                    options={[
+                        { value: "", label: "—" },
+                        ...agencies.map((a) => ({ value: String(a.id), label: a.name })),
+                    ]}
                 />
             </label>
             <button type="submit" disabled={pending} className={primaryButton}>
@@ -258,6 +264,7 @@ function UserEditPanel({
     const [name, setName] = useState(user.name);
     const [email, setEmail] = useState(user.email);
     const [merittoUserId, setMerittoUserId] = useState(user.merittoUserId === null ? "" : String(user.merittoUserId));
+    const [dateOfJoining, setDateOfJoining] = useState(user.dateOfJoining ?? "");
     const [roleId, setRoleId] = useState(user.roleId);
     const [teamId, setTeamId] = useState<number | "">(user.teamId ?? "");
     const [agencyId, setAgencyId] = useState<number | "">(user.agencyId ?? "");
@@ -290,6 +297,7 @@ function UserEditPanel({
                     name,
                     email: email.trim(),
                     merittoUserId: parsedMerittoUserId,
+                    dateOfJoining: dateOfJoining === "" ? null : dateOfJoining,
                     ...(canChangeRole ? { roleId } : {}),
                     teamId: teamId === "" ? null : teamId,
                     agencyId: agencyId === "" ? null : agencyId,
@@ -350,6 +358,10 @@ function UserEditPanel({
                     />
                 </label>
                 <label className={fieldLabel}>
+                    Date of joining
+                    <DatePicker className="w-full" value={dateOfJoining} onChange={setDateOfJoining} aria-label="Date of joining" />
+                </label>
+                <label className={fieldLabel}>
                     Role
                     {canChangeRole ? (
                         <Select
@@ -388,7 +400,10 @@ function UserEditPanel({
                         onChange={(value) => {
                             setAgencyId(value === "" ? "" : Number(value));
                         }}
-                        options={[{ value: "", label: "—" }, ...agencies.map((a) => ({ value: String(a.id), label: a.name }))]}
+                        options={[
+                            { value: "", label: "—" },
+                            ...agencies.map((a) => ({ value: String(a.id), label: a.name })),
+                        ]}
                     />
                 </label>
             </div>
@@ -572,7 +587,10 @@ export function RosterView({
                     onChange={(value) => {
                         setRoleFilter(value === "" ? "" : Number(value));
                     }}
-                    options={[{ value: "", label: "All roles" }, ...roles.map((r) => ({ value: String(r.id), label: roleLabel(r.name) }))]}
+                    options={[
+                        { value: "", label: "All roles" },
+                        ...roles.map((r) => ({ value: String(r.id), label: roleLabel(r.name) })),
+                    ]}
                 />
                 <Select
                     size="sm"
@@ -581,7 +599,10 @@ export function RosterView({
                     onChange={(value) => {
                         setTeamFilter(value === "" ? "" : Number(value));
                     }}
-                    options={[{ value: "", label: "All teams" }, ...teams.map((t) => ({ value: String(t.id), label: t.name }))]}
+                    options={[
+                        { value: "", label: "All teams" },
+                        ...teams.map((t) => ({ value: String(t.id), label: t.name })),
+                    ]}
                 />
                 <Select
                     size="sm"
@@ -590,7 +611,10 @@ export function RosterView({
                     onChange={(value) => {
                         setAgencyFilter(value === "" ? "" : Number(value));
                     }}
-                    options={[{ value: "", label: "All agencies" }, ...agencies.map((a) => ({ value: String(a.id), label: a.name }))]}
+                    options={[
+                        { value: "", label: "All agencies" },
+                        ...agencies.map((a) => ({ value: String(a.id), label: a.name })),
+                    ]}
                 />
                 <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
                     <input

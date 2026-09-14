@@ -2,6 +2,7 @@
 -- `wrangler d1 migrations apply` re-runs 0000 onwards from scratch. Needed
 -- whenever migrations/0000_init_schema.sql is rewritten in place (the seed
 -- migrations are rewritten, not appended, in this project). Destructive.
+DROP TABLE IF EXISTS call_audits;
 DROP TABLE IF EXISTS sessions;
 DROP TABLE IF EXISTS user_changes;
 DROP TABLE IF EXISTS admissions;

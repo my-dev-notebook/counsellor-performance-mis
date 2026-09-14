@@ -11,24 +11,29 @@ import {
     FiCalendar,
     FiEdit3,
     FiGrid,
+    FiHeadphones,
     FiKey,
     FiLayers,
     FiLink,
     FiLogOut,
     FiMenu,
+    FiPlusCircle,
     FiUploadCloud,
     FiUsers,
     FiX,
 } from "react-icons/fi";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { logoutAction } from "@/app/(auth)/actions";
-import type { Permissions } from "@/lib/auth/permissions";
+import type { Permissions, RoleName } from "@/lib/auth/permissions";
+import { roleLabel } from "@/lib/auth/permissions";
 
 type NavLink = {
     href: string;
     label: string;
     icon: IconType;
     requires: keyof Permissions | null;
+    /** When set, only these roles see the link (on top of `requires`). */
+    roles?: readonly RoleName[];
     /** Sub-pages shown indented under the parent while any of them is open. */
     children?: { href: string; label: string }[];
 };
@@ -43,7 +48,7 @@ const SECTIONS: NavSection[] = [
                 href: "/",
                 label: "Dashboard",
                 icon: FiGrid,
-                requires: null,
+                requires: "viewPerformance",
                 children: [
                     { href: "/", label: "Monthly" },
                     { href: "/yearly", label: "Yearly" },
@@ -53,11 +58,10 @@ const SECTIONS: NavSection[] = [
                 href: "/reports",
                 label: "Reports",
                 icon: FiBarChart2,
-                requires: null,
+                requires: "viewPerformance",
                 children: [
                     { href: "/reports", label: "Overview" },
                     { href: "/reports/teams", label: "Team Performance" },
-                    { href: "/reports/counsellor", label: "Counsellor History" },
                 ],
             },
         ],
@@ -71,9 +75,17 @@ const SECTIONS: NavSection[] = [
         ],
     },
     {
+        title: "Quality",
+        links: [
+            { href: "/quality", label: "Call Audits", icon: FiHeadphones, requires: "auditCalls" },
+            { href: "/quality/new", label: "New Audit", icon: FiPlusCircle, requires: "auditCalls" },
+            { href: "/quality/mine", label: "My Audits", icon: FiHeadphones, requires: null, roles: ["counsellor"] },
+        ],
+    },
+    {
         title: "Manage",
         links: [
-            { href: "/roster", label: "Users", icon: FiUsers, requires: "readTeamRows" },
+            { href: "/roster", label: "Users", icon: FiUsers, requires: "viewRoster" },
             { href: "/teams", label: "Teams", icon: FiLayers, requires: "manageTeams" },
             { href: "/agencies", label: "Agencies", icon: FiBriefcase, requires: "manageAgencies" },
         ],
@@ -86,13 +98,6 @@ const SECTIONS: NavSection[] = [
         ],
     },
 ];
-
-const ROLE_LABELS: Record<string, string> = {
-    counsellor: "Counsellor",
-    team_leader: "Team Leader",
-    mis_executive: "MIS Executive",
-    admin: "Admin",
-};
 
 const ACTIVE = "bg-primary text-primary-foreground";
 const INACTIVE = "text-muted-foreground hover:bg-accent hover:text-accent-foreground";
@@ -140,7 +145,7 @@ function SidebarLink({ link, pathname }: { link: NavLink; pathname: string }) {
 }
 
 function UserMenu({ user }: { user: { name: string; roleName: string; teamName: string | null } }) {
-    const role = ROLE_LABELS[user.roleName] ?? user.roleName;
+    const role = roleLabel(user.roleName);
     const row = `flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm font-medium whitespace-nowrap ${INACTIVE}`;
     return (
         <div data-component="UserMenu" className="border-t border-border p-3">
@@ -186,7 +191,11 @@ export function Sidebar({
 
     const sections = SECTIONS.map((section) => ({
         ...section,
-        links: section.links.filter((link) => link.requires === null || permissions[link.requires]),
+        links: section.links.filter(
+            (link) =>
+                (link.requires === null || permissions[link.requires]) &&
+                (link.roles === undefined || link.roles.some((role) => role === user.roleName)),
+        ),
     })).filter((section) => section.links.length > 0);
 
     return (

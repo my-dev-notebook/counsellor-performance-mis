@@ -5,7 +5,7 @@ import { RosterView } from "@/components/roster/RosterView";
 import { requirePermission } from "@/lib/auth/session";
 
 export default async function RosterPage() {
-    const user = await requirePermission("readTeamRows");
+    const user = await requirePermission("viewRoster");
     const [users, roles, teams, agencies] = await Promise.all([
         listUsers(user.scope, { includeInactive: true }),
         listRoles(),

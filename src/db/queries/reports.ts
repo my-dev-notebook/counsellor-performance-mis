@@ -1,13 +1,13 @@
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, like, sql } from "drizzle-orm";
 import { getDb } from "@/db/client";
-import { users, teams, counsellorPerfMonthly } from "@/db/schema";
+import { users, teams, counsellorPerfMonthly, admissions } from "@/db/schema";
 import type { Status } from "@/schemas/parser";
 import { derivePctAchieved } from "@/lib/metrics/derive";
 import { deriveStatus } from "@/lib/metrics/buckets";
 import { summarize } from "@/lib/metrics/summarize";
 import { formatMonthLabel } from "@/lib/format";
 import type { Scope } from "@/lib/auth/permissions";
-import { combine, scopeRowCondition } from "@/lib/auth/permissions";
+import { combine, scopeRowCondition, scopeTeamCondition } from "@/lib/auth/permissions";
 import { getMonthlyWorkbook } from "./dashboard";
 import { listMonthsWithData, getAchievedForMonth } from "./performance";
 
@@ -160,4 +160,56 @@ export async function getPersonHistory(userId: number, scope: Scope): Promise<Pe
             };
         }),
     );
+}
+
+/** One team's monthly totals, from the same team aggregates `getTeamMonthlySeries` reads. */
+export async function getTeamMonthlyPoints(teamName: string, scope: Scope): Promise<MonthlyPoint[]> {
+    const series = await getTeamMonthlySeries(scope);
+    return series.find((s) => s.team === teamName)?.points ?? [];
+}
+
+/**
+ * Whose daily admissions to count. `company` is only meaningful for an
+ * all-teams scope; a narrower scope's team filter still applies underneath
+ * (a counsellor asking for "company" gets their own team, nothing more).
+ */
+export type DailySubject = { kind: "company" } | { kind: "team"; teamId: number } | { kind: "person"; userId: number };
+
+export interface DailyPoint {
+    /** "YYYY-MM-DD" */
+    date: string;
+    /** Day of month, 1-31. */
+    day: number;
+    count: number;
+}
+
+/**
+ * Admissions per day across one "YYYY-MM" month for the subject — every day
+ * of the month is present, days without admissions at 0. A person's series is
+ * gated by the scope's ROW filter (individual rows), a team's or the
+ * company's by its TEAM filter (aggregates).
+ */
+export async function getDailyCounts(monthDate: string, subject: DailySubject, scope: Scope): Promise<DailyPoint[]> {
+    const db = await getDb();
+    const subjectCondition =
+        subject.kind === "person"
+            ? combine(eq(admissions.userId, subject.userId), scopeRowCondition(scope, admissions.userId, admissions.teamId))
+            : combine(
+                  subject.kind === "team" ? eq(admissions.teamId, subject.teamId) : undefined,
+                  scopeTeamCondition(scope, admissions.userId, admissions.teamId),
+              );
+
+    const rows = await db
+        .select({ date: admissions.date, count: sql<number>`COUNT(*)` })
+        .from(admissions)
+        .where(combine(like(admissions.date, `${monthDate}-%`), subjectCondition))
+        .groupBy(admissions.date);
+    const byDate = new Map(rows.map((r) => [r.date, Number(r.count)]));
+
+    const [yearStr, monthStr] = monthDate.split("-");
+    const daysInMonth = new Date(Number.parseInt(yearStr ?? "", 10), Number.parseInt(monthStr ?? "", 10), 0).getDate();
+    return Array.from({ length: daysInMonth }, (_, i) => {
+        const date = `${monthDate}-${String(i + 1).padStart(2, "0")}`;
+        return { date, day: i + 1, count: byDate.get(date) ?? 0 };
+    });
 }

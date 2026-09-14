@@ -8,7 +8,7 @@ import { UploadZone } from "@/components/upload/UploadZone";
 import { ParseReportPanel } from "@/components/upload/ParseReportPanel";
 import { ImportReview } from "@/components/upload/import/ImportReview";
 import { ErrorState } from "@/components/ErrorState";
-import { Dashboard } from "@/components/Dashboard";
+import { CompanyDashboard } from "@/components/dashboard/CompanyDashboard";
 
 type Mode = "preview" | "import";
 
@@ -104,7 +104,7 @@ export function UploadPreview({ teamNames, canImport }: { teamNames: string[]; c
                                 }}
                             />
                         ) : (
-                            <Dashboard workbook={state.workbook} />
+                            <CompanyDashboard workbook={state.workbook} />
                         )}
                     </>
                 )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { MONTH_NAMES } from "@/lib/format";
 import { Select } from "@/components/Select";
 
@@ -13,7 +13,7 @@ function toDate(year: number, month: number): string {
     return `${String(year)}-${String(month).padStart(2, "0")}`;
 }
 
-/** Shared month/year navigation control — pushes `?date=YYYY-MM` onto `basePath`. */
+/** Shared month/year navigation control — pushes `?date=YYYY-MM` onto `basePath`, keeping any other query params. */
 export function MonthPicker({
     date,
     existingMonths,
@@ -24,10 +24,13 @@ export function MonthPicker({
     basePath: string;
 }) {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { year, month } = parseDate(date);
 
     const navigate = (y: number, m: number) => {
-        router.push(`${basePath}?date=${toDate(y, m)}`);
+        const params = new URLSearchParams(searchParams);
+        params.set("date", toDate(y, m));
+        router.push(`${basePath}?${params.toString()}`);
     };
 
     return (

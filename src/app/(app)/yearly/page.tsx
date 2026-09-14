@@ -1,17 +1,35 @@
 import { getYearlyWorkbook } from "@/db/queries/dashboard";
 import { listYearsWithData } from "@/db/queries/performance";
 import { Header } from "@/components/Header";
-import { Dashboard } from "@/components/Dashboard";
+import { CompanyDashboard } from "@/components/dashboard/CompanyDashboard";
+import { TeamDashboard } from "@/components/dashboard/TeamDashboard";
+import { CounsellorDashboard } from "@/components/dashboard/CounsellorDashboard";
 import { YearPicker } from "@/components/YearPicker";
 import { currentYearDate, parseYearDateParam } from "@/schemas/dates";
-import { requireUser } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
+import type { CurrentUser } from "@/lib/auth/session";
+import type { ParsedWorkbook } from "@/schemas/parser";
+
+/** Same split as the monthly page; the yearly counsellor view has no calendar (a year has no days grid). */
+function DashboardForScope({ user, workbook }: { user: CurrentUser; workbook: ParsedWorkbook }) {
+    switch (user.scope.kind) {
+        case "all":
+            return <CompanyDashboard workbook={workbook} />;
+        case "team":
+            return <TeamDashboard workbook={workbook} />;
+        case "self":
+            return <CounsellorDashboard workbook={workbook} userId={user.id} />;
+        case "none":
+            return <p className="py-8 text-center text-sm text-muted-foreground">Nothing to show for your account.</p>;
+    }
+}
 
 export default async function YearlyDashboardPage({
     searchParams,
 }: {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-    const user = await requireUser();
+    const user = await requirePermission("viewPerformance");
     const params = await searchParams;
     const years = await listYearsWithData(user.scope);
     const latest = years[0];
@@ -36,7 +54,7 @@ export default async function YearlyDashboardPage({
                     </p>
                 </div>
                 <YearPicker year={year} existingYears={years} basePath="/yearly" />
-                <Dashboard workbook={workbook} />
+                <DashboardForScope user={user} workbook={workbook} />
             </main>
         </div>
     );

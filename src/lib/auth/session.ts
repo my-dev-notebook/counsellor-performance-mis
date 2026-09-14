@@ -5,7 +5,7 @@ import { createSession, deleteSession, extendSession, getSession } from "@/db/qu
 import { getPasswordState, getUserById } from "@/db/queries/users";
 import type { UserRow } from "@/db/types";
 import type { Permissions, Scope } from "@/lib/auth/permissions";
-import { permissionsFor, scopeFor } from "@/lib/auth/permissions";
+import { homePathFor, permissionsFor, scopeFor } from "@/lib/auth/permissions";
 
 /**
  * Data-access layer for "who is making this request".
@@ -112,7 +112,7 @@ export async function requireUser(options?: { allowPasswordChange?: boolean }): 
 /** `requireUser` plus one permission flag; sends the user home when they lack it. */
 export async function requirePermission(permission: keyof Permissions): Promise<CurrentUser> {
     const user = await requireUser();
-    if (!user.permissions[permission]) redirect("/");
+    if (!user.permissions[permission]) redirect(homePathFor(user.permissions));
     return user;
 }
 
