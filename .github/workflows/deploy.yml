@@ -32,6 +32,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Generate Cloudflare binding types
+        run: pnpm run cf-typegen
+
       # Builds with OpenNext and runs `wrangler deploy --env staging`.
       # D1 migrations are intentionally NOT applied here; run
       # `pnpm db:migrate:staging` manually when the schema changes.
