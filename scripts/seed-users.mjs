@@ -8,8 +8,10 @@
  * the app reads as "must change password on first login".
  *
  * Team and role ids match migrations/0001_seed_teams_roles.sql. Agencies are
- * created here as well; every seeded user has agency NULL because the Meritto
- * dump the roster came from carries no agency field.
+ * created here as well, in AGENCIES order, and `agency` in the JSON is the
+ * agency's name (or null). The Meritto dump carries no agency field; the
+ * values come from the "Agency Name" column of the monthly performance
+ * workbooks (tmp/backfill/apply-agencies.mjs).
  *
  * Usage: node scripts/seed-users.mjs
  */
@@ -22,7 +24,14 @@ const OUT_PATH = "migrations/0002_seed_users.sql";
 
 const TEAMS = { Design: 1, Engineering: 2, Inbound: 3, Law: 4, Management: 5, "Media/Liberal Arts": 6 };
 const ROLES = { counsellor: 1, team_leader: 2, mis_executive: 3, admin: 4 };
+// Insert order is the id: AM2PM = 1, SKS Enterprises = 2.
 const AGENCIES = ["AM2PM", "SKS Enterprises"];
+const agencyId = (name) => {
+    if (name === null) return null;
+    const index = AGENCIES.indexOf(name);
+    if (index === -1) throw new Error(`unknown agency ${String(name)}`);
+    return index + 1;
+};
 
 // Mirrors src/lib/auth/password.ts exactly.
 const ALGORITHM = "pbkdf2-sha256";
@@ -72,8 +81,9 @@ async function main() {
     out.push("-- NULL, so the app forces a change on first login. Each hash carries its own");
     out.push("-- random salt (src/lib/auth/password.ts).");
     out.push("--");
-    out.push("-- agency_id is NULL for everyone: the Meritto dump carries no agency field.");
-    out.push("-- Agencies get assigned through the roster UI instead.");
+    out.push("-- agency_id comes from the \"Agency Name\" column of the monthly performance");
+    out.push("-- workbooks (the Meritto dump carries no agency field); users the workbooks");
+    out.push("-- never list keep NULL and get assigned through the roster UI.");
     out.push("");
     out.push("INSERT INTO agencies (name) VALUES");
     out.push(AGENCIES.map((name) => `  (${quote(name)})`).join(",\n") + ";");
@@ -86,7 +96,7 @@ async function main() {
         rows.push(
             `  (${String(user.id)}, ${quote(user.name)}, ${quote(user.email)}, ${nullable(user.merittoUserId)}, ` +
                 `${String(ROLES[user.role])}, ${nullable(user.team === null ? null : TEAMS[user.team])}, ` +
-                `${nullable(user.agency)}, 1, ${quote(hash)}, NULL)`,
+                `${nullable(agencyId(user.agency))}, 1, ${quote(hash)}, NULL)`,
         );
     }
     out.push(rows.join(",\n") + ";");
@@ -99,7 +109,7 @@ async function main() {
     for (const user of roster) {
         changes.push(`  (${String(user.id)}, 'role_id', NULL, ${String(ROLES[user.role])}, NULL)`);
         if (user.team !== null) changes.push(`  (${String(user.id)}, 'team_id', NULL, ${String(TEAMS[user.team])}, NULL)`);
-        if (user.agency !== null) changes.push(`  (${String(user.id)}, 'agency_id', NULL, ${String(user.agency)}, NULL)`);
+        if (user.agency !== null) changes.push(`  (${String(user.id)}, 'agency_id', NULL, ${String(agencyId(user.agency))}, NULL)`);
     }
     out.push(changes.join(",\n") + ";");
     out.push("");
