@@ -8,18 +8,19 @@ import {
     buildCommit,
     countByStatus,
     defaultChoices,
+    defaultCounsellorEmail,
     deriveRows,
     isCommittable,
     mergeChoices,
 } from "@/lib/import/decisions";
-import type { Decision, ReviewChoices } from "@/lib/import/decisions";
+import type { Decision, ReviewChoices, RowView } from "@/lib/import/decisions";
 import { MONTH_NAMES } from "@/lib/format";
 import type { ParsedWorkbook } from "@/schemas/parser";
 import type { AgencyChoice, ImportRowInput } from "@/schemas/import";
 import { Select } from "@/components/Select";
 import { ImportMappings } from "@/components/upload/import/ImportMappings";
 import { ImportFilterBar, DEFAULT_ROW_FILTER, applyRowFilter } from "@/components/upload/import/ImportFilterBar";
-import type { RowFilter } from "@/components/upload/import/ImportFilterBar";
+import type { BulkActions, RowFilter } from "@/components/upload/import/ImportFilterBar";
 import { ImportRowsTable } from "@/components/upload/import/ImportRowsTable";
 import { ImportSummary } from "@/components/upload/import/ImportSummary";
 import { ImportResultPanel } from "@/components/upload/import/ImportResultPanel";
@@ -68,7 +69,9 @@ export function ImportReview({
     const [planning, setPlanning] = useState(false);
     const [planError, setPlanError] = useState<string | null>(null);
     const [choices, setChoices] = useState<ReviewChoices>({ teamChoices: {}, agencyChoices: {}, decisions: {} });
-    const [filter, setFilter] = useState<RowFilter>(DEFAULT_ROW_FILTER);
+    const [filter, setFilterState] = useState<RowFilter>(DEFAULT_ROW_FILTER);
+    // Rows edited under the current status filter; they stay visible until the filter changes.
+    const [pinned, setPinned] = useState<ReadonlySet<string>>(() => new Set());
     const [committing, setCommitting] = useState(false);
     const [outcome, setOutcome] = useState<CommitOutcome | null>(null);
     const requestId = useRef(0);
@@ -101,11 +104,19 @@ export function ImportReview({
 
     const views = useMemo(() => (plan ? deriveRows(plan, choices) : []), [plan, choices]);
     const counts = useMemo(() => countByStatus(views), [views]);
-    const shownViews = useMemo(() => applyRowFilter(views, filter), [views, filter]);
+    const shownViews = useMemo(() => applyRowFilter(views, filter, pinned), [views, filter, pinned]);
     const committable = isCommittable(views) && !planning && !committing && outcome?.ok !== true;
 
+    const setFilter = useCallback(
+        (next: RowFilter) => {
+            if (next.status !== filter.status) setPinned(new Set());
+            setFilterState(next);
+        },
+        [filter.status],
+    );
     const setDecision = useCallback((rowId: string, decision: Decision) => {
         setChoices((previous) => ({ ...previous, decisions: { ...previous.decisions, [rowId]: decision } }));
+        setPinned((previous) => (previous.has(rowId) ? previous : new Set(previous).add(rowId)));
     }, []);
     const setTeamChoice = useCallback((sheetTeam: string, teamId: number) => {
         setChoices((previous) => ({ ...previous, teamChoices: { ...previous.teamChoices, [sheetTeam]: teamId } }));
@@ -114,31 +125,52 @@ export function ImportReview({
         setChoices((previous) => ({ ...previous, agencyChoices: { ...previous.agencyChoices, [text]: choice } }));
     }, []);
 
-    const bulk = {
-        confirmLikely: () => {
-            setChoices((previous) => {
-                const decisions = { ...previous.decisions };
-                for (const view of views) {
-                    if (view.status === "confirm" && view.decision.kind === "match") {
-                        decisions[view.row.rowId] = { ...view.decision, confirmed: true };
-                    }
-                }
-                return { ...previous, decisions };
+    /** Apply `patch` to every row it returns a decision for, and pin those rows so they stay visible. */
+    const bulkDecide = useCallback(
+        (patch: (view: RowView) => Decision | null) => {
+            const changed: [string, Decision][] = [];
+            for (const view of views) {
+                const next = patch(view);
+                if (next) changed.push([view.row.rowId, next]);
+            }
+            if (changed.length === 0) return;
+            setChoices((previous) => ({
+                ...previous,
+                decisions: { ...previous.decisions, ...Object.fromEntries(changed) },
+            }));
+            setPinned((previous) => {
+                const next = new Set(previous);
+                for (const [rowId] of changed) next.add(rowId);
+                return next;
             });
         },
-        resolveConflicts: (take: "sheet" | "keep", includeSnapshots: boolean) => {
-            setChoices((previous) => {
-                const decisions = { ...previous.decisions };
-                for (const view of views) {
-                    if (view.status !== "conflict" || view.decision.kind !== "match") continue;
-                    decisions[view.row.rowId] = {
-                        ...view.decision,
-                        take,
-                        rewriteSnapshot:
-                            take === "sheet" && includeSnapshots && (view.assessment?.differs.snapshot ?? false),
-                    };
-                }
-                return { ...previous, decisions };
+        [views],
+    );
+    const bulk: BulkActions = {
+        confirmLikely: () => {
+            bulkDecide((view) =>
+                view.status === "confirm" && view.decision.kind === "match"
+                    ? { ...view.decision, confirmed: true }
+                    : null,
+            );
+        },
+        resolveConflicts: (take, includeSnapshots) => {
+            bulkDecide((view) =>
+                view.status === "conflict" && view.decision.kind === "match"
+                    ? {
+                          ...view.decision,
+                          take,
+                          rewriteSnapshot:
+                              take === "sheet" && includeSnapshots && (view.assessment?.differs.snapshot ?? false),
+                      }
+                    : null,
+            );
+        },
+        fillDefaultEmails: () => {
+            bulkDecide((view) => {
+                if (view.decision.kind !== "create" || view.decision.email !== "") return null;
+                const email = defaultCounsellorEmail(view.row.input.name);
+                return email === "" ? null : { kind: "create", email };
             });
         },
     };
@@ -238,8 +270,7 @@ export function ImportReview({
                     planning={planning}
                     committing={committing}
                     committable={committable}
-                    onConfirmLikely={bulk.confirmLikely}
-                    onResolveConflicts={bulk.resolveConflicts}
+                    bulk={bulk}
                     onCommit={commit}
                     date={date}
                     error={outcome && !outcome.ok ? outcome : null}
@@ -253,6 +284,8 @@ export function ImportReview({
                     shown={shownViews.length}
                     filter={filter}
                     onChange={setFilter}
+                    bulk={bulk}
+                    locked={outcome?.ok === true || committing}
                 />
             )}
             {plan && (

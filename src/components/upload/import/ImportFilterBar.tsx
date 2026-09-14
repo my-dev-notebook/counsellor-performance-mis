@@ -11,13 +11,32 @@ export interface RowFilter {
     query: string;
 }
 
+/** Bulk decisions over every row currently in a given status. */
+export interface BulkActions {
+    confirmLikely: () => void;
+    resolveConflicts: (take: "sheet" | "keep", includeSnapshots: boolean) => void;
+    /** Fill the conventional login email into every "create" row whose email is still empty. */
+    fillDefaultEmails: () => void;
+}
+
 export const DEFAULT_ROW_FILTER: RowFilter = { status: "all", query: "" };
 
-export function applyRowFilter(views: readonly RowView[], filter: RowFilter): RowView[] {
+/**
+ * `pinned` rows skip the status check: a row the operator just resolved stays on screen instead of
+ * vanishing from under them the moment its status no longer matches the active filter.
+ */
+export function applyRowFilter(
+    views: readonly RowView[],
+    filter: RowFilter,
+    pinned: ReadonlySet<string> = new Set(),
+): RowView[] {
     const query = filter.query.trim().toLowerCase();
     return views.filter((view) => {
-        if (filter.status === "attention" && !view.needsAttention) return false;
-        if (filter.status !== "all" && filter.status !== "attention" && view.status !== filter.status) return false;
+        if (!pinned.has(view.row.rowId)) {
+            if (filter.status === "attention" && !view.needsAttention) return false;
+            if (filter.status !== "all" && filter.status !== "attention" && view.status !== filter.status)
+                return false;
+        }
         if (query === "") return true;
         const { name, email, sheet } = view.row.input;
         return (
@@ -26,6 +45,71 @@ export function applyRowFilter(views: readonly RowView[], filter: RowFilter): Ro
             sheet.toLowerCase().includes(query)
         );
     });
+}
+
+const BULK_BUTTON =
+    "rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50";
+
+/** One-click resolution for every row in the selected status, shown next to that status's chip. */
+function BulkForStatus({
+    status,
+    count,
+    bulk,
+    locked,
+}: {
+    status: RowFilter["status"];
+    count: number;
+    bulk: BulkActions;
+    locked: boolean;
+}) {
+    const disabled = locked || count === 0;
+    const n = `(${String(count)})`;
+    let buttons: ReactNode = null;
+    if (status === "confirm") {
+        buttons = (
+            <button type="button" className={BULK_BUTTON} disabled={disabled} onClick={bulk.confirmLikely}>
+                Confirm all {n}
+            </button>
+        );
+    } else if (status === "conflict") {
+        buttons = (
+            <>
+                <button
+                    type="button"
+                    className={BULK_BUTTON}
+                    disabled={disabled}
+                    onClick={() => {
+                        bulk.resolveConflicts("keep", false);
+                    }}
+                >
+                    Keep DB for all {n}
+                </button>
+                <button
+                    type="button"
+                    className={BULK_BUTTON}
+                    disabled={disabled}
+                    onClick={() => {
+                        bulk.resolveConflicts("sheet", false);
+                    }}
+                >
+                    Take sheet for all {n}
+                </button>
+            </>
+        );
+    } else if (status === "invalid") {
+        buttons = (
+            <button type="button" className={BULK_BUTTON} disabled={disabled} onClick={bulk.fillDefaultEmails}>
+                Fill default email for all {n}
+            </button>
+        );
+    }
+    if (buttons === null) return null;
+    return (
+        <span data-component="BulkForStatus" className="flex items-center gap-1.5">
+            <span className="mx-1 h-5 w-px bg-border" aria-hidden />
+            {buttons}
+        </span>
+    );
 }
 
 const CHIP =
@@ -62,12 +146,16 @@ export function ImportFilterBar({
     shown,
     filter,
     onChange,
+    bulk,
+    locked,
 }: {
     counts: Record<RowStatus, number>;
     total: number;
     shown: number;
     filter: RowFilter;
     onChange: (next: RowFilter) => void;
+    bulk: BulkActions;
+    locked: boolean;
 }) {
     const attention = STATUS_ORDER.filter((status) => ATTENTION_STATUSES.has(status)).reduce(
         (sum, status) => sum + counts[status],
@@ -113,6 +201,9 @@ export function ImportFilterBar({
                     {STATUS_STYLES[status].label} <span className="tabular-nums">{counts[status]}</span>
                 </FilterChip>
             ))}
+            {filter.status !== "all" && filter.status !== "attention" && (
+                <BulkForStatus status={filter.status} count={counts[filter.status]} bulk={bulk} locked={locked} />
+            )}
             <label className="relative ml-auto flex items-center">
                 <FiSearch className="pointer-events-none absolute left-2 h-4 w-4 text-muted-foreground" aria-hidden />
                 <input

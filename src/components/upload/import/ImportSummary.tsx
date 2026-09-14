@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { CommitOutcome } from "@/db/queries/imports";
 import type { RowStatus } from "@/lib/import/decisions";
 import { formatMonthLabel } from "@/lib/format";
+import type { BulkActions } from "@/components/upload/import/ImportFilterBar";
 
 const BUTTON =
     "rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium text-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50";
@@ -23,8 +24,7 @@ export function ImportSummary({
     planning,
     committing,
     committable,
-    onConfirmLikely,
-    onResolveConflicts,
+    bulk,
     onCommit,
     date,
     error,
@@ -34,8 +34,7 @@ export function ImportSummary({
     planning: boolean;
     committing: boolean;
     committable: boolean;
-    onConfirmLikely: () => void;
-    onResolveConflicts: (take: "sheet" | "keep", includeSnapshots: boolean) => void;
+    bulk: BulkActions;
     onCommit: () => void;
     date: string;
     error: Exclude<CommitOutcome, { ok: true }> | null;
@@ -70,7 +69,7 @@ export function ImportSummary({
                     type="button"
                     className={BUTTON}
                     disabled={planning || committing || counts.confirm === 0}
-                    onClick={onConfirmLikely}
+                    onClick={bulk.confirmLikely}
                 >
                     Confirm all suggested matches ({counts.confirm})
                 </button>
@@ -79,7 +78,7 @@ export function ImportSummary({
                     className={BUTTON}
                     disabled={planning || committing || counts.conflict === 0}
                     onClick={() => {
-                        onResolveConflicts("sheet", includeSnapshots);
+                        bulk.resolveConflicts("sheet", includeSnapshots);
                     }}
                 >
                     Take sheet for all conflicts ({counts.conflict})
@@ -89,10 +88,18 @@ export function ImportSummary({
                     className={BUTTON}
                     disabled={planning || committing || counts.conflict === 0}
                     onClick={() => {
-                        onResolveConflicts("keep", false);
+                        bulk.resolveConflicts("keep", false);
                     }}
                 >
                     Keep DB for all conflicts
+                </button>
+                <button
+                    type="button"
+                    className={BUTTON}
+                    disabled={planning || committing || counts.invalid === 0}
+                    onClick={bulk.fillDefaultEmails}
+                >
+                    Fill default emails ({counts.invalid})
                 </button>
                 <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
                     <input

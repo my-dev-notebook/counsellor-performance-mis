@@ -28,6 +28,18 @@ export type Decision =
       }
     | { kind: "create"; email: string };
 
+/** Counsellor login email convention: "Romeo Sarkar" -> "c-romeo.sarkar@bennett.edu.in". */
+export function defaultCounsellorEmail(name: string): string {
+    const slug = name
+        .normalize("NFKD")
+        .replace(/[^\x00-\x7F]/g, "")
+        .toLowerCase()
+        .split(/[^a-z0-9]+/)
+        .filter(Boolean)
+        .join(".");
+    return slug ? `c-${slug}@bennett.edu.in` : "";
+}
+
 export interface ReviewChoices {
     /** Sheet team name → DB team id, for teams the plan could not match. */
     teamChoices: Record<string, number>;

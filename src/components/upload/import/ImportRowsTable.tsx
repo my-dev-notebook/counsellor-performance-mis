@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import type { SyntheticEvent } from "react";
 import { FiMinus, FiPlus } from "react-icons/fi";
 import type { ImportPlan, RosterUser } from "@/lib/import/plan";
+import { defaultCounsellorEmail } from "@/lib/import/decisions";
 import type { Decision, RowStatus, RowView } from "@/lib/import/decisions";
 import type { Flag } from "@/lib/import/assess";
 import { formatInt } from "@/lib/format";
@@ -280,8 +281,9 @@ function RowAction({
         e.stopPropagation();
     };
     if (decision.kind === "create") {
+        const suggested = defaultCounsellorEmail(view.row.input.name);
         return (
-            <div data-component="RowAction" onClick={stop}>
+            <div data-component="RowAction" className="flex items-center gap-1" onClick={stop}>
                 <input
                     type="email"
                     placeholder="Login email (required)"
@@ -292,6 +294,19 @@ function RowAction({
                     }}
                     className={`${INPUT} w-48`}
                 />
+                {decision.email === "" && suggested !== "" && (
+                    <button
+                        type="button"
+                        disabled={locked}
+                        title={`Fill in ${suggested}`}
+                        onClick={() => {
+                            onDecision(view.row.rowId, { kind: "create", email: suggested });
+                        }}
+                        className={`${SMALL_BUTTON} whitespace-nowrap`}
+                    >
+                        Fill default
+                    </button>
+                )}
             </div>
         );
     }
