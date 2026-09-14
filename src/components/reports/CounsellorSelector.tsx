@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import type { PersonOption } from "@/db/queries/reports";
+import { Select } from "@/components/Select";
 
 export function CounsellorSelector({
     people,
@@ -16,19 +17,16 @@ export function CounsellorSelector({
         <div data-component="CounsellorSelector" className="flex items-center gap-2">
             <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 Counsellor
-                <select
-                    value={selectedUserId ?? ""}
-                    onChange={(e) => {
-                        router.push(`/reports/counsellor?userId=${e.target.value}`);
+                <Select
+                    size="sm"
+                    className="min-w-56"
+                    placeholder="Select counsellor"
+                    value={selectedUserId === undefined ? "" : String(selectedUserId)}
+                    onChange={(userId) => {
+                        router.push(`/reports/counsellor?userId=${userId}`);
                     }}
-                    className="min-w-56 rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
-                >
-                    {people.map((p) => (
-                        <option key={p.userId} value={p.userId}>
-                            {p.name}
-                        </option>
-                    ))}
-                </select>
+                    options={people.map((p) => ({ value: String(p.userId), label: p.name }))}
+                />
             </label>
         </div>
     );

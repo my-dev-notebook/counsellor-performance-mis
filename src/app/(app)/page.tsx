@@ -6,7 +6,7 @@ import { MonthPicker } from "@/components/MonthPicker";
 import { currentMonthDate, parseMonthDateParam } from "@/schemas/dates";
 import { requireUser } from "@/lib/auth/session";
 
-export default async function LiveDashboardPage({
+export default async function MonthlyDashboardPage({
     searchParams,
 }: {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -20,13 +20,19 @@ export default async function LiveDashboardPage({
     const workbook = await getMonthlyWorkbook(date, user.scope);
 
     return (
-        <div data-component="LiveDashboardPage" className="flex min-h-full flex-1 flex-col bg-background">
+        <div data-component="MonthlyDashboardPage" className="flex min-h-full flex-1 flex-col bg-background">
             <Header
                 monthLabel={workbook.monthLabel}
                 counsellorCount={workbook.counsellors.length}
                 teamCount={workbook.teams.length}
             />
             <main className="mx-auto w-full max-w-7xl flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+                <div>
+                    <h2 className="text-xl font-semibold tracking-tight text-foreground">Monthly</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                        One month at a time — what is currently recorded for the selected month.
+                    </p>
+                </div>
                 <MonthPicker date={date} existingMonths={months} basePath="/" />
                 <Dashboard workbook={workbook} />
             </main>

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import type { TeamWithUsage } from "@/db/queries/teams";
 import { RowMenu } from "@/components/RowMenu";
+import { Select } from "@/components/Select";
 import type { MenuItem } from "@/components/RowMenu";
 import { DataTable } from "@/components/DataTable";
 import type { Column, RowState } from "@/components/DataTable";
@@ -169,20 +170,20 @@ function TeamEditPanel({
                 </label>
                 <label className={fieldLabel}>
                     Leader
-                    <select
-                        value={leaderId}
-                        onChange={(e) => {
-                            setLeaderId(e.target.value === "" ? "" : Number(e.target.value));
+                    <Select
+                        className="w-full"
+                        value={String(leaderId)}
+                        onChange={(value) => {
+                            setLeaderId(value === "" ? "" : Number(value));
                         }}
-                        className={panelInput}
-                    >
-                        <option value="">No leader</option>
-                        {leaderOptions.map((o) => (
-                            <option key={o.id} value={o.id}>
-                                {o.note === "" ? o.name : `${o.name} (${o.note})`}
-                            </option>
-                        ))}
-                    </select>
+                        options={[
+                            { value: "", label: "No leader" },
+                            ...leaderOptions.map((o) => ({
+                                value: String(o.id),
+                                label: o.note === "" ? o.name : `${o.name} (${o.note})`,
+                            })),
+                        ]}
+                    />
                 </label>
             </div>
             {team.leaders.length > 1 && (

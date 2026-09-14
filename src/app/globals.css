@@ -115,3 +115,28 @@ body {
     color: var(--foreground);
     font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
+
+/* Slim, theme-coloured scrollbars everywhere — the page itself and every scrolling panel/popover. */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+}
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+    background-color: var(--ring);
+}
+::-webkit-scrollbar-corner {
+    background: transparent;
+}

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { MONTH_NAMES } from "@/lib/format";
+import { Select } from "@/components/Select";
 
 function parseDate(date: string): { year: number; month: number } {
     const [yearStr, monthStr] = date.split("-");
@@ -33,19 +34,14 @@ export function MonthPicker({
         <div data-component="MonthPicker" className="flex flex-wrap items-center gap-3">
             <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 Month
-                <select
-                    value={month}
-                    onChange={(e) => {
-                        navigate(year, Number(e.target.value));
+                <Select
+                    size="sm"
+                    value={String(month)}
+                    onChange={(value) => {
+                        navigate(year, Number(value));
                     }}
-                    className="rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
-                >
-                    {MONTH_NAMES.map((name, i) => (
-                        <option key={name} value={i + 1}>
-                            {name}
-                        </option>
-                    ))}
-                </select>
+                    options={MONTH_NAMES.map((name, i) => ({ value: String(i + 1), label: name }))}
+                />
             </label>
             <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 Year

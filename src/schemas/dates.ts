@@ -13,6 +13,10 @@ import { z } from "zod";
 export const MonthDate = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "date must be YYYY-MM");
 export type MonthDate = z.infer<typeof MonthDate>;
 
+/** "YYYY" — a calendar year, the yearly dashboard's `?year=` param. */
+export const YearDate = z.string().regex(/^\d{4}$/, "year must be YYYY");
+export type YearDate = z.infer<typeof YearDate>;
+
 /** "YYYY-MM-DD" — the `admissions.date` shape, e.g. "2026-09-10". */
 export const DayDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "date must be YYYY-MM-DD");
 export type DayDate = z.infer<typeof DayDate>;
@@ -23,6 +27,11 @@ export function currentMonthDate(): string {
     return `${String(now.getFullYear())}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
 
+/** Today's year as a `YearDate`, in the server's local timezone. */
+export function currentYearDate(): string {
+    return String(new Date().getFullYear());
+}
+
 /**
  * Reads a `?date=YYYY-MM` search param, falling back when it's absent, repeated
  * (`string[]`), or malformed — a bad URL should land the user on a sane month,
@@ -31,4 +40,9 @@ export function currentMonthDate(): string {
  */
 export function parseMonthDateParam(value: string | string[] | undefined, fallback = currentMonthDate()): string {
     return MonthDate.safeParse(value).success ? (value as string) : fallback;
+}
+
+/** `parseMonthDateParam`'s counterpart for a `?year=YYYY` search param. */
+export function parseYearDateParam(value: string | string[] | undefined, fallback = currentYearDate()): string {
+    return YearDate.safeParse(value).success ? (value as string) : fallback;
 }

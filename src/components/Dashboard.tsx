@@ -19,7 +19,6 @@ export function Dashboard({ workbook }: { workbook: ParsedWorkbook }) {
 
     const resetFilters = () => {
         setFilters(DEFAULT_FILTERS);
-        setSelectedId(null);
     };
 
     return (

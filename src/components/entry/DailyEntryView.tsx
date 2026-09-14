@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { AdmissionRecord, AdmissionRow, UserRow } from "@/db/types";
 import { MONTH_NAMES } from "@/lib/format";
+import { Select } from "@/components/Select";
+import { Tooltip } from "@/components/Tooltip";
 import { saveDailyAdmissionAction, autoFetchApplicantsAction } from "@/app/(app)/entry/actions";
 import { loadNpfSession } from "@/lib/nopaperformsSession";
 import { DataTable } from "@/components/DataTable";
@@ -96,19 +98,14 @@ function MonthNav({ date, userId }: { date: string; userId: number }) {
         <div data-component="MonthNav" className="flex flex-wrap items-center gap-3">
             <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 Month
-                <select
-                    value={month}
-                    onChange={(e) => {
-                        navigate(year, Number(e.target.value));
+                <Select
+                    size="sm"
+                    value={String(month)}
+                    onChange={(value) => {
+                        navigate(year, Number(value));
                     }}
-                    className="rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
-                >
-                    {MONTH_NAMES.map((name, i) => (
-                        <option key={name} value={i + 1}>
-                            {name}
-                        </option>
-                    ))}
-                </select>
+                    options={MONTH_NAMES.map((name, i) => ({ value: String(i + 1), label: name }))}
+                />
             </label>
             <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 Year
@@ -397,33 +394,36 @@ function DayEditor({
                     Day {day} — {filledCount} admission{filledCount === 1 ? "" : "s"}
                 </p>
                 <div className="flex items-center gap-1">
-                    <button
-                        type="button"
-                        disabled={fetching}
-                        onClick={autoFetch}
-                        title="Fetch this counsellor's applicants from the saved NPF session"
-                        className="rounded-md border border-input px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent disabled:opacity-40"
-                    >
-                        {fetching ? "Fetching…" : "Auto-fetch"}
-                    </button>
-                    <button
-                        type="button"
-                        disabled={past.length === 0}
-                        onClick={undo}
-                        title="Undo (Ctrl+Z)"
-                        className="rounded-md border border-input px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent disabled:opacity-40"
-                    >
-                        Undo
-                    </button>
-                    <button
-                        type="button"
-                        disabled={future.length === 0}
-                        onClick={redo}
-                        title="Redo (Ctrl+Y)"
-                        className="rounded-md border border-input px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent disabled:opacity-40"
-                    >
-                        Redo
-                    </button>
+                    <Tooltip content="Fetch this counsellor's applicants from the saved NPF session">
+                        <button
+                            type="button"
+                            disabled={fetching}
+                            onClick={autoFetch}
+                            className="rounded-md border border-input px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent disabled:opacity-40"
+                        >
+                            {fetching ? "Fetching…" : "Auto-fetch"}
+                        </button>
+                    </Tooltip>
+                    <Tooltip content="Undo (Ctrl+Z)">
+                        <button
+                            type="button"
+                            disabled={past.length === 0}
+                            onClick={undo}
+                            className="rounded-md border border-input px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent disabled:opacity-40"
+                        >
+                            Undo
+                        </button>
+                    </Tooltip>
+                    <Tooltip content="Redo (Ctrl+Y)">
+                        <button
+                            type="button"
+                            disabled={future.length === 0}
+                            onClick={redo}
+                            className="rounded-md border border-input px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent disabled:opacity-40"
+                        >
+                            Redo
+                        </button>
+                    </Tooltip>
                 </div>
             </div>
             <div className="mt-3 overflow-x-auto">
@@ -502,16 +502,17 @@ function DayEditor({
                                     </td>
                                     <td className="px-2 py-1">
                                         {!isSentinel && (
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    removeRecord(index);
-                                                }}
-                                                title="Delete row"
-                                                className="rounded-md border border-input px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent"
-                                            >
-                                                Delete
-                                            </button>
+                                            <Tooltip content="Delete row">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        removeRecord(index);
+                                                    }}
+                                                    className="rounded-md border border-input px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </Tooltip>
                                         )}
                                     </td>
                                 </tr>

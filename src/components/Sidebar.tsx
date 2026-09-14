@@ -38,7 +38,16 @@ const SECTIONS: NavSection[] = [
     {
         title: "Overview",
         links: [
-            { href: "/", label: "Dashboard", icon: FiGrid, requires: null },
+            {
+                href: "/",
+                label: "Dashboard",
+                icon: FiGrid,
+                requires: null,
+                children: [
+                    { href: "/", label: "Monthly" },
+                    { href: "/yearly", label: "Yearly" },
+                ],
+            },
             {
                 href: "/reports",
                 label: "Reports",
@@ -88,8 +97,12 @@ const INACTIVE = "text-muted-foreground hover:bg-accent hover:text-accent-foregr
 
 function SidebarLink({ link, pathname }: { link: NavLink; pathname: string }) {
     const Icon = link.icon;
-    // A parent with children is "open" for any of its sub-routes; leaf links match exactly.
-    const active = link.children ? pathname === link.href || pathname.startsWith(`${link.href}/`) : pathname === link.href;
+    // A parent with children is "open" for any of its children's routes (a
+    // prefix test on the parent alone would make "/" match everything); leaf
+    // links match exactly.
+    const active = link.children
+        ? link.children.some((child) => pathname === child.href || pathname.startsWith(`${child.href}/`))
+        : pathname === link.href;
 
     return (
         <div data-component="SidebarLink">

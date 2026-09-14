@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { FiPlus } from "react-icons/fi";
 import { RowMenu } from "@/components/RowMenu";
+import { Select } from "@/components/Select";
 import type { MenuItem } from "@/components/RowMenu";
 import { DataTable } from "@/components/DataTable";
 import type { Column, RowState } from "@/components/DataTable";
@@ -177,54 +178,43 @@ function AddUserForm({
             {canManageUsers && (
                 <label className="flex flex-col text-xs font-medium text-muted-foreground">
                     Role
-                    <select
-                        value={roleId}
-                        onChange={(e) => {
-                            setRoleId(Number(e.target.value));
+                    <Select
+                        size="sm"
+                        className="mt-1"
+                        value={String(roleId)}
+                        onChange={(value) => {
+                            setRoleId(Number(value));
                         }}
-                        className={inputClass}
-                    >
-                        {roles.map((r) => (
-                            <option key={r.id} value={r.id}>
-                                {roleLabel(r.name)}
-                            </option>
-                        ))}
-                    </select>
+                        options={roles.map((r) => ({ value: String(r.id), label: roleLabel(r.name) }))}
+                    />
                 </label>
             )}
             <label className="flex flex-col text-xs font-medium text-muted-foreground">
                 {roleName === "team_leader" ? "Leads team" : "Team"}
-                <select
-                    value={teamId}
-                    onChange={(e) => {
-                        setTeamId(e.target.value === "" ? "" : Number(e.target.value));
+                <Select
+                    size="sm"
+                    className="mt-1"
+                    value={String(teamId)}
+                    onChange={(value) => {
+                        setTeamId(value === "" ? "" : Number(value));
                     }}
-                    className={inputClass}
-                >
-                    {!roleRequiresTeam(roleName) && <option value="">—</option>}
-                    {teams.map((t) => (
-                        <option key={t.id} value={t.id}>
-                            {t.name}
-                        </option>
-                    ))}
-                </select>
+                    options={[
+                        ...(roleRequiresTeam(roleName) ? [] : [{ value: "", label: "—" }]),
+                        ...teams.map((t) => ({ value: String(t.id), label: t.name })),
+                    ]}
+                />
             </label>
             <label className="flex flex-col text-xs font-medium text-muted-foreground">
                 Agency
-                <select
-                    value={agencyId}
-                    onChange={(e) => {
-                        setAgencyId(e.target.value === "" ? "" : Number(e.target.value));
+                <Select
+                    size="sm"
+                    className="mt-1"
+                    value={String(agencyId)}
+                    onChange={(value) => {
+                        setAgencyId(value === "" ? "" : Number(value));
                     }}
-                    className={inputClass}
-                >
-                    <option value="">—</option>
-                    {agencies.map((a) => (
-                        <option key={a.id} value={a.id}>
-                            {a.name}
-                        </option>
-                    ))}
-                </select>
+                    options={[{ value: "", label: "—" }, ...agencies.map((a) => ({ value: String(a.id), label: a.name }))]}
+                />
             </label>
             <button type="submit" disabled={pending} className={primaryButton}>
                 {pending ? "Saving…" : "Save"}
@@ -362,19 +352,14 @@ function UserEditPanel({
                 <label className={fieldLabel}>
                     Role
                     {canChangeRole ? (
-                        <select
-                            value={roleId}
-                            onChange={(e) => {
-                                setRoleId(Number(e.target.value));
+                        <Select
+                            className="w-full"
+                            value={String(roleId)}
+                            onChange={(value) => {
+                                setRoleId(Number(value));
                             }}
-                            className={panelInput}
-                        >
-                            {roles.map((r) => (
-                                <option key={r.id} value={r.id}>
-                                    {roleLabel(r.name)}
-                                </option>
-                            ))}
-                        </select>
+                            options={roles.map((r) => ({ value: String(r.id), label: roleLabel(r.name) }))}
+                        />
                     ) : (
                         <span className={`${panelInput} border-transparent bg-transparent px-0`}>
                             {roleLabel(user.roleName)}
@@ -383,37 +368,28 @@ function UserEditPanel({
                 </label>
                 <label className={fieldLabel}>
                     {draftRoleName === "team_leader" ? "Leads team" : "Team"}
-                    <select
-                        value={teamId}
-                        onChange={(e) => {
-                            setTeamId(e.target.value === "" ? "" : Number(e.target.value));
+                    <Select
+                        className="w-full"
+                        value={String(teamId)}
+                        onChange={(value) => {
+                            setTeamId(value === "" ? "" : Number(value));
                         }}
-                        className={panelInput}
-                    >
-                        {!roleRequiresTeam(draftRoleName) && <option value="">—</option>}
-                        {teams.map((t) => (
-                            <option key={t.id} value={t.id}>
-                                {t.name}
-                            </option>
-                        ))}
-                    </select>
+                        options={[
+                            ...(roleRequiresTeam(draftRoleName) ? [] : [{ value: "", label: "—" }]),
+                            ...teams.map((t) => ({ value: String(t.id), label: t.name })),
+                        ]}
+                    />
                 </label>
                 <label className={fieldLabel}>
                     Agency
-                    <select
-                        value={agencyId}
-                        onChange={(e) => {
-                            setAgencyId(e.target.value === "" ? "" : Number(e.target.value));
+                    <Select
+                        className="w-full"
+                        value={String(agencyId)}
+                        onChange={(value) => {
+                            setAgencyId(value === "" ? "" : Number(value));
                         }}
-                        className={panelInput}
-                    >
-                        <option value="">—</option>
-                        {agencies.map((a) => (
-                            <option key={a.id} value={a.id}>
-                                {a.name}
-                            </option>
-                        ))}
-                    </select>
+                        options={[{ value: "", label: "—" }, ...agencies.map((a) => ({ value: String(a.id), label: a.name }))]}
+                    />
                 </label>
             </div>
             {error && <p className="text-xs text-destructive">{error}</p>}
@@ -587,50 +563,35 @@ export function RosterView({
                     onChange={(e) => {
                         setSearch(e.target.value);
                     }}
-                    className="rounded-md border border-input bg-background px-2 py-1.5 text-sm text-foreground"
+                    className="rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
                 />
-                <select
-                    value={roleFilter}
-                    onChange={(e) => {
-                        setRoleFilter(e.target.value === "" ? "" : Number(e.target.value));
+                <Select
+                    size="sm"
+                    aria-label="Filter by role"
+                    value={String(roleFilter)}
+                    onChange={(value) => {
+                        setRoleFilter(value === "" ? "" : Number(value));
                     }}
-                    className="rounded-md border border-input bg-background px-2 py-1.5 text-sm text-foreground"
-                >
-                    <option value="">All roles</option>
-                    {roles.map((r) => (
-                        <option key={r.id} value={r.id}>
-                            {roleLabel(r.name)}
-                        </option>
-                    ))}
-                </select>
-                <select
-                    value={teamFilter}
-                    onChange={(e) => {
-                        setTeamFilter(e.target.value === "" ? "" : Number(e.target.value));
+                    options={[{ value: "", label: "All roles" }, ...roles.map((r) => ({ value: String(r.id), label: roleLabel(r.name) }))]}
+                />
+                <Select
+                    size="sm"
+                    aria-label="Filter by team"
+                    value={String(teamFilter)}
+                    onChange={(value) => {
+                        setTeamFilter(value === "" ? "" : Number(value));
                     }}
-                    className="rounded-md border border-input bg-background px-2 py-1.5 text-sm text-foreground"
-                >
-                    <option value="">All teams</option>
-                    {teams.map((t) => (
-                        <option key={t.id} value={t.id}>
-                            {t.name}
-                        </option>
-                    ))}
-                </select>
-                <select
-                    value={agencyFilter}
-                    onChange={(e) => {
-                        setAgencyFilter(e.target.value === "" ? "" : Number(e.target.value));
+                    options={[{ value: "", label: "All teams" }, ...teams.map((t) => ({ value: String(t.id), label: t.name }))]}
+                />
+                <Select
+                    size="sm"
+                    aria-label="Filter by agency"
+                    value={String(agencyFilter)}
+                    onChange={(value) => {
+                        setAgencyFilter(value === "" ? "" : Number(value));
                     }}
-                    className="rounded-md border border-input bg-background px-2 py-1.5 text-sm text-foreground"
-                >
-                    <option value="">All agencies</option>
-                    {agencies.map((a) => (
-                        <option key={a.id} value={a.id}>
-                            {a.name}
-                        </option>
-                    ))}
-                </select>
+                    options={[{ value: "", label: "All agencies" }, ...agencies.map((a) => ({ value: String(a.id), label: a.name }))]}
+                />
                 <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
                     <input
                         type="checkbox"

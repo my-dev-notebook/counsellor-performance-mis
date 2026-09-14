@@ -3,10 +3,11 @@
 import type { Counsellor } from "@/schemas/parser";
 import { counsellorOptions, teamOptions } from "@/lib/filters";
 import type { Filters } from "@/lib/filters";
+import { Select } from "@/components/Select";
 
 const STATUS_OPTIONS = ["Green", "Yellow", "Red"] as const;
 
-function Select({
+function FilterSelect({
     label,
     value,
     onChange,
@@ -22,29 +23,21 @@ function Select({
     disabledHint?: string;
 }) {
     return (
-        <label data-component="Select" className="flex flex-col gap-1">
+        <div data-component="FilterSelect" className="flex flex-col gap-1">
             <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{label}</span>
             {disabled ? (
                 <span className="rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
                     {disabledHint ?? "—"}
                 </span>
             ) : (
-                <select
+                <Select
+                    aria-label={label}
                     value={value}
-                    onChange={(event) => {
-                        onChange(event.target.value);
-                    }}
-                    className="rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:border-ring focus:ring-1 focus:ring-ring focus:outline-none"
-                >
-                    <option value="All">All</option>
-                    {options.map((option) => (
-                        <option key={option} value={option}>
-                            {option}
-                        </option>
-                    ))}
-                </select>
+                    onChange={onChange}
+                    options={[{ value: "All", label: "All" }, ...options.map((option) => ({ value: option, label: option }))]}
+                />
             )}
-        </label>
+        </div>
     );
 }
 
@@ -67,7 +60,7 @@ export function FilterBar({
             className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4 sm:flex-row sm:items-end sm:justify-between"
         >
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
-                <Select
+                <FilterSelect
                     label="Team"
                     value={filters.team}
                     options={teamOptions(counsellors)}
@@ -75,7 +68,7 @@ export function FilterBar({
                         onChange({ ...filters, team, counsellor: "All" });
                     }}
                 />
-                <Select
+                <FilterSelect
                     label="Agency"
                     value={filters.agency}
                     options={agencies}
@@ -85,7 +78,7 @@ export function FilterBar({
                         onChange({ ...filters, agency, counsellor: "All" });
                     }}
                 />
-                <Select
+                <FilterSelect
                     label="Status"
                     value={filters.status}
                     options={STATUS_OPTIONS}
@@ -93,7 +86,7 @@ export function FilterBar({
                         onChange({ ...filters, status: status as Filters["status"], counsellor: "All" });
                     }}
                 />
-                <Select
+                <FilterSelect
                     label="Counsellor"
                     value={filters.counsellor}
                     options={counsellorOptions(counsellors, filters)}

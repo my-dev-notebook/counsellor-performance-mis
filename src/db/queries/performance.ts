@@ -31,6 +31,12 @@ export async function listMonthsWithData(scope: Scope): Promise<string[]> {
     return rows.map((r) => r.date);
 }
 
+/** Distinct years (as "YYYY") among `listMonthsWithData`, newest first. */
+export async function listYearsWithData(scope: Scope): Promise<string[]> {
+    const months = await listMonthsWithData(scope);
+    return Array.from(new Set(months.map((m) => m.slice(0, 4))));
+}
+
 /**
  * Live "achieved" for every counsellor in one month: COUNT(*) of `admissions`
  * rows whose date falls inside the given "YYYY-MM" month, grouped by user. One
