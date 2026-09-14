@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { IconType } from "react-icons";
 import {
+    FiAlertTriangle,
     FiBarChart2,
     FiBriefcase,
     FiCalendar,
@@ -66,6 +67,7 @@ const SECTIONS: NavSection[] = [
         links: [
             { href: "/entry", label: "Monthly Entry", icon: FiEdit3, requires: "writeEntries" },
             { href: "/entry/daily", label: "Daily Entry", icon: FiCalendar, requires: "writeEntries" },
+            { href: "/entry/discrepancies", label: "Discrepancies", icon: FiAlertTriangle, requires: "writeEntries" },
         ],
     },
     {
@@ -79,7 +81,7 @@ const SECTIONS: NavSection[] = [
     {
         title: "Tools",
         links: [
-            { href: "/upload", label: "Upload & Preview", icon: FiUploadCloud, requires: "useTools" },
+            { href: "/upload", label: "Upload & Import", icon: FiUploadCloud, requires: "useTools" },
             { href: "/tools/meritto-auth", label: "Meritto Auth", icon: FiLink, requires: "useTools" },
         ],
     },

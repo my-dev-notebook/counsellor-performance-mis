@@ -49,4 +49,18 @@ describe("matchTeamSheetName", () => {
             if (result.matched) expect(result.team).toBe(team);
         }
     });
+
+    it("matches against a caller-supplied team list, hints included", () => {
+        const teams = ["Engineering", "Pharmacy", "Media/Liberal Arts"];
+        expect(matchTeamSheetName("Pharmacy Team", teams)).toMatchObject({ matched: true, team: "Pharmacy" });
+        expect(matchTeamSheetName("Engg", teams)).toMatchObject({ matched: true, team: "Engineering" });
+        expect(matchTeamSheetName("Liberal Arts", teams)).toMatchObject({ matched: true, team: "Media/Liberal Arts" });
+        expect(matchTeamSheetName("Law", teams).matched).toBe(false);
+    });
+
+    it("tolerates a typo in a sheet name via the fuzzy fallback", () => {
+        expect(matchTeamSheetName("Enginering")).toMatchObject({ matched: true, team: "Engineering" });
+        expect(matchTeamSheetName("Managment ")).toMatchObject({ matched: true, team: "Management" });
+        expect(matchTeamSheetName("Pharmcy", ["Pharmacy", "Law"])).toMatchObject({ matched: true, team: "Pharmacy" });
+    });
 });

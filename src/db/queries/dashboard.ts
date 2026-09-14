@@ -44,6 +44,7 @@ function toCounsellor({ counsellor, team, target, nonNegotiable, achieved }: Row
         target,
         nonNegotiable,
         achieved,
+        achievedBlank: false,
         acknowledgment: null,
         feedback: null,
         pending,

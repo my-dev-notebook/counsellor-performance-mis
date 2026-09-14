@@ -3,7 +3,7 @@ import { deriveStatus } from "@/lib/metrics/buckets";
 import { toBoolean, toDate, toNumber, toStringOrNull } from "./coerce";
 import type { ColumnMap } from "./map-columns";
 import { matchTeamSheetName } from "./match-team";
-import type { CanonicalTeam, Counsellor, Warning } from "@/schemas/parser";
+import type { Counsellor, Warning } from "@/schemas/parser";
 import { Counsellor as CounsellorSchema } from "@/schemas/parser";
 import { slug } from "./util";
 import { makeWarning } from "./warnings";
@@ -11,7 +11,9 @@ import { makeWarning } from "./warnings";
 export interface BuildRowParams {
     cells: readonly unknown[];
     columns: ColumnMap;
-    team: CanonicalTeam;
+    team: string;
+    /** Candidate team names (the `teams` table), used for the row-level Team Name cross-check. */
+    teams: readonly string[];
     sheetName: string;
     excelRow: number;
 }
@@ -23,7 +25,7 @@ export interface BuildRowOutcome {
 
 /** Stage 5 (PLAN.md §4) — coerce and validate one row. Never throws; `safeParse` only. */
 export function buildCounsellor(params: BuildRowParams): BuildRowOutcome {
-    const { cells, columns, team, sheetName, excelRow } = params;
+    const { cells, columns, team, teams, sheetName, excelRow } = params;
     const warnings: Warning[] = [];
     const issues: string[] = [];
 
@@ -64,7 +66,7 @@ export function buildCounsellor(params: BuildRowParams): BuildRowOutcome {
     if (columns.team !== undefined) {
         const rawTeam = toStringOrNull(cells[columns.team]);
         if (rawTeam.value) {
-            const crossMatch = matchTeamSheetName(rawTeam.value);
+            const crossMatch = matchTeamSheetName(rawTeam.value, teams);
             if (crossMatch.matched && crossMatch.team !== team) {
                 warnings.push(
                     makeWarning(
@@ -85,7 +87,8 @@ export function buildCounsellor(params: BuildRowParams): BuildRowOutcome {
     // "unknown" (PLAN.md §2.6.5 / §7 — the whole Aug workbook is like this).
     // A junk value (_, NA, an Excel error) is a real data-quality problem and
     // stays null.
-    const achieved = achievedResult.value === null && achievedResult.issue === undefined ? 0 : achievedResult.value;
+    const achievedBlank = achievedResult.value === null && achievedResult.issue === undefined;
+    const achieved = achievedBlank ? 0 : achievedResult.value;
     const pending = derivePending(target, achieved);
     const pctAchieved = derivePctAchieved(target, achieved);
     const status = deriveStatus(pctAchieved);
@@ -101,6 +104,7 @@ export function buildCounsellor(params: BuildRowParams): BuildRowOutcome {
         target,
         nonNegotiable: nonNegotiableResult.value,
         achieved,
+        achievedBlank,
         acknowledgment: acknowledgmentResult.value,
         feedback: feedbackResult.value,
         pending,

@@ -13,11 +13,8 @@ import {
 import { deleteSessionsForUser } from "@/db/queries/sessions";
 import { AddUserInput, AssignmentChangeInput, EditUserInput, ProfileInput } from "@/schemas/roster";
 import { assertPermission } from "@/lib/auth/session";
-import { hashPassword } from "@/lib/auth/password";
+import { DEFAULT_PASSWORD, hashPassword } from "@/lib/auth/password";
 import { roleRequiresMeritto, roleRequiresTeam, userInScope } from "@/lib/auth/permissions";
-
-/** Temporary password for new and reset accounts; the app forces a change on first login. */
-const DEFAULT_PASSWORD = "change-it";
 
 async function roleNameFor(roleId: number): Promise<string> {
     const role = (await listRoles()).find((r) => r.id === roleId);

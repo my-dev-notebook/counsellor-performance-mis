@@ -63,3 +63,10 @@ export async function verifyPassword(password: string, stored: string): Promise<
     const digest = await derive(password, fromBase64(saltText), iterations);
     return equal(digest, fromBase64(digestText));
 }
+
+/**
+ * Temporary password every new or reset account starts with; the app forces
+ * a change on first login (`password_changed_at` NULL). Shared by the roster
+ * page, the seed script and the workbook import.
+ */
+export const DEFAULT_PASSWORD = "change-it";

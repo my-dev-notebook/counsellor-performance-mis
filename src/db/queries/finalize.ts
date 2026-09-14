@@ -1,4 +1,4 @@
-import { desc, like, sql } from "drizzle-orm";
+import { desc, eq, like, sql } from "drizzle-orm";
 import { getDb } from "@/db/client";
 import { admissions, counsellorPerfMonthly } from "@/db/schema";
 
@@ -14,6 +14,12 @@ import { admissions, counsellorPerfMonthly } from "@/db/schema";
  * themselves (the assignment most of them were recorded under), not from the
  * user's current row, so finalizing a month long after a team change still
  * files it under the right team. An existing row keeps its snapshot.
+ *
+ * A row whose `achieved_source` is 'import' or 'manual' is left alone: the
+ * workbook total (or the operator's correction) is the number of record for
+ * that month even when the daily rows add up differently. Re-running
+ * finalize must never silently undo that. The discrepancies screen
+ * (src/app/(app)/entry/discrepancies) is where such rows get reconciled.
  *
  * Currently invoked manually (no Cloudflare Cron Trigger configured in
  * wrangler.jsonc) via the POST endpoint at src/app/api/finalize/route.ts and
@@ -52,6 +58,7 @@ export async function finalizeMonth(monthDate: string): Promise<{ updated: numbe
             .onConflictDoUpdate({
                 target: [counsellorPerfMonthly.userId, counsellorPerfMonthly.date],
                 set: { achieved, updatedAt: sql`(datetime('now'))` },
+                setWhere: eq(counsellorPerfMonthly.achievedSource, "admissions"),
             });
         updated += 1;
     }

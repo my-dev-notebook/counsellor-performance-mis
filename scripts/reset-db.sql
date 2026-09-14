@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS sessions;
 DROP TABLE IF EXISTS user_changes;
 DROP TABLE IF EXISTS admissions;
 DROP TABLE IF EXISTS counsellor_perf_monthly;
+DROP TABLE IF EXISTS imports;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS roles;
 DROP TABLE IF EXISTS agencies;

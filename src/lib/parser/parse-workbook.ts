@@ -10,9 +10,24 @@ import { matchTeamSheetName } from "./match-team";
 import { detectMonth } from "./month";
 import { readWorkbook } from "./read";
 import type { RawSheet } from "./read";
-import type { Counsellor, ParsedWorkbook, TeamAggregate, Warning, CanonicalTeam } from "@/schemas/parser";
+import type { Counsellor, ParsedWorkbook, TeamAggregate, Warning } from "@/schemas/parser";
+import { CANONICAL_TEAMS } from "@/schemas/parser";
 import { columnLetter } from "./util";
 import { makeWarning } from "./warnings";
+
+export interface ParseOptions {
+    /**
+     * Team names to recognise sheets by — the `teams` table in the live app.
+     * Defaults to the six canonical names the fixtures use.
+     */
+    teams?: readonly string[];
+    /**
+     * Sheet name → team name, for sheets the matcher could not place that the
+     * operator has mapped by hand on the import screen. An override wins over
+     * the matcher; a sheet mapped to `null` is skipped without a warning.
+     */
+    sheetTeamOverrides?: Readonly<Record<string, string | null>>;
+}
 
 /**
  * Top-level orchestration of PLAN.md §4's six stages.
@@ -25,14 +40,17 @@ import { makeWarning } from "./warnings";
 export async function parseWorkbook(
     buffer: ArrayBuffer,
     sourceFileName: string,
+    options: ParseOptions = {},
 ): Promise<Result<ParsedWorkbook, ParseError>> {
     const rawResult = await readWorkbook(buffer);
     if (rawResult.isErr()) return err(rawResult.error);
     const raw = rawResult.value;
+    const teamNames = options.teams ?? CANONICAL_TEAMS;
+    const overrides = options.sheetTeamOverrides ?? {};
 
     const warnings: Warning[] = [];
     const sheetsSeen: string[] = [];
-    const teamSheets: { team: CanonicalTeam; sheet: RawSheet }[] = [];
+    const teamSheets: { team: string; sheet: RawSheet }[] = [];
     const titleCandidates: string[] = [];
 
     for (const sheet of raw.sheets) {
@@ -41,7 +59,13 @@ export async function parseWorkbook(
         const titleCell = toStringOrNull(sheet.grid[0]?.[0]);
         if (titleCell.value) titleCandidates.push(titleCell.value);
 
-        const match = matchTeamSheetName(sheet.name);
+        if (sheet.name in overrides) {
+            const override = overrides[sheet.name];
+            if (override !== null && override !== undefined) teamSheets.push({ team: override, sheet });
+            continue;
+        }
+
+        const match = matchTeamSheetName(sheet.name, teamNames);
         if (match.matched) {
             teamSheets.push({ team: match.team, sheet });
             continue;
@@ -54,7 +78,9 @@ export async function parseWorkbook(
                 "sheet",
                 "SHEET_IGNORED",
                 looksLikeRoster
-                    ? `Sheet "${sheet.name}" looks like a team roster (has a counsellor name and a target column) but its name did not match a known team — it was skipped. If this is really a team, rename the sheet.`
+                    ? match.ambiguous
+                        ? `Sheet "${sheet.name}" looks like a team roster but its name matches several teams (${match.candidates.join(", ")}) — it was skipped. Map it to a team to include it.`
+                        : `Sheet "${sheet.name}" looks like a team roster (has a counsellor name and a target column) but its name did not match a known team — it was skipped. Map it to a team to include it.`
                     : `Sheet "${sheet.name}" does not match a known team and was skipped.`,
                 { sheet: sheet.name },
             ),
@@ -123,6 +149,7 @@ export async function parseWorkbook(
                 cells: row.cells,
                 columns,
                 team,
+                teams: teamNames,
                 sheetName: sheet.name,
                 excelRow: row.excelRow,
             });

@@ -51,6 +51,9 @@ export const Counsellor = z.object({
     target: z.number().nullable(),
     nonNegotiable: z.number().nullable(),
     achieved: z.number().nullable(),
+    // True when the Achieved cell was genuinely empty and `achieved` is the
+    // degraded 0 — an import must treat that as "no figure", not "zero".
+    achievedBlank: z.boolean(),
     acknowledgment: z.boolean().nullable(),
     feedback: z.string().nullable(),
     // derived — always recomputed, never read from the sheet (PLAN.md §2.6)

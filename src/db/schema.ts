@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import { sqliteTable, integer, text, index, uniqueIndex, check } from "drizzle-orm/sqlite-core";
+import { ACHIEVED_SOURCES } from "@/schemas/achieved-source";
 
 /**
  * Authoritative schema. History is kept the "snapshot + changelog" way:
@@ -122,7 +123,15 @@ export const sessions = sqliteTable(
 //
 // `team_id`/`agency_id` are the counsellor's team/agency when the row was
 // first created (the "team at month start" rule) and are never touched by
-// later upserts, so a mid-month team change does not rewrite the month.
+// later upserts, so a mid-month team change does not rewrite the month. The
+// one exception is a workbook import where the operator explicitly chose
+// "take sheet" on a row whose sheet team differs (src/db/queries/imports.ts).
+//
+// `achieved_source` says who wrote `achieved`. A workbook's monthly total is
+// allowed to disagree with COUNT(*) over `admissions` (the sheets carry
+// corrections the daily rows never see), and when it does the stored total
+// wins: finalize only overwrites rows whose source is still 'admissions',
+// and the discrepancies screen surfaces the rest.
 export const counsellorPerfMonthly = sqliteTable(
     "counsellor_perf_monthly",
     {
@@ -138,6 +147,9 @@ export const counsellorPerfMonthly = sqliteTable(
         overall: integer("overall"),
         nonNegotiable: integer("non_negotiable"),
         achieved: integer("achieved"),
+        achievedSource: text("achieved_source", { enum: ACHIEVED_SOURCES }).notNull().default("admissions"),
+        // The import that last wrote this row's `achieved`, when the source is 'import'.
+        importId: integer("import_id").references(() => imports.id),
         createdAt: text("created_at")
             .notNull()
             .default(sql`(datetime('now'))`),
@@ -148,9 +160,41 @@ export const counsellorPerfMonthly = sqliteTable(
     (table) => [
         uniqueIndex("idx_counsellor_perf_monthly_user_date").on(table.userId, table.date),
         index("idx_counsellor_perf_monthly_team_date").on(table.teamId, table.date),
+        index("idx_counsellor_perf_monthly_import").on(table.importId),
         check("chk_overall_non_negative", sql`${table.overall} IS NULL OR ${table.overall} >= 0`),
         check("chk_non_negotiable_non_negative", sql`${table.nonNegotiable} IS NULL OR ${table.nonNegotiable} >= 0`),
         check("chk_achieved_non_negative", sql`${table.achieved} IS NULL OR ${table.achieved} >= 0`),
+        check("chk_achieved_source", sql`${table.achievedSource} IN ('admissions', 'import', 'manual')`),
+    ],
+);
+
+// One row per committed workbook import (the Upload page's "Import" flow).
+// Every monthly row an import writes `achieved` into points back here via
+// `import_id`, so the discrepancies screen can name the file a number came
+// from. `notes` is a JSON array of the human-readable flags the operator saw
+// and accepted (name/email differences, snapshot rewrites, roster updates).
+export const imports = sqliteTable(
+    "imports",
+    {
+        id: integer("id").primaryKey({ autoIncrement: true }),
+        // "YYYY-MM", the month the workbook was imported into.
+        date: text("date").notNull(),
+        sourceFileName: text("source_file_name").notNull(),
+        importedBy: integer("imported_by")
+            .notNull()
+            .references(() => users.id),
+        importedAt: text("imported_at")
+            .notNull()
+            .default(sql`(datetime('now'))`),
+        rowsInserted: integer("rows_inserted").notNull().default(0),
+        rowsUpdated: integer("rows_updated").notNull().default(0),
+        rowsSkipped: integer("rows_skipped").notNull().default(0),
+        usersCreated: integer("users_created").notNull().default(0),
+        notes: text("notes").notNull().default("[]"),
+    },
+    (table) => [
+        index("idx_imports_date").on(table.date),
+        check("chk_imports_date_format", sql`${table.date} GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]'`),
     ],
 );
 

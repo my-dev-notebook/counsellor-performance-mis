@@ -111,6 +111,8 @@ export async function getProgressForMonth(
                     overall: counsellorPerfMonthly.overall,
                     nonNegotiable: counsellorPerfMonthly.nonNegotiable,
                     achieved: counsellorPerfMonthly.achieved,
+                    achievedSource: counsellorPerfMonthly.achievedSource,
+                    importId: counsellorPerfMonthly.importId,
                 },
                 snapshotTeamName: snapshotTeams.name,
             })
@@ -186,6 +188,8 @@ export async function getPreviousEntry(userId: number, date: string): Promise<Pe
             overall: counsellorPerfMonthly.overall,
             nonNegotiable: counsellorPerfMonthly.nonNegotiable,
             achieved: counsellorPerfMonthly.achieved,
+            achievedSource: counsellorPerfMonthly.achievedSource,
+            importId: counsellorPerfMonthly.importId,
         })
         .from(counsellorPerfMonthly)
         .where(and(eq(counsellorPerfMonthly.userId, userId), lt(counsellorPerfMonthly.date, date)))
