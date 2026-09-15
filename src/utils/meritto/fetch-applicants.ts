@@ -1,4 +1,8 @@
-import * as cheerio from "cheerio";
+// `cheerio/slim` parses with htmlparser2 only. The full `cheerio` entry pulls in
+// `undici` for its `fromURL` helper, and undici touches the `MessagePort` global
+// at import time, which the Cloudflare Workers runtime does not define
+// ("ReferenceError: MessagePort is not defined"). We only need `load`.
+import * as cheerio from "cheerio/slim";
 
 export interface Applicant {
     userId: string;
@@ -52,7 +56,10 @@ export function parseApplicants(html: string): Applicant[] {
 
     const clean = (s: string) => s.replace(/ /g, " ").replace(/\s+/g, " ").trim();
 
-    return $("tbody tr")
+    // htmlparser2 does not auto-insert `<tbody>` around bare `<tr>` rows the way
+    // parse5 does, so match rows directly and drop header rows explicitly.
+    return $("tr")
+        .not("thead tr")
         .toArray()
         .map((tr) => {
             const $tr = $(tr);
