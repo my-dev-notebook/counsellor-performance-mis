@@ -53,7 +53,7 @@ export function QualityExportButton() {
                 { header: "Counsellor name", key: "name", width: 26 },
                 { header: "Email", key: "email", width: 30 },
                 { header: "Team name", key: "teamName", width: 20 },
-                { header: "Quality score", key: "qualityScore", width: 14, style: { numFmt: "0.0%" } },
+                { header: "Quality score", key: "qualityScore", width: 14, style: { numFmt: "0%" } },
                 { header: "Audits", key: "auditCount", width: 8 },
             ];
             sheet.getRow(1).font = { bold: true };
