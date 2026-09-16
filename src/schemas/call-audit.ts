@@ -129,10 +129,16 @@ export function computeAqs(ratings: Record<ParameterKey, Rating>): number {
     return ok / PARAMETER_KEYS.length;
 }
 
-/** Green at 100%, Yellow from 88% up, Red below. */
+/** AQS as a whole percent, rounded half-up like Excel's percent format (7/8 -> 88). */
+export function aqsPercent(aqs: number): number {
+    return Math.round(aqs * 100);
+}
+
+/** Green at 100%, Yellow from 88% up, Red below — judged on the rounded whole percent. */
 export function aqsStatus(aqs: number): Status {
-    if (aqs >= 1) return "Green";
-    if (aqs >= 0.88) return "Yellow";
+    const pct = aqsPercent(aqs);
+    if (pct >= 100) return "Green";
+    if (pct >= 88) return "Yellow";
     return "Red";
 }
 
