@@ -58,7 +58,7 @@ export function AdmissionsCalendar({ monthDate, admissions }: { monthDate: strin
         <div data-component="AdmissionsCalendar" className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">
             <div className="rounded-lg border border-border bg-card p-4">
                 <div className="mb-3 flex items-baseline justify-between">
-                    <h3 className="text-sm font-semibold text-foreground">Daily admissions</h3>
+                    <h3 className="text-sm font-semibold text-foreground">Daily applications</h3>
                     <span className="text-xs text-muted-foreground">{formatInt(admissions.length)} in month</span>
                 </div>
                 <div className="grid grid-cols-7 gap-1 text-center">
@@ -80,7 +80,7 @@ export function AdmissionsCalendar({ monthDate, admissions }: { monthDate: strin
                                     setSelectedDay(isSelected ? null : day);
                                 }}
                                 aria-pressed={isSelected}
-                                aria-label={`${dayDate(monthDate, day)}: ${String(count)} admissions`}
+                                aria-label={`${dayDate(monthDate, day)}: ${String(count)} applications`}
                                 className={`flex aspect-square flex-col items-center justify-center rounded-md border text-sm transition-colors disabled:cursor-default ${
                                     isSelected ? "border-primary ring-1 ring-primary" : "border-border"
                                 } ${cellTone(count, maxCount)} ${count > 0 ? "hover:border-primary/60" : ""}`}
@@ -94,10 +94,10 @@ export function AdmissionsCalendar({ monthDate, admissions }: { monthDate: strin
             </div>
             <div className="rounded-lg border border-border bg-card p-4">
                 <h3 className="mb-3 text-sm font-semibold text-foreground">
-                    {selectedDay === null ? "Select a day" : `Admissions on ${dayDate(monthDate, selectedDay)}`}
+                    {selectedDay === null ? "Select a day" : `Applications on ${dayDate(monthDate, selectedDay)}`}
                 </h3>
                 {selectedDay === null ? (
-                    <p className="text-sm text-muted-foreground">Click a day with admissions to see who was admitted.</p>
+                    <p className="text-sm text-muted-foreground">Click a day with applications to see who was admitted.</p>
                 ) : (
                     <ul className="divide-y divide-border">
                         {selectedRows.map((row) => (
