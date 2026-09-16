@@ -50,8 +50,8 @@ const SECTIONS: NavSection[] = [
                 icon: FiGrid,
                 requires: "viewPerformance",
                 children: [
-                    { href: "/", label: "Monthly" },
                     { href: "/yearly", label: "Yearly" },
+                    { href: "/", label: "Monthly" },
                 ],
             },
             {
