@@ -9,9 +9,9 @@ import type { Status } from "@/schemas/parser";
 
 /** Soft row fills (ARGB), readable with black text in Excel. */
 const ROW_FILL: Partial<Record<Status, string>> = {
-    Green: "FFD9EAD3",
-    Yellow: "FFFCE5CD",
-    Red: "FFF4CCCC",
+    Green: "FFB7E1A1",
+    Yellow: "FFFFD966",
+    Red: "FFF4A6A6",
 };
 /** Text colour for a counsellor with no audit in the range: greyed out, no fill. */
 const UNAUDITED_FONT_COLOR = "FF9E9E9E";
@@ -85,6 +85,24 @@ export function QualityExportButton() {
                     }
                 }
             }
+
+            // Colour legend two columns right of the table, from row 3: swatch in G, range in H.
+            const LEGEND: { status: Status; label: string }[] = [
+                { status: "Green", label: "100%" },
+                { status: "Yellow", label: ">= 88%" },
+                { status: "Red", label: "< 88%" },
+            ];
+            sheet.getColumn(7).width = 4;
+            sheet.getColumn(8).width = 10;
+            LEGEND.forEach(({ status, label }, i) => {
+                const swatch = sheet.getCell(i + 3, 7);
+                const fill = ROW_FILL[status];
+                if (fill) swatch.fill = { type: "pattern", pattern: "solid", fgColor: { argb: fill } };
+                const text = sheet.getCell(i + 3, 8);
+                text.value = label;
+                // Row-level grey font (unaudited rows) would otherwise bleed into the legend.
+                text.font = { color: { argb: "FF000000" } };
+            });
 
             const buffer = await workbook.xlsx.writeBuffer();
             const blob = new Blob([buffer], {
