@@ -21,13 +21,21 @@ export function proxy(request: NextRequest) {
     const sessionId = request.cookies.get(SESSION_COOKIE)?.value;
 
     if (!sessionId) {
-        if (PUBLIC_PATHS.has(pathname)) return NextResponse.next();
+        if (PUBLIC_PATHS.has(pathname)) {
+            return NextResponse.next();
+        }
+
         const login = new URL("/login", request.nextUrl);
-        if (pathname !== "/") login.searchParams.set("next", pathname);
+
+        if (pathname !== "/") {
+            login.searchParams.set("next", pathname);
+        }
+
         return NextResponse.redirect(login);
     }
 
     const response = NextResponse.next();
+
     response.cookies.set(SESSION_COOKIE, sessionId, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -35,6 +43,7 @@ export function proxy(request: NextRequest) {
         path: "/",
         expires: new Date(Date.now() + SESSION_TTL_MS),
     });
+
     return response;
 }
 
