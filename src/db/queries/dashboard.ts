@@ -8,6 +8,7 @@ import { getProgressForMonth, listMonthsWithData } from "./performance";
 import type { PerformanceEntry, ProgressRow, UserRow } from "@/db/types";
 import type { Scope } from "@/lib/auth/permissions";
 import { rowVisible } from "@/lib/auth/permissions";
+import { formatSessionSpan, sessionOfMonth } from "@/schemas/dates";
 
 function hasEntry(row: ProgressRow): row is ProgressRow & { entry: PerformanceEntry } {
     return row.entry !== null;
@@ -141,19 +142,24 @@ function addNullable(sum: number | null, value: number | null): number | null {
     return value === null ? sum : (sum ?? 0) + value;
 }
 
-/** "2026 (Jan – Sep)" — the year plus the span of months it actually has data for. */
+/** "Session 2027 (Oct 2026 – Mar 2027)" — the session year plus the span of months it actually has data for. */
 function formatYearLabel(year: string, months: readonly string[]): string {
     const first = months[0];
     const last = months[months.length - 1];
-    if (!first || !last) return year;
-    const abbr = (date: string) => MONTH_NAMES[Number.parseInt(date.slice(5), 10) - 1]?.slice(0, 3) ?? "?";
-    return first === last ? `${year} (${abbr(first)})` : `${year} (${abbr(first)} – ${abbr(last)})`;
+    if (!first || !last) return `Session ${year} (${formatSessionSpan(year)})`;
+    const abbr = (date: string) =>
+        `${MONTH_NAMES[Number.parseInt(date.slice(5), 10) - 1]?.slice(0, 3) ?? "?"} ${date.slice(0, 4)}`;
+    return first === last
+        ? `Session ${year} (${abbr(first)})`
+        : `Session ${year} (${abbr(first)} – ${abbr(last)})`;
 }
 
 /**
  * The yearly counterpart of `getMonthlyWorkbook`: one row per counsellor with
- * Target / Non-Negotiable / Achieved SUMMED over every month of `year`
- * ("YYYY") that has data, so the same `Dashboard` renders a whole year.
+ * Target / Non-Negotiable / Achieved SUMMED over every month of the SESSION
+ * `year` ("YYYY", October of the previous calendar year through September —
+ * see `sessionOfMonth`) that has data, so the same `Dashboard` renders a
+ * whole session.
  *
  * A counsellor is filed under the team of their LATEST month in the year; a
  * mid-year team move therefore shows the whole year's numbers under the new
@@ -166,7 +172,7 @@ function formatYearLabel(year: string, months: readonly string[]): string {
  */
 export async function getYearlyWorkbook(year: string, scope: Scope): Promise<ParsedWorkbook> {
     const months = (await listMonthsWithData(scope))
-        .filter((m) => m.startsWith(`${year}-`))
+        .filter((m) => sessionOfMonth(m) === year)
         .sort((a, b) => a.localeCompare(b));
 
     const perMonth = await Promise.all(

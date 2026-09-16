@@ -1,8 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { formatSessionSpan } from "@/schemas/dates";
 
-/** `MonthPicker`'s yearly sibling — pushes `?year=YYYY` onto `basePath`. */
+/**
+ * `MonthPicker`'s yearly sibling — pushes `?year=YYYY` onto `basePath`. The
+ * year is a SESSION year (Oct → Sep, named after the calendar year it ends in),
+ * so the control spells out the calendar span next to the number.
+ */
 export function YearPicker({
     year,
     existingYears,
@@ -21,7 +26,7 @@ export function YearPicker({
     return (
         <div data-component="YearPicker" className="flex flex-wrap items-center gap-3">
             <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                Year
+                Session
                 <input
                     type="number"
                     value={Number.parseInt(year, 10)}
@@ -31,6 +36,7 @@ export function YearPicker({
                     }}
                     className="w-24 rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
                 />
+                <span className="text-xs">({formatSessionSpan(year)})</span>
             </label>
             {existingYears.length > 0 && (
                 <div className="flex flex-wrap items-center gap-1.5">

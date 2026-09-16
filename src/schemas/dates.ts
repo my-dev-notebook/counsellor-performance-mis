@@ -13,9 +13,41 @@ import { z } from "zod";
 export const MonthDate = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "date must be YYYY-MM");
 export type MonthDate = z.infer<typeof MonthDate>;
 
-/** "YYYY" — a calendar year, the yearly dashboard's `?year=` param. */
+/**
+ * "YYYY" — a SESSION year, the yearly dashboard's `?year=` param. Not a
+ * calendar year: a session runs October → September and is named after the
+ * calendar year it ENDS in, so "2027" covers 2026-10 … 2027-09 (see
+ * `sessionOfMonth`).
+ */
 export const YearDate = z.string().regex(/^\d{4}$/, "year must be YYYY");
 export type YearDate = z.infer<typeof YearDate>;
+
+/** First month of a session (1-12). October: the session for 2027 begins in 2026-10. */
+export const SESSION_START_MONTH = 10;
+
+/** The session year ("YYYY") a "YYYY-MM" month belongs to — Oct–Dec roll into the NEXT calendar year. */
+export function sessionOfMonth(monthDate: string): string {
+    const [yearStr, monthStr] = monthDate.split("-");
+    const year = Number.parseInt(yearStr ?? "", 10);
+    const month = Number.parseInt(monthStr ?? "", 10);
+    return String(month >= SESSION_START_MONTH ? year + 1 : year);
+}
+
+/** Every "YYYY-MM" month of a session year, in order: "2027" → ["2026-10", …, "2027-09"]. */
+export function sessionMonths(sessionYear: string): string[] {
+    const end = Number.parseInt(sessionYear, 10);
+    return Array.from({ length: 12 }, (_, i) => {
+        const month = ((SESSION_START_MONTH - 1 + i) % 12) + 1;
+        const year = month >= SESSION_START_MONTH ? end - 1 : end;
+        return `${String(year)}-${String(month).padStart(2, "0")}`;
+    });
+}
+
+/** "Oct 2026 – Sep 2027" — the calendar span a session year covers. */
+export function formatSessionSpan(sessionYear: string): string {
+    const end = Number.parseInt(sessionYear, 10);
+    return `Oct ${String(end - 1)} – Sep ${String(end)}`;
+}
 
 /** "YYYY-MM-DD" — the `admissions.date` shape, e.g. "2026-09-10". */
 export const DayDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "date must be YYYY-MM-DD");
@@ -27,9 +59,9 @@ export function currentMonthDate(): string {
     return `${String(now.getFullYear())}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
 
-/** Today's year as a `YearDate`, in the server's local timezone. */
+/** Today's SESSION year as a `YearDate` (October onward already counts as next year's session). */
 export function currentYearDate(): string {
-    return String(new Date().getFullYear());
+    return sessionOfMonth(currentMonthDate());
 }
 
 /**

@@ -46,11 +46,12 @@ export default async function YearlyDashboardPage({
             />
             <main className="mx-auto w-full max-w-7xl flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-8">
                 <div>
-                    <h2 className="text-xl font-semibold tracking-tight text-foreground">Yearly</h2>
+                    <h2 className="text-xl font-semibold tracking-tight text-foreground">Yearly (session)</h2>
                     <p className="mt-1 text-sm text-muted-foreground">
-                        Every month of the year rolled into one: each counsellor&apos;s Target, Non-Negotiable and
-                        Achieved are summed across the months on record, filed under the team they were on most
-                        recently.
+                        A session runs October to September and is named after the year it ends in (October 2026
+                        to September 2027 is session 2027). Every month of the session rolled into one: each
+                        counsellor&apos;s Target, Non-Negotiable and Achieved are summed across the months on
+                        record, filed under the team they were on most recently.
                     </p>
                 </div>
                 <YearPicker year={year} existingYears={years} basePath="/yearly" />

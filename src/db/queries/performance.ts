@@ -6,6 +6,7 @@ import type { MonthSummary, PerformanceEntry, ProgressRow, UserRow } from "@/db/
 import type { Scope } from "@/lib/auth/permissions";
 import { combine, rowVisible, scopeTeamCondition, userInScope } from "@/lib/auth/permissions";
 import { getUserById } from "@/db/queries/users";
+import { sessionOfMonth } from "@/schemas/dates";
 
 /** Roles whose users appear on the entry/progress screens as "counsellors". */
 const COUNSELLOR_ROLES = ["counsellor"] as const;
@@ -31,10 +32,10 @@ export async function listMonthsWithData(scope: Scope): Promise<string[]> {
     return rows.map((r) => r.date);
 }
 
-/** Distinct years (as "YYYY") among `listMonthsWithData`, newest first. */
+/** Distinct SESSION years (as "YYYY", Oct–Sep — see `sessionOfMonth`) among `listMonthsWithData`, newest first. */
 export async function listYearsWithData(scope: Scope): Promise<string[]> {
     const months = await listMonthsWithData(scope);
-    return Array.from(new Set(months.map((m) => m.slice(0, 4))));
+    return Array.from(new Set(months.map(sessionOfMonth)));
 }
 
 /**
