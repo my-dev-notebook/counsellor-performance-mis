@@ -1,30 +1,36 @@
 {
-	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "counsellor-performance-mis",
-	"account_id": "0764000448c72fb336573aed75539841",
-	"main": ".open-next/worker.js",
-	"compatibility_date": "2024-09-23",
-	"compatibility_flags": [
-		"nodejs_compat"
-	],
-	"assets": {
-		"binding": "ASSETS",
-		"directory": ".open-next/assets",
-	},
-	// Only "staging" is configured for now (per product-owner decision) — the
-	// "production" environment is deliberately not set up yet. Add an
-	// `env.production` block here, mirroring `env.staging`, once a production
-	// D1 database exists.
-	"env": {
-		"staging": {
-			"name": "counsellor-performance-mis-staging",
-			"d1_databases": [
-				{
-					"binding": "DB",
-					"database_name": "counsellor-performance-staging",
-					"database_id": "ccf6272d-51a0-4c15-934c-895525026e83"
-				},
-			],
-		},
-	},
+    "$schema": "node_modules/wrangler/config-schema.json",
+    "name": "counsellor-performance-mis",
+    "account_id": "0764000448c72fb336573aed75539841",
+    "main": ".open-next/worker.js",
+    "compatibility_date": "2024-09-23",
+    "compatibility_flags": [
+        "nodejs_compat"
+    ],
+    "assets": {
+        "binding": "ASSETS",
+        "directory": ".open-next/assets",
+    },
+    // Only "staging" is configured for now (per product-owner decision) — the
+    // "production" environment is deliberately not set up yet. Add an
+    // `env.production` block here, mirroring `env.staging`, once a production
+    // D1 database exists.
+    "observability": {
+        "logs": {
+            "enabled": false,
+            "invocation_logs": true
+        }
+    },
+    "env": {
+        "staging": {
+            "name": "counsellor-performance-mis-staging",
+            "d1_databases": [
+                {
+                    "binding": "DB",
+                    "database_name": "counsellor-performance-staging",
+                    "database_id": "ccf6272d-51a0-4c15-934c-895525026e83"
+                },
+            ],
+        },
+    },
 }
