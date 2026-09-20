@@ -39,6 +39,7 @@ export default async function DailyEntryPage({
                 </p>
             </div>
             <DailyEntryView
+                key={`${String(counsellor?.id ?? "none")}-${date}`}
                 date={date}
                 counsellors={counsellors}
                 selectedUserId={counsellor?.id ?? null}

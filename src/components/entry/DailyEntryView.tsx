@@ -567,6 +567,7 @@ export function DailyEntryView({
             });
             byDate.set(row.date, records);
         }
+
         return byDate;
     });
 
