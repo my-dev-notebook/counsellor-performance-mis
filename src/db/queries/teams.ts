@@ -1,11 +1,13 @@
-import { and, count, eq, sql } from "drizzle-orm";
+import { and, count, eq } from "drizzle-orm";
 import { getDb } from "@/db/client";
-import { admissions, counsellorPerfMonthly, roles, teams, users } from "@/db/schema";
+import { roles, teams, users } from "@/db/schema";
 import type { Team } from "@/db/types";
 
 export async function listTeams(): Promise<Team[]> {
     const db = await getDb();
-    return db.select({ id: teams.id, name: teams.name }).from(teams).orderBy(teams.name);
+    return db.select({
+        id: teams.id, name: teams.name, isActive: teams.isActive, createdAt: teams.createdAt, updatedAt: teams.updatedAt
+    }).from(teams).orderBy(teams.name);
 }
 
 export interface TeamLeader {
@@ -16,51 +18,40 @@ export interface TeamLeader {
 export interface TeamWithUsage extends Team {
     /** Active users with the team_leader role whose team is this one. A team may have several, or none. */
     leaders: TeamLeader[];
-    /** Users (active or not) currently on the team. */
-    memberCount: number;
     /** Members with `is_active = 1`. */
-    activeMemberCount: number;
-    /** Monthly entries + daily admission rows whose snapshot team is this one. */
-    historyCount: number;
+    memberCount: number;
 }
 
 /** Every team with how much refers to it — what decides whether it may be deleted. */
 export async function listTeamsWithUsage(): Promise<TeamWithUsage[]> {
     const db = await getDb();
-    const [all, leaders, members, monthly, daily] = await Promise.all([
-        listTeams(),
+    const [all, leaders, members] = await Promise.all([
+        listTeams(), // 6
         db
             .select({ id: users.id, name: users.name, teamId: users.teamId })
             .from(users)
             .innerJoin(roles, eq(users.roleId, roles.id))
             .where(and(eq(roles.name, "team_leader"), eq(users.isActive, 1)))
-            .orderBy(users.name),
+            .orderBy(users.name), // 1
         db
             .select({
                 teamId: users.teamId,
                 n: count(),
-                active: sql<number>`coalesce(sum(${users.isActive}), 0)`.mapWith(Number),
             })
             .from(users)
-            .groupBy(users.teamId),
-        db
-            .select({ teamId: counsellorPerfMonthly.teamId, n: count() })
-            .from(counsellorPerfMonthly)
-            .groupBy(counsellorPerfMonthly.teamId),
-        db.select({ teamId: admissions.teamId, n: count() }).from(admissions).groupBy(admissions.teamId),
+            .where(eq(users.isActive, 1))
+            .groupBy(users.teamId), // 195 -> 99
     ]);
+
     const tally = (rows: { teamId: number | null; n: number }[]) =>
         new Map(rows.filter((r) => r.teamId !== null).map((r) => [r.teamId, r.n]));
+
     const memberBy = tally(members);
-    const activeBy = tally(members.map((r) => ({ teamId: r.teamId, n: r.active })));
-    const monthlyBy = tally(monthly);
-    const dailyBy = tally(daily);
+
     return all.map((team) => ({
         ...team,
         leaders: leaders.filter((l) => l.teamId === team.id).map(({ id, name }) => ({ id, name })),
         memberCount: memberBy.get(team.id) ?? 0,
-        activeMemberCount: activeBy.get(team.id) ?? 0,
-        historyCount: (monthlyBy.get(team.id) ?? 0) + (dailyBy.get(team.id) ?? 0),
     }));
 }
 

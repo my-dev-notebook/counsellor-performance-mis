@@ -130,12 +130,12 @@ function AgencyEditPanel({ agency, onClose }: { agency: AgencyWithUsage; onClose
 
 /** The ⋯ menu in an agency's actions cell. */
 function AgencyActions({ agency, state }: { agency: AgencyWithUsage; state: RowState }) {
-    const [pending, startTransition] = useTransition();
-    const deletable = agency.memberCount === 0 && agency.historyCount === 0;
+    // const [pending, startTransition] = useTransition();
+    // const deletable = agency.memberCount === 0 && agency.historyCount === 0;
 
     const menuItems: MenuItem[] = [
         { label: state.expanded ? "Close" : "Edit", onSelect: state.toggle },
-        {
+        /* {
             label: deletable ? "Delete" : agency.memberCount > 0 ? "Delete (has users)" : "Delete (has history)",
             destructive: true,
             disabled: pending || !deletable,
@@ -149,7 +149,7 @@ function AgencyActions({ agency, state }: { agency: AgencyWithUsage; state: RowS
                     }
                 });
             },
-        },
+        }, */
     ];
 
     return (
@@ -161,7 +161,7 @@ function AgencyActions({ agency, state }: { agency: AgencyWithUsage; state: RowS
 
 const COLUMNS: Column<AgencyWithUsage>[] = [
     { key: "name", header: "Agency", className: "font-medium text-foreground", render: (a) => a.name },
-    { key: "users", header: "Users", className: "text-muted-foreground", render: (a) => a.memberCount },
+    { key: "users", header: "Active users", className: "text-muted-foreground", render: (a) => a.memberCount },
     {
         key: "actions",
         header: "",

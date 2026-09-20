@@ -85,9 +85,9 @@ export async function deleteTeamAction(id: number) {
     if (usage.memberCount > 0) {
         throw new Error(`Move or deactivate the ${String(usage.memberCount)} member(s) off this team first.`);
     }
-    if (usage.historyCount > 0) {
+    /* if (usage.historyCount > 0) {
         throw new Error("This team has recorded history and cannot be deleted. Rename it instead.");
-    }
+    } */
     await deleteTeam(parsedId);
     refresh();
 }

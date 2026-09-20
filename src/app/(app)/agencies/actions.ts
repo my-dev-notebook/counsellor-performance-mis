@@ -34,9 +34,9 @@ export async function deleteAgencyAction(id: number) {
     if (usage.memberCount > 0) {
         throw new Error(`Reassign the ${String(usage.memberCount)} user(s) on this agency first.`);
     }
-    if (usage.historyCount > 0) {
+    /* if (usage.historyCount > 0) {
         throw new Error("This agency has recorded history and cannot be deleted. Rename it instead.");
-    }
+    } */
     await deleteAgency(parsedId);
     refresh();
 }

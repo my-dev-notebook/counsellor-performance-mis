@@ -1,41 +1,43 @@
 import { count, eq } from "drizzle-orm";
 import { getDb } from "@/db/client";
-import { admissions, agencies, counsellorPerfMonthly, users } from "@/db/schema";
+import { agencies, users } from "@/db/schema";
 import type { Agency } from "@/db/types";
 
 export async function listAgencies(): Promise<Agency[]> {
     const db = await getDb();
-    return db.select({ id: agencies.id, name: agencies.name }).from(agencies).orderBy(agencies.name);
+    return db.select({
+        id: agencies.id,
+        name: agencies.name,
+        isActive: agencies.isActive,
+        createdAt: agencies.createdAt,
+        updatedAt: agencies.updatedAt
+    }).from(agencies).orderBy(agencies.name);
 }
 
 export interface AgencyWithUsage extends Agency {
     /** Users (active or not) currently assigned to the agency. */
     memberCount: number;
-    /** Monthly entries + daily admission rows whose snapshot agency is this one. */
-    historyCount: number;
 }
 
 /** Every agency with how much refers to it — what decides whether it may be deleted. */
 export async function listAgenciesWithUsage(): Promise<AgencyWithUsage[]> {
     const db = await getDb();
-    const [all, members, monthly, daily] = await Promise.all([
+    const [all, members] = await Promise.all([
         listAgencies(),
-        db.select({ agencyId: users.agencyId, n: count() }).from(users).groupBy(users.agencyId),
         db
-            .select({ agencyId: counsellorPerfMonthly.agencyId, n: count() })
-            .from(counsellorPerfMonthly)
-            .groupBy(counsellorPerfMonthly.agencyId),
-        db.select({ agencyId: admissions.agencyId, n: count() }).from(admissions).groupBy(admissions.agencyId),
+            .select({ agencyId: users.agencyId, n: count() })
+            .from(users)
+            .where(eq(users.isActive, 1))
+            .groupBy(users.agencyId),
     ]);
+
     const tally = (rows: { agencyId: number | null; n: number }[]) =>
         new Map(rows.filter((r) => r.agencyId !== null).map((r) => [r.agencyId, r.n]));
     const memberBy = tally(members);
-    const monthlyBy = tally(monthly);
-    const dailyBy = tally(daily);
+
     return all.map((agency) => ({
         ...agency,
         memberCount: memberBy.get(agency.id) ?? 0,
-        historyCount: (monthlyBy.get(agency.id) ?? 0) + (dailyBy.get(agency.id) ?? 0),
     }));
 }
 

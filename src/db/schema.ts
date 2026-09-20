@@ -18,11 +18,17 @@ import { OVERALL_RATINGS, RATINGS } from "@/schemas/call-audit";
 export const teams = sqliteTable("teams", {
     id: integer("id").primaryKey({ autoIncrement: true }),
     name: text("name").notNull().unique(),
+    isActive: integer("is_active").notNull().default(1),
+    createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+    updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
 });
 
 export const agencies = sqliteTable("agencies", {
     id: integer("id").primaryKey({ autoIncrement: true }),
     name: text("name").notNull().unique(),
+    isActive: integer("is_active").notNull().default(1),
+    createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+    updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
 });
 
 // Lookup table rather than a CHECK constraint so a new role is one INSERT.

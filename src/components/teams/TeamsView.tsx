@@ -200,12 +200,12 @@ function TeamEditPanel({
 
 /** The ⋯ menu in a team's actions cell. */
 function TeamActions({ team, state }: { team: TeamWithUsage; state: RowState }) {
-    const [pending, startTransition] = useTransition();
-    const deletable = team.memberCount === 0 && team.historyCount === 0;
+    // const [pending, startTransition] = useTransition();
+    // const deletable = team.memberCount === 0;
 
     const menuItems: MenuItem[] = [
         { label: state.expanded ? "Close" : "Edit", onSelect: state.toggle },
-        {
+        /*{
             label: deletable ? "Delete" : team.memberCount > 0 ? "Delete (has members)" : "Delete (has history)",
             destructive: true,
             disabled: pending || !deletable,
@@ -219,7 +219,7 @@ function TeamActions({ team, state }: { team: TeamWithUsage; state: RowState }) 
                     }
                 });
             },
-        },
+        }, */
     ];
 
     return (
@@ -239,9 +239,9 @@ const COLUMNS: Column<TeamWithUsage>[] = [
     },
     {
         key: "members",
-        header: "Members (active / total)",
+        header: "Active members",
         className: "text-muted-foreground",
-        render: (t) => `${String(t.activeMemberCount)} / ${String(t.memberCount)}`,
+        render: (t) => String(t.memberCount),
     },
     { key: "actions", header: "", srLabel: "Actions", render: (t, state) => <TeamActions team={t} state={state} /> },
 ];
