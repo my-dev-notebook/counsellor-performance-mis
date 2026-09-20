@@ -37,3 +37,16 @@ export const SaveDailyAdmissionInput = z.object({
     records: z.array(AdmissionRecord),
 });
 export type SaveDailyAdmissionInput = z.infer<typeof SaveDailyAdmissionInput>;
+
+/**
+ * Auto-fetch apply: several days of one counsellor, written as a whole (see
+ * `replaceDailyAdmissions`). A day with no records clears that day.
+ * `reclaim` is only set by the all-counsellors fetch.
+ */
+export const ApplyFetchedAdmissionsInput = z.object({
+    userId: z.number().int(),
+    days: z.array(z.object({ date: DayDate, records: z.array(AdmissionRecord) })).min(1),
+    /** Application numbers to take over from other counsellors first (moves the operator accepted). */
+    reclaim: z.array(z.string().trim().min(1)).optional(),
+});
+export type ApplyFetchedAdmissionsInput = z.infer<typeof ApplyFetchedAdmissionsInput>;

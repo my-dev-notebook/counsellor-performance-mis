@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { AdmissionRow } from "@/db/types";
 import { formatInt } from "@/lib/format";
+import { cellTone } from "@/lib/admissions/calendar-tone";
 
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -13,15 +14,6 @@ function parseMonth(monthDate: string): { year: number; month: number } {
 
 function dayDate(monthDate: string, day: number): string {
     return `${monthDate}-${String(day).padStart(2, "0")}`;
-}
-
-/** Tint by how busy the day was, relative to the month's best day. */
-function cellTone(count: number, max: number): string {
-    if (count === 0) return "bg-card text-muted-foreground";
-    const ratio = count / max;
-    if (ratio >= 0.75) return "bg-success/30 text-foreground";
-    if (ratio >= 0.4) return "bg-success/20 text-foreground";
-    return "bg-success/10 text-foreground";
 }
 
 /**

@@ -4,10 +4,17 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { AdmissionRecord, AdmissionRow, UserRow } from "@/db/types";
 import { MONTH_NAMES } from "@/lib/format";
+import { cellTone } from "@/lib/admissions/calendar-tone";
 import { Select } from "@/components/Select";
 import { Tooltip } from "@/components/Tooltip";
-import { saveDailyAdmissionAction, autoFetchApplicantsAction } from "@/app/(app)/entry/actions";
+import {
+    saveDailyAdmissionAction,
+    fetchAdmissionDiffAction,
+    applyFetchedAdmissionsAction,
+} from "@/app/(app)/entry/actions";
+import type { AdmissionFetchDiff, FetchWindow } from "@/app/(app)/entry/actions";
 import { loadNpfSession } from "@/lib/nopaperformsSession";
+import { AdmissionDiffPanel } from "@/components/entry/AdmissionDiffPanel";
 import { DataTable } from "@/components/DataTable";
 import type { Column } from "@/components/DataTable";
 
@@ -65,14 +72,27 @@ function CounsellorPicker({ counsellors, date }: { counsellors: UserRow[]; date:
 
     return (
         <div data-component="CounsellorPicker" className="space-y-3">
-            <input
-                placeholder="Search by name, team, agency…"
-                value={search}
-                onChange={(e) => {
-                    setSearch(e.target.value);
-                }}
-                className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm text-foreground sm:w-80"
-            />
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <input
+                    placeholder="Search by name, team, agency…"
+                    value={search}
+                    onChange={(e) => {
+                        setSearch(e.target.value);
+                    }}
+                    className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm text-foreground sm:w-80"
+                />
+                <Tooltip content="Fetch this month from Meritto for every counsellor listed here and compare with what is saved">
+                    <button
+                        type="button"
+                        onClick={() => {
+                            router.push(`/entry/fetch?date=${date}`);
+                        }}
+                        className="rounded-md border border-input px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent"
+                    >
+                        Auto-fetch all counsellors
+                    </button>
+                </Tooltip>
+            </div>
             <DataTable
                 columns={PICKER_COLUMNS}
                 rows={filtered}
@@ -132,16 +152,17 @@ function CalendarGrid({
     date: string;
     counts: Map<string, number>;
     selectedDate: string | null;
-    onSelect: (dDate: string) => void;
+    onSelect: (dDate: string | null) => void;
 }) {
     const days = Array.from({ length: daysInMonth(date) }, (_, i) => i + 1);
     const leadingBlanks = Array.from({ length: firstWeekday(date) }, (_, i) => i);
+    const maxCount = Math.max(0, ...counts.values());
 
     return (
-        <div data-component="CalendarGrid" className="w-fit rounded-lg border border-border bg-card p-2">
-            <div className="grid grid-cols-7 gap-1">
+        <div data-component="CalendarGrid" className="w-fit rounded-lg border border-border bg-card p-3">
+            <div className="grid grid-cols-7 gap-1.5">
                 {WEEKDAY_LABELS.map((w) => (
-                    <div key={w} className="w-9 pb-0.5 text-center text-[10px] font-semibold text-muted-foreground">
+                    <div key={w} className="w-12 pb-1 text-center text-[11px] font-semibold text-muted-foreground">
                         {w}
                     </div>
                 ))}
@@ -157,20 +178,16 @@ function CalendarGrid({
                             key={dDate}
                             type="button"
                             onClick={() => {
-                                onSelect(dDate);
+                                onSelect(selected ? null : dDate);
                             }}
-                            className={`flex h-9 w-9 flex-col items-center justify-center rounded-md border text-xs leading-none ${
-                                selected
-                                    ? "border-primary bg-primary/10 text-foreground"
-                                    : "border-border text-foreground hover:bg-accent/50"
-                            }`}
+                            aria-pressed={selected}
+                            aria-label={`${dDate}: ${String(count)} applications`}
+                            className={`flex h-12 w-12 flex-col items-center justify-center rounded-md border text-sm leading-none transition-colors hover:border-primary/60 ${
+                                selected ? "border-primary ring-1 ring-primary" : "border-border"
+                            } ${cellTone(count, maxCount)}`}
                         >
-                            <span>{day}</span>
-                            <span
-                                className={`mt-0.5 text-[9px] ${count > 0 ? "text-primary" : "text-muted-foreground"}`}
-                            >
-                                {count > 0 ? count : "—"}
-                            </span>
+                            <span className="text-xs">{day}</span>
+                            {count > 0 && <span className="mt-1 text-base font-semibold">{count}</span>}
                         </button>
                     );
                 })}
@@ -260,24 +277,91 @@ function normalizeDrafts(drafts: DraftRecord[]): DraftRecord[] {
     return [...drafts.slice(0, end), { ...BLANK_DRAFT }];
 }
 
+/**
+ * The two-step auto-fetch shared by the day editor and the month button:
+ * fetch a diff against the DB, show it, then (on apply) write every differing
+ * day and hand the written rows to `onApplied` so the caller can refresh its
+ * own state. Nothing touches the DB until apply.
+ */
+function useAdmissionFetch(userId: number, onApplied: (days: { date: string; records: AdmissionRecord[] }[]) => void) {
+    const [diff, setDiff] = useState<AdmissionFetchDiff | null>(null);
+    const [fetching, setFetching] = useState(false);
+    const [applying, setApplying] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const fetchDiff = (range: FetchWindow) => {
+        setError(null);
+        const session = loadNpfSession();
+        if (!session) {
+            setError("No saved NPF session — capture one on the Curl Parser page first.");
+            return;
+        }
+        setFetching(true);
+        void fetchAdmissionDiffAction(session.url, session.headers, userId, range)
+            .then(setDiff)
+            .catch(() => {
+                setError("Auto-fetch failed. Check the saved session is still valid and the counsellor has a Meritto id.");
+            })
+            .finally(() => {
+                setFetching(false);
+            });
+    };
+
+    const apply = () => {
+        if (!diff || diff.days.length === 0) return;
+        setError(null);
+        setApplying(true);
+        const days = diff.days.map((d) => ({ date: d.date, records: d.fetched }));
+        void applyFetchedAdmissionsAction({ userId, days })
+            .then(() => {
+                setDiff(null);
+                onApplied(days);
+            })
+            .catch(() => {
+                setError("Apply failed. Nothing was written — check the rows and try again.");
+            })
+            .finally(() => {
+                setApplying(false);
+            });
+    };
+
+    const discard = () => {
+        setDiff(null);
+        setError(null);
+    };
+
+    return { diff, fetching, applying, error, fetchDiff, apply, discard };
+}
+
 function DayEditor({
     userId,
     date,
     initialRecords,
     onSaved,
+    onClose,
 }: {
     userId: number;
     date: string;
     initialRecords: AdmissionRecord[];
     onSaved: (dDate: string, records: AdmissionRecord[]) => void;
+    onClose: () => void;
 }) {
     const [records, setRecords] = useState<DraftRecord[]>(() => normalizeDrafts(initialRecords.map(toDraft)));
     const [past, setPast] = useState<DraftRecord[][]>([]);
     const [future, setFuture] = useState<DraftRecord[][]>([]);
     const [pending, startTransition] = useTransition();
-    const [fetching, setFetching] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [saved, setSaved] = useState(true);
+    // Apply writes straight to the DB, so the grid is reset to what was
+    // written: the draft (and its undo history) no longer describes anything.
+    const autoFetch = useAdmissionFetch(userId, (days) => {
+        const applied = days.find((d) => d.date === date)?.records ?? [];
+        setRecords(normalizeDrafts(applied.map(toDraft)));
+        setPast([]);
+        setFuture([]);
+        setSaved(true);
+        onSaved(date, applied);
+    });
 
     const commit = (next: DraftRecord[]) => {
         setPast((p) => [...p, records]);
@@ -332,35 +416,6 @@ function DayEditor({
         commit(normalizeDrafts(records.filter((_, i) => i !== index)));
     };
 
-    const autoFetch = () => {
-        setError(null);
-        const session = loadNpfSession();
-        if (!session) {
-            setError("No saved NPF session — capture one on the Curl Parser page first.");
-            return;
-        }
-        setFetching(true);
-        void autoFetchApplicantsAction(session.url, session.headers, userId, date)
-            .then((fetched) => {
-                if (fetched.length === 0) {
-                    setError("Auto-fetch returned no applicants for this counsellor.");
-                    return;
-                }
-                const kept = records.filter((r) => !isEmptyDraft(r));
-                // application_number is globally unique in `admissions`, so
-                // re-fetching a day must not re-add rows already in the grid.
-                const existing = new Set(kept.map((r) => r.applicationNumber));
-                const toAdd = fetched.map(toDraft).filter((r) => !existing.has(r.applicationNumber));
-                commit(normalizeDrafts([...kept, ...toAdd]));
-            })
-            .catch(() => {
-                setError("Auto-fetch failed. Check the saved session is still valid.");
-            })
-            .finally(() => {
-                setFetching(false);
-            });
-    };
-
     const save = () => {
         setError(null);
         const drafts = records.filter((r) => !isEmptyDraft(r));
@@ -394,14 +449,16 @@ function DayEditor({
                     Day {day} — {filledCount} admission{filledCount === 1 ? "" : "s"}
                 </p>
                 <div className="flex items-center gap-1">
-                    <Tooltip content="Fetch this counsellor's applicants from the saved NPF session">
+                    <Tooltip content="Fetch this day's online-paid applicants from Meritto and compare with what is saved">
                         <button
                             type="button"
-                            disabled={fetching}
-                            onClick={autoFetch}
+                            disabled={autoFetch.fetching || autoFetch.applying}
+                            onClick={() => {
+                                autoFetch.fetchDiff({ day: date });
+                            }}
                             className="rounded-md border border-input px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent disabled:opacity-40"
                         >
-                            {fetching ? "Fetching…" : "Auto-fetch"}
+                            {autoFetch.fetching ? "Fetching…" : "Auto-fetch"}
                         </button>
                     </Tooltip>
                     <Tooltip content="Undo (Ctrl+Z)">
@@ -424,8 +481,31 @@ function DayEditor({
                             Redo
                         </button>
                     </Tooltip>
+                    <Tooltip content="Close day editor">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            aria-label="Close day editor"
+                            className="rounded-md border border-input px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent"
+                        >
+                            ✕
+                        </button>
+                    </Tooltip>
                 </div>
             </div>
+            {autoFetch.error && !autoFetch.diff && <p className="mt-2 text-xs text-destructive">{autoFetch.error}</p>}
+            {autoFetch.diff && (
+                <div className="mt-3">
+                    <AdmissionDiffPanel
+                        title={`Meritto vs saved — day ${String(day)}`}
+                        diff={autoFetch.diff}
+                        applying={autoFetch.applying}
+                        error={autoFetch.error}
+                        onApply={autoFetch.apply}
+                        onDiscard={autoFetch.discard}
+                    />
+                </div>
+            )}
             <div className="mt-3 overflow-x-auto">
                 <table className="min-w-full divide-y divide-border text-sm">
                     <thead>
@@ -552,6 +632,9 @@ export function DailyEntryView({
 }) {
     const router = useRouter();
     const [selectedDate, setSelectedDate] = useState<string | null>(null);
+    // Bumped when a month apply rewrites days behind the open editor, so it
+    // remounts from the new rows instead of keeping a stale draft.
+    const [editorVersion, setEditorVersion] = useState(0);
     // `admissions` arrives as one row per admission; the calendar grid and the
     // day editor both work per-day, so group once on mount.
     const [recordsByDate, setRecordsByDate] = useState<Map<string, AdmissionRecord[]>>(() => {
@@ -569,6 +652,18 @@ export function DailyEntryView({
         }
 
         return byDate;
+    });
+
+    const monthFetch = useAdmissionFetch(selectedUserId ?? 0, (days) => {
+        setRecordsByDate((prev) => {
+            const next = new Map(prev);
+            for (const d of days) {
+                if (d.records.length === 0) next.delete(d.date);
+                else next.set(d.date, d.records);
+            }
+            return next;
+        });
+        setEditorVersion((v) => v + 1);
     });
 
     if (selectedUserId === null) {
@@ -596,16 +691,44 @@ export function DailyEntryView({
                     </button>
                     <h2 className="mt-1 text-base font-semibold text-foreground">{counsellorName}</h2>
                 </div>
-                <MonthNav date={date} userId={selectedUserId} />
+                <div className="flex flex-wrap items-center gap-3">
+                    <MonthNav date={date} userId={selectedUserId} />
+                    <Tooltip content="Fetch the whole month's online-paid applicants from Meritto and compare with what is saved">
+                        <button
+                            type="button"
+                            disabled={monthFetch.fetching || monthFetch.applying}
+                            onClick={() => {
+                                monthFetch.fetchDiff({ month: date });
+                            }}
+                            className="rounded-md border border-input px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent disabled:opacity-40"
+                        >
+                            {monthFetch.fetching ? "Fetching month…" : "Auto-fetch month"}
+                        </button>
+                    </Tooltip>
+                </div>
             </div>
             <CalendarGrid date={date} counts={counts} selectedDate={selectedDate} onSelect={setSelectedDate} />
+            {monthFetch.error && !monthFetch.diff && <p className="text-xs text-destructive">{monthFetch.error}</p>}
+            {monthFetch.diff && (
+                <AdmissionDiffPanel
+                    title={`Meritto vs saved — ${MONTH_NAMES[parseMonthDate(date).month - 1] ?? ""} ${String(parseMonthDate(date).year)}`}
+                    diff={monthFetch.diff}
+                    applying={monthFetch.applying}
+                    error={monthFetch.error}
+                    onApply={monthFetch.apply}
+                    onDiscard={monthFetch.discard}
+                />
+            )}
             {selectedDate && (
                 <DayEditor
-                    key={selectedDate}
+                    key={`${selectedDate}-${String(editorVersion)}`}
                     userId={selectedUserId}
                     date={selectedDate}
                     initialRecords={recordsByDate.get(selectedDate) ?? []}
                     onSaved={handleSaved}
+                    onClose={() => {
+                        setSelectedDate(null);
+                    }}
                 />
             )}
         </div>
