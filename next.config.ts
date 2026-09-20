@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {/* config options here */};
+const nextConfig: NextConfig = { allowedDevOrigins: ["116.74.252.63"] };
 
 export default nextConfig;
 
