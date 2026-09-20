@@ -49,8 +49,8 @@ export async function getAchievedForCounsellors(monthDate: string): Promise<Map<
     const rows = await db
         .select({ userId: admissions.userId, total: sql<number>`COUNT(*)` })
         .from(admissions)
-        .where(like(admissions.date, `${monthDate}-%`))
-        .groupBy(admissions.userId);
+        .where(like(admissions.date, `${monthDate}-%`)) // TODO: optimize this!
+        .groupBy(admissions.userId); // For 2500 admissions on a month, this query will cost 2500 row reads;
     return new Map(rows.map((r) => [r.userId, Number(r.total)]));
 }
 
@@ -136,9 +136,13 @@ export async function getProgressForMonth(
                         : or(eq(users.isActive, 1), isNotNull(counsellorPerfMonthly.id)),
                 ),
             )
-            .orderBy(users.name),
+            .orderBy(users.name), // 278
         getAchievedForCounsellors(date),
     ]);
+
+    /*
+    ** SELECT users.name as name, teams.name as team, agencies.name as agency, counsellor_perf_monthly.overall, counsellor_perf_monthly.non_negotiable FROM users LEFT JOIN counsellor_perf_monthly ON users.id = counsellor_perf_monthly.user_id LEFT JOIN teams ON teams.id = users.team_id LEFT JOIN agencies ON  agencies.id = users.agency_id INNER JOIN roles ON roles.id = users.role_id WHERE counsellor_perf_monthly.date = '2026-08' AND roles.name = 'counsellor' AND users.is_active = 1 ORDER BY users.name;
+    */
 
     const progress = rows.map((row): ProgressRow => {
         const counsellor: UserRow = { ...row.counsellor, isActive: row.counsellor.isActive === 1 };
