@@ -35,22 +35,33 @@ function newSessionId(): string {
     return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-function cookieOptions(expires: Date) {
+/**
+ * With `expires` the browser keeps the cookie until then ("keep me signed in"); without it the cookie
+ * is a session cookie and goes when the browser closes. The DB row expires at SESSION_TTL_MS either way,
+ * so a session cookie that outlives the browser (restored tabs) still dies with the row.
+ */
+function cookieOptions(expires: Date | undefined) {
     return {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax" as const,
         path: "/",
-        expires,
+        ...(expires ? { expires } : {}),
     };
 }
 
-/** Server Actions / Route Handlers only — cookies cannot be set during rendering. */
-export async function startSession(userId: number): Promise<void> {
+/**
+ * Server Actions / Route Handlers only — cookies cannot be set during rendering.
+ * `persistent` (default true) decides whether the cookie survives the browser closing.
+ */
+export async function startSession(
+    userId: number,
+    { persistent = true }: { persistent?: boolean } = {},
+): Promise<void> {
     const id = newSessionId();
     const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
     await createSession(id, userId, expiresAt);
-    (await cookies()).set(SESSION_COOKIE, id, cookieOptions(expiresAt));
+    (await cookies()).set(SESSION_COOKIE, id, cookieOptions(persistent ? expiresAt : undefined));
 }
 
 export async function endSession(): Promise<void> {

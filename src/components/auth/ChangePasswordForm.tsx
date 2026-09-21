@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { FiAlertCircle } from "react-icons/fi";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 import { changePasswordAction, logoutAction } from "@/app/(auth)/actions";
 import type { AuthFormState } from "@/app/(auth)/actions";
 import { PASSWORD_MIN_LENGTH } from "@/schemas/auth";
@@ -16,36 +17,33 @@ export function ChangePasswordForm({ forced }: { forced: boolean }) {
             <form action={action} className="stack gap-3.5">
                 <label className="field">
                     <span className="label">Current password</span>
-                    <input
+                    <PasswordInput
                         name="currentPassword"
-                        type="password"
                         autoComplete="current-password"
                         required
-                        className="input input-lg"
+                        className="input-lg"
                     />
                 </label>
                 <label className="field">
                     <span className="label">
                         New password <span className="opt">(at least {PASSWORD_MIN_LENGTH} characters)</span>
                     </span>
-                    <input
+                    <PasswordInput
                         name="newPassword"
-                        type="password"
                         autoComplete="new-password"
                         minLength={PASSWORD_MIN_LENGTH}
                         required
-                        className="input input-lg"
+                        className="input-lg"
                     />
                 </label>
                 <label className="field">
                     <span className="label">Confirm new password</span>
-                    <input
+                    <PasswordInput
                         name="confirmPassword"
-                        type="password"
                         autoComplete="new-password"
                         minLength={PASSWORD_MIN_LENGTH}
                         required
-                        className="input input-lg"
+                        className="input-lg"
                     />
                 </label>
                 {state.error && (

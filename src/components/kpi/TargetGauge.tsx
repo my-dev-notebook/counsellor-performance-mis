@@ -1,4 +1,7 @@
+"use client";
+
 import type { CSSProperties } from "react";
+import { CursorHint, useCursorHint } from "@/components/CursorHint";
 import type { Summary } from "@/lib/metrics/summarize";
 import type { Status } from "@/schemas/parser";
 import { deriveStatus } from "@/lib/metrics/buckets";
@@ -13,65 +16,84 @@ const STATUS_STROKE: Record<Status, { arc: string; track: string }> = {
     Unknown: { arc: "var(--neutral)", track: "var(--neutral-soft)" },
 };
 
-/** Celebration only — chart series colours, never the status set, so the burst doesn't read as data. */
-const CONFETTI_COLORS = ["var(--series-1)", "var(--series-2)", "var(--series-3)", "var(--series-4)", "var(--series-5)"];
+/**
+ * Party flakes — the Green celebration. Every knob below was picked in the
+ * design system's "Party flakes lab" card; change them there first, then here.
+ */
+const FLAKES = {
+    count: 80,
+    size: [4, 8],
+    fall: [4, 8],
+    sway: [4, 14],
+    spin: [360, 1440],
+    /** Share of the card height a flake crosses before it is gone. */
+    travel: 0.7,
+    opacity: 0.65,
+    shapes: ["", "sq", "rib", "tri"],
+    palette: ["var(--good)", "var(--accent)", "var(--warn)", "var(--series-5)", "var(--info)", "var(--series-3)"],
+    seed: 656,
+} as const;
 
 /**
- * Deterministic pseudo-random (LCG) so the server and client render identical
- * pieces — `Math.random()` here would be a hydration mismatch.
+ * mulberry32 — the same generator, seed and draw order as the lab, so the
+ * scene here is the one that was approved there. Deterministic so the server
+ * and client render identical pieces (`Math.random()` would be a hydration
+ * mismatch).
  */
 function seededRandom(seed: number): () => number {
-    let state = seed;
+    let state = seed >>> 0 || 1;
     return () => {
-        state = (state * 1664525 + 1013904223) % 4294967296;
-        return state / 4294967296;
+        state = (state + 0x6d2b79f5) | 0;
+        let t = Math.imul(state ^ (state >>> 15), 1 | state);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     };
 }
 
-interface ConfettiPiece {
-    dx: string;
-    dy: string;
-    rot: string;
-    delay: string;
-    color: string;
-    round: boolean;
+interface Flake {
+    shape: string;
+    style: CSSProperties;
 }
 
-/** 28 pieces fanned across the top half-circle, so they burst up and out from the needle hub. */
-const CONFETTI_PIECES: ConfettiPiece[] = (() => {
-    const rand = seededRandom(7);
-    return Array.from({ length: 28 }, (_, i) => {
-        const angle = Math.PI * (0.1 + 0.8 * rand());
-        const distance = 70 + 80 * rand();
+/** Inclusive integer in [lo, hi] from a unit random. */
+function intBetween(r: number, [lo, hi]: readonly [number, number]): number {
+    return lo + Math.floor(r * (hi - lo + 1));
+}
+
+const FLAKE_PIECES: Flake[] = (() => {
+    const rand = seededRandom(FLAKES.seed);
+    return Array.from({ length: FLAKES.count }, (_, i) => {
+        const shape = FLAKES.shapes[Math.floor(rand() * FLAKES.shapes.length)] ?? "";
+        const size = intBetween(rand(), FLAKES.size);
+        const duration = FLAKES.fall[0] + rand() * (FLAKES.fall[1] - FLAKES.fall[0]);
+        const spin = intBetween(rand(), FLAKES.spin);
+        const sway = intBetween(rand(), FLAKES.sway);
+        const x = Math.round(rand() * 100);
+        const extraTravel = Math.floor(rand() * 20);
+        const delay = rand() * duration;
         return {
-            dx: `${(Math.cos(angle) * distance).toFixed(0)}px`,
-            dy: `${(-Math.sin(angle) * distance).toFixed(0)}px`,
-            rot: `${(360 + 540 * rand()).toFixed(0)}deg`,
-            delay: `${(rand() * 0.25).toFixed(2)}s`,
-            color: CONFETTI_COLORS[i % CONFETTI_COLORS.length] ?? "var(--series-1)",
-            round: i % 4 === 0,
+            shape,
+            style: {
+                "--x": `${String(x)}%`,
+                "--s": `${String(size)}px`,
+                "--c": FLAKES.palette[i % FLAKES.palette.length],
+                "--h": `calc(${String(FLAKES.travel * 100)}cqh + ${String(extraTravel)}px)`,
+                "--d": `${duration.toFixed(1)}s`,
+                "--dl": `-${delay.toFixed(1)}s`,
+                "--rot": `${String(spin)}deg`,
+                "--sw": `${String(sway)}px`,
+                "--o": FLAKES.opacity,
+            } as CSSProperties,
         };
     });
 })();
 
-/** Bursts on a loop for as long as the gauge is Green. Hidden for reduced-motion users. */
-function Confetti() {
+/** Loops for as long as the gauge is Green. Hidden for reduced-motion users. */
+function Flakes() {
     return (
-        <div data-component="Confetti" aria-hidden="true" className="confetti">
-            {CONFETTI_PIECES.map((piece, i) => (
-                <span
-                    key={i}
-                    className={`cf ${piece.round ? "h-2 w-2 rounded-full" : ""}`}
-                    style={
-                        {
-                            backgroundColor: piece.color,
-                            "--dx": piece.dx,
-                            "--dy": piece.dy,
-                            "--rot": piece.rot,
-                            "--delay": piece.delay,
-                        } as CSSProperties
-                    }
-                />
+        <div data-component="Flakes" aria-hidden="true" className="flakes">
+            {FLAKE_PIECES.map((piece, i) => (
+                <span key={i} className={`fk ${piece.shape}`} style={piece.style} />
             ))}
         </div>
     );
@@ -92,6 +114,11 @@ function pointAt(frac: number, r: number): { x: number; y: number } {
 
 const ARC = `M ${String(CX - RADIUS)} ${String(CY)} A ${String(RADIUS)} ${String(RADIUS)} 0 0 1 ${String(CX + RADIUS)} ${String(CY)}`;
 
+type Segment = "done" | "left";
+
+/** Hit area around the arc — wider than the track so the edges are easy to catch. */
+const HIT_WIDTH = TRACK_WIDTH + 10;
+
 /**
  * Half-circle speedometer for the filtered set's Achieved against its Target.
  * The arc fills to Achievement % (capped at the 100% mark — over-achievement
@@ -104,10 +131,23 @@ export function TargetGauge({ summary }: { summary: Summary }) {
     const { arc: stroke, track } = STATUS_STROKE[status];
     const frac = pct === null ? 0 : Math.min(1, Math.max(0, pct));
     const needleTip = pointAt(frac, RADIUS - TRACK_WIDTH - 10);
+    const { hint: hover, follow, leave } = useCursorHint<Segment>();
+
+    // Hover copy: the filled arc is what's done, the rest of the track is what's left to the target.
+    // Over 100% there is no empty arc; the filled one then carries the overshoot.
+    const left = Math.max(0, summary.target - summary.achieved);
+    const over = Math.max(0, summary.achieved - summary.target);
+    const hoverText: Record<Segment, string> = {
+        done:
+            over > 0
+                ? `${formatInt(summary.achieved)} applications achieved · ${formatInt(over)} over target`
+                : `${formatInt(summary.achieved)} applications achieved (${formatPct(pct)})`,
+        left: `${formatInt(left)} applications left to target`,
+    };
 
     return (
         <div data-component="TargetGauge" className="gauge card card-pad">
-            {status === "Green" && <Confetti />}
+            {status === "Green" && <Flakes />}
             <div className="kpi-label w-full">
                 <span>Target vs achieved</span>
             </div>
@@ -117,17 +157,54 @@ export function TargetGauge({ summary }: { summary: Summary }) {
                 role="img"
                 aria-label={`Achieved ${formatInt(summary.achieved)} of target ${formatInt(summary.target)} (${formatPct(pct)})`}
             >
-                {/* Track: the band's soft tint, so state reads across the whole arc. */}
-                <path d={ARC} fill="none" stroke={track} strokeWidth={TRACK_WIDTH} strokeLinecap="round" />
+                {/* Track: the band's soft tint, so state reads across the whole arc. Thickens under the pointer. */}
+                <path
+                    d={ARC}
+                    fill="none"
+                    stroke={track}
+                    strokeWidth={hover?.key === "left" ? TRACK_WIDTH + 3 : TRACK_WIDTH}
+                    strokeLinecap="round"
+                    className="seg"
+                />
                 {frac > 0 && (
                     <path
                         d={ARC}
                         fill="none"
                         stroke={stroke}
-                        strokeWidth={TRACK_WIDTH}
+                        strokeWidth={hover?.key === "done" ? TRACK_WIDTH + 3 : TRACK_WIDTH}
                         strokeLinecap="round"
                         pathLength={1}
                         strokeDasharray={`${String(frac)} 1`}
+                        className="seg"
+                    />
+                )}
+                {/* Invisible hit areas: the empty part of the track first, the filled part on top of it. */}
+                {pct !== null && frac < 1 && (
+                    <path
+                        d={ARC}
+                        fill="none"
+                        stroke="transparent"
+                        strokeWidth={HIT_WIDTH}
+                        pathLength={1}
+                        strokeDasharray={`${String(1 - frac)} 1`}
+                        strokeDashoffset={-frac}
+                        onMouseEnter={follow("left")}
+                        onMouseMove={follow("left")}
+                        onMouseLeave={leave}
+                    />
+                )}
+                {pct !== null && frac > 0 && (
+                    <path
+                        d={ARC}
+                        fill="none"
+                        stroke="transparent"
+                        strokeWidth={HIT_WIDTH}
+                        strokeLinecap="round"
+                        pathLength={1}
+                        strokeDasharray={`${String(frac)} 1`}
+                        onMouseEnter={follow("done")}
+                        onMouseMove={follow("done")}
+                        onMouseLeave={leave}
                     />
                 )}
                 {BAND_TICKS.map((tick) => {
@@ -172,6 +249,7 @@ export function TargetGauge({ summary }: { summary: Summary }) {
                 {formatInt(summary.achieved)} of {formatInt(summary.target)} achieved
             </div>
             <StatusPill status={status} long className="mt-1" />
+            {hover && <CursorHint x={hover.x} y={hover.y} text={hoverText[hover.key]} />}
         </div>
     );
 }

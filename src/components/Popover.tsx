@@ -25,6 +25,7 @@ export function Popover({
     onClose,
     maxHeight = 320,
     align = "start",
+    className = "",
     children,
 }: {
     anchorRef: RefObject<HTMLElement | null>;
@@ -33,6 +34,8 @@ export function Popover({
     maxHeight?: number;
     /** Which edge of the anchor the panel lines up with. */
     align?: "start" | "end";
+    /** Extra classes on the panel, e.g. `p-0` when the content draws its own frame. */
+    className?: string;
     children: ReactNode;
 }) {
     const panelRef = useRef<HTMLDivElement>(null);
@@ -83,7 +86,12 @@ export function Popover({
 
     if (!open) return null;
     return createPortal(
-        <div data-component="Popover" ref={panelRef} style={position} className="popover fixed z-50 overflow-auto">
+        <div
+            data-component="Popover"
+            ref={panelRef}
+            style={position}
+            className={`popover fixed z-50 overflow-auto ${className}`}
+        >
             {children}
         </div>,
         document.body,

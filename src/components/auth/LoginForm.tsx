@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState } from "react";
-import { FiAlertCircle, FiLock, FiMail } from "react-icons/fi";
+import { FiAlertCircle, FiMail } from "react-icons/fi";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 import { loginAction } from "@/app/(auth)/actions";
 import type { AuthFormState } from "@/app/(auth)/actions";
 
@@ -29,16 +30,11 @@ export function LoginForm({ next }: { next: string }) {
             </label>
             <label className="field">
                 <span className="label">Password</span>
-                <span className="input-wrap">
-                    <FiLock className="lead" aria-hidden />
-                    <input
-                        name="password"
-                        type="password"
-                        autoComplete="current-password"
-                        required
-                        className="input input-lg"
-                    />
-                </span>
+                <PasswordInput withIcon name="password" autoComplete="current-password" required className="input-lg" />
+            </label>
+            <label className="checkbox items-center">
+                <input type="checkbox" name="remember" defaultChecked />
+                <span>Keep me signed in</span>
             </label>
             {state.error && (
                 <p className="error-text" role="alert">

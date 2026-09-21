@@ -3,16 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment } from "react";
-import { FiChevronRight, FiGithub, FiMenu } from "react-icons/fi";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { FiChevronRight, FiMenu } from "react-icons/fi";
 import type { SidebarUser } from "@/components/Sidebar";
+import { HeaderActions } from "@/components/shell/HeaderActions";
+import { NotificationsMenu } from "@/components/shell/NotificationsMenu";
 import { breadcrumbFor } from "@/components/shell/nav";
 import { UserMenu } from "@/components/shell/UserMenu";
 import { Tooltip } from "@/components/Tooltip";
 
-const REPO_URL = "https://github.com/my-dev-notebook/counsellor-performance-mis";
-
-/** Sticky top bar: breadcrumb for the current route, repo link, theme toggle and the signed-in user's avatar menu. */
+/** Sticky top bar: breadcrumb for the current route, repo link + commit, notifications, theme toggle and the signed-in user's avatar menu. */
 export function AppHeader({
     user,
     sidebarCollapsed,
@@ -36,7 +35,7 @@ export function AppHeader({
                     aria-label={sidebarCollapsed ? "Show navigation" : "Hide navigation"}
                     aria-expanded={!sidebarCollapsed}
                     aria-controls="app-sidebar"
-                    className="btn btn-ghost btn-icon btn-sm"
+                    className="btn btn-ghost btn-icon"
                 >
                     <FiMenu aria-hidden />
                 </button>
@@ -53,18 +52,9 @@ export function AppHeader({
                 </nav>
             </div>
             <div className="app-header-actions">
-                <Tooltip content="Source on GitHub">
-                    <a
-                        href={REPO_URL}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label="Source on GitHub"
-                        className="btn btn-ghost btn-icon btn-sm"
-                    >
-                        <FiGithub aria-hidden />
-                    </a>
-                </Tooltip>
-                <ThemeToggle />
+                <HeaderActions>
+                    <NotificationsMenu />
+                </HeaderActions>
                 <UserMenu user={user} />
             </div>
         </header>

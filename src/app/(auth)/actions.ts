@@ -29,7 +29,8 @@ export async function loginAction(_state: AuthFormState, formData: FormData): Pr
     if (!ok || !user.isActive) return invalid;
 
     await deleteExpiredSessions(new Date());
-    await startSession(user.id);
+    // "Keep me signed in" unchecked → session cookie only; the checkbox posts "on" when ticked.
+    await startSession(user.id, { persistent: formData.get("remember") === "on" });
     redirect(safeNextPath(formData.get("next")));
 }
 

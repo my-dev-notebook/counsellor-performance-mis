@@ -15,7 +15,7 @@ export default async function LoginPage({
 
     return (
         <div data-component="LoginPage" className="contents">
-            <AuthCard title="Sign in" sub="Use your Bennett email.">
+            <AuthCard title="Sign in">
                 <LoginForm next={next} />
             </AuthCard>
         </div>

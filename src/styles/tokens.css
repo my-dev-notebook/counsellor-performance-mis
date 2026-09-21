@@ -132,6 +132,8 @@
 
     /* --- Layout ----------------------------------------------- */
     --sidebar-w: 256px;
+    /* Shared by the app header and the sidebar brand row so their bottom borders line up. */
+    --header-h: 60px;
     --content-max: 1280px;
     --control-h-sm: 28px;
     --control-h-md: 36px;

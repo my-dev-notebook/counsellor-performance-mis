@@ -17,7 +17,7 @@ export function ThemeToggle() {
                 data-component="ThemeToggle"
                 onClick={toggleTheme}
                 aria-label={label}
-                className="btn btn-ghost btn-icon btn-sm"
+                className="btn btn-ghost btn-icon"
             >
                 {isDark ? <FiSun aria-hidden /> : <FiMoon aria-hidden />}
             </button>
