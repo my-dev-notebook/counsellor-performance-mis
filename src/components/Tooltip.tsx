@@ -85,7 +85,7 @@ export function Tooltip({ content, children }: { content: string; children: Reac
                             left: placement.left,
                             transform: placement.side === "top" ? "translate(-50%, -100%)" : "translate(-50%, 0)",
                         }}
-                        className="pointer-events-none fixed z-50 max-w-64 rounded-md border border-border bg-popover px-2 py-1 text-xs text-popover-foreground shadow-md"
+                        className="tooltip pointer-events-none fixed z-50"
                     >
                         {content}
                     </div>,

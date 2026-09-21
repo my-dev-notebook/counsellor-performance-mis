@@ -2,8 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { DashboardState } from "@/lib/dashboard-state";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
+import { PageHeader } from "@/components/shell/PageHeader";
 import { UploadZone } from "@/components/upload/UploadZone";
 import { ParseReportPanel } from "@/components/upload/ParseReportPanel";
 import { ImportReview } from "@/components/upload/import/ImportReview";
@@ -74,42 +73,35 @@ export function UploadPreview({ teamNames, canImport }: { teamNames: string[]; c
     const ready = state.status === "ready";
 
     return (
-        <div data-component="UploadPreview" className="flex min-h-full flex-1 flex-col bg-background">
-            <Header
-                monthLabel={ready ? state.workbook.monthLabel : undefined}
-                counsellorCount={ready ? state.workbook.counsellors.length : undefined}
-                teamCount={ready ? state.workbook.teams.length : undefined}
+        <div data-component="UploadPreview" className="stack gap-5">
+            <PageHeader
+                title="Upload & import"
+                sub={
+                    ready
+                        ? `${state.workbook.monthLabel} · ${String(state.workbook.counsellors.length)} counsellors · ${String(state.workbook.teams.length)} teams · parsed in-browser from ${state.workbook.sourceFileName}`
+                        : "Drop a raw monthly workbook to preview how it parses. Nothing is saved until you switch to Import, review every row and confirm."
+                }
+                actions={ready && canImport ? <ModeSwitch mode={mode} onChange={setMode} /> : undefined}
             />
-            <main className="mx-auto w-full max-w-7xl flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-                <div>
-                    <h1 className="text-xl font-semibold tracking-tight text-foreground">Upload &amp; Import</h1>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        Drop a raw monthly workbook to preview how it parses. Nothing is saved until you switch to{" "}
-                        <span className="font-medium text-foreground">Import</span>, review every row and confirm.
-                    </p>
-                </div>
-                <UploadZone onFileSelected={handleFile} busy={state.status === "parsing"} />
-                {state.status === "failed" && <ErrorState error={state.error} fileName={state.fileName} />}
-                {ready && (
-                    <>
-                        <ParseReportPanel workbook={state.workbook} />
-                        {canImport && <ModeSwitch mode={mode} onChange={setMode} />}
-                        {mode === "import" && canImport ? (
-                            <ImportReview
-                                workbook={state.workbook}
-                                teamNames={teamNames}
-                                sheetOverrides={sheetOverrides}
-                                onMapSheet={(sheet, team) => {
-                                    setSheetOverrides((previous) => ({ ...previous, [sheet]: team }));
-                                }}
-                            />
-                        ) : (
-                            <CompanyDashboard workbook={state.workbook} />
-                        )}
-                    </>
-                )}
-            </main>
-            {ready && <Footer sourceFileName={state.workbook.sourceFileName} monthLabel={state.workbook.monthLabel} />}
+            <UploadZone onFileSelected={handleFile} busy={state.status === "parsing"} />
+            {state.status === "failed" && <ErrorState error={state.error} fileName={state.fileName} />}
+            {ready && (
+                <>
+                    <ParseReportPanel workbook={state.workbook} />
+                    {mode === "import" && canImport ? (
+                        <ImportReview
+                            workbook={state.workbook}
+                            teamNames={teamNames}
+                            sheetOverrides={sheetOverrides}
+                            onMapSheet={(sheet, team) => {
+                                setSheetOverrides((previous) => ({ ...previous, [sheet]: team }));
+                            }}
+                        />
+                    ) : (
+                        <CompanyDashboard workbook={state.workbook} />
+                    )}
+                </>
+            )}
         </div>
     );
 }
@@ -121,18 +113,13 @@ function ModeSwitch({ mode, onChange }: { mode: Mode; onChange: (mode: Mode) => 
             onClick={() => {
                 onChange(value);
             }}
-            aria-pressed={mode === value}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium ${
-                mode === value
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-            }`}
+            aria-selected={mode === value}
         >
             {label}
         </button>
     );
     return (
-        <div data-component="ModeSwitch" className="inline-flex items-center gap-1 rounded-lg border border-border bg-card p-1">
+        <div data-component="ModeSwitch" className="segmented" role="tablist" aria-label="Mode">
             {button("preview", "Preview")}
             {button("import", "Import into database")}
         </div>

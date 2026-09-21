@@ -4,6 +4,7 @@ import { listMonthsWithData } from "@/db/queries/performance";
 import { MonthPicker } from "@/components/MonthPicker";
 import { MyAuditsTable } from "@/components/dashboard/MyAuditsTable";
 import { formatMonthLabel } from "@/lib/format";
+import { PageHeader } from "@/components/shell/PageHeader";
 import { requireUser } from "@/lib/auth/session";
 import { currentMonthDate, parseMonthDateParam } from "@/schemas/dates";
 
@@ -23,14 +24,12 @@ export default async function MyAuditsPage({
     const audits = await listCallAudits(user.scope, { userId: user.id, from: `${date}-01`, to: `${date}-31 23:59` });
 
     return (
-        <div data-component="MyAuditsPage" className="mx-auto w-full max-w-7xl flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-            <div>
-                <h1 className="text-xl font-semibold tracking-tight text-foreground">My Audits</h1>
-                <p className="mt-1 text-sm text-muted-foreground">
-                    Call audits the Quality Analyst recorded for you. Click a row to see the score on each parameter.
-                </p>
-            </div>
-            <MonthPicker date={date} existingMonths={months} basePath="/quality/mine" />
+        <div data-component="MyAuditsPage" className="stack gap-5">
+            <PageHeader
+                title="My audits"
+                sub="Call audits the Quality Analyst recorded for you. Click a row to see the score on each parameter."
+                actions={<MonthPicker date={date} existingMonths={months} basePath="/quality/mine" />}
+            />
             <MyAuditsTable audits={audits} monthLabel={formatMonthLabel(date)} />
         </div>
     );

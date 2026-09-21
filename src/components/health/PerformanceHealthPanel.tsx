@@ -1,10 +1,12 @@
 import type { Counsellor, Status } from "@/schemas/parser";
+import { STATUS_META } from "@/components/StatusPill";
+import { Kpi } from "@/components/kpi/Kpi";
 
-const BUCKETS: { status: Status; label: string; dot: string }[] = [
-    { status: "Green", label: "Green (≥90%)", dot: "bg-success" },
-    { status: "Yellow", label: "Yellow (60–89%)", dot: "bg-warning" },
-    { status: "Red", label: "Red (<60%)", dot: "bg-destructive" },
-    { status: "Unknown", label: "Unknown (no target)", dot: "bg-muted-foreground/50" },
+const BUCKETS: { status: Status; label: string }[] = [
+    { status: "Green", label: "Green (≥ 90%)" },
+    { status: "Yellow", label: "Yellow (60–89%)" },
+    { status: "Red", label: "Red (< 60%)" },
+    { status: "Unknown", label: "No target" },
 ];
 
 /** PLAN.md §5.5 — counsellor counts per band. `Unknown` is always shown separately, never folded into `Red`. */
@@ -13,15 +15,24 @@ export function PerformanceHealthPanel({ counsellors }: { counsellors: readonly 
     for (const c of counsellors) counts[c.status]++;
 
     return (
-        <div data-component="PerformanceHealthPanel" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div data-component="PerformanceHealthPanel" className="grid g4 gap-3">
             {BUCKETS.map((bucket) => (
-                <div key={bucket.status} className="rounded-lg border border-border bg-card p-3">
-                    <div className="flex items-center gap-2">
-                        <span className={`h-2 w-2 rounded-full ${bucket.dot}`} />
-                        <span className="text-xs text-muted-foreground">{bucket.label}</span>
-                    </div>
-                    <p className="mt-1 text-xl font-semibold text-foreground">{counts[bucket.status]}</p>
-                </div>
+                <Kpi
+                    key={bucket.status}
+                    small
+                    className="gap-1"
+                    label={
+                        <span className="inline-flex items-center gap-1.5">
+                            <span
+                                aria-hidden
+                                className="inline-block h-2 w-2 rounded-full"
+                                style={{ background: STATUS_META[bucket.status].color }}
+                            />
+                            {bucket.label}
+                        </span>
+                    }
+                    value={counts[bucket.status]}
+                />
             ))}
         </div>
     );

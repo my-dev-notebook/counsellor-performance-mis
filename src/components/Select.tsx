@@ -6,16 +6,25 @@ import { FiCheck, FiChevronDown } from "react-icons/fi";
 
 export type SelectOption = { value: string; label: string };
 
-type MenuPosition = { top?: number; bottom?: number; left: number; minWidth: number; maxWidth: number; maxHeight: number };
+type MenuPosition = {
+    top?: number;
+    bottom?: number;
+    left: number;
+    minWidth: number;
+    maxWidth: number;
+    maxHeight: number;
+};
 
 /** Space between the trigger and the menu, and the tallest the menu will grow before scrolling. */
 const MENU_GAP = 4;
 const MENU_MAX_HEIGHT = 288;
+/** The menu never grows wider than this even for long labels; the label truncates instead. */
+const MENU_MAX_WIDTH = 360;
 const TYPEAHEAD_RESET_MS = 500;
 
 const SIZE_CLASSES = {
-    sm: "px-2 py-1 text-sm",
-    md: "px-3 py-2 text-sm",
+    sm: "select-trigger sm",
+    md: "select-trigger",
 } as const;
 
 /**
@@ -44,10 +53,18 @@ export function Select({
 }) {
     const [open, setOpen] = useState(false);
     const [highlighted, setHighlighted] = useState(0);
-    const [position, setPosition] = useState<MenuPosition>({ left: 0, minWidth: 0, maxWidth: 0, maxHeight: MENU_MAX_HEIGHT });
+    const [position, setPosition] = useState<MenuPosition>({
+        left: 0,
+        minWidth: 0,
+        maxWidth: MENU_MAX_WIDTH,
+        maxHeight: MENU_MAX_HEIGHT,
+    });
     const buttonRef = useRef<HTMLButtonElement>(null);
     const listRef = useRef<HTMLDivElement>(null);
-    const typeahead = useRef<{ buffer: string; timer: ReturnType<typeof setTimeout> | null }>({ buffer: "", timer: null });
+    const typeahead = useRef<{ buffer: string; timer: ReturnType<typeof setTimeout> | null }>({
+        buffer: "",
+        timer: null,
+    });
     const listboxId = useId();
 
     const selectedIndex = options.findIndex((option) => option.value === value);
@@ -60,11 +77,14 @@ export function Select({
         const spaceBelow = window.innerHeight - rect.bottom - MENU_GAP;
         const spaceAbove = rect.top - MENU_GAP;
         const flipUp = spaceBelow < MENU_MAX_HEIGHT && spaceAbove > spaceBelow;
+        // The menu is at least as wide as its trigger and otherwise sized to its content (`width: max-content`),
+        // capped so a long label can't push it off-screen.
+        const maxWidth = Math.max(rect.width, Math.min(MENU_MAX_WIDTH, window.innerWidth - rect.left - 8));
         setPosition({
             ...(flipUp ? { bottom: window.innerHeight - rect.top + MENU_GAP } : { top: rect.bottom + MENU_GAP }),
             left: rect.left,
             minWidth: rect.width,
-            maxWidth: Math.max(rect.width, window.innerWidth - rect.left - 8),
+            maxWidth,
             maxHeight: Math.min(MENU_MAX_HEIGHT, flipUp ? spaceAbove : spaceBelow),
         });
         setHighlighted(Math.max(0, selectedIndex));
@@ -196,13 +216,10 @@ export function Select({
                     else openMenu();
                 }}
                 onKeyDown={onKeyDown}
-                className={`inline-flex items-center justify-between gap-2 rounded-md border border-input bg-background text-left text-foreground focus:border-ring focus:ring-1 focus:ring-ring focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${SIZE_CLASSES[size]} ${className}`}
+                className={`${SIZE_CLASSES[size]} ${className}`}
             >
-                <span className={`truncate ${selected ? "" : "text-muted-foreground"}`}>{selected?.label ?? placeholder}</span>
-                <FiChevronDown
-                    aria-hidden
-                    className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
-                />
+                <span className={selected ? undefined : "placeholder"}>{selected?.label ?? placeholder}</span>
+                <FiChevronDown aria-hidden />
             </button>
             {open &&
                 createPortal(
@@ -210,12 +227,12 @@ export function Select({
                         ref={listRef}
                         id={listboxId}
                         role="listbox"
-                        style={position}
+                        style={{ ...position, width: "max-content" }}
                         // Keep focus (and keyboard handling) on the trigger while clicking options.
                         onMouseDown={(e) => {
                             e.preventDefault();
                         }}
-                        className="fixed z-50 overflow-y-auto rounded-md border border-border bg-popover p-1 shadow-lg"
+                        className="popover menu fixed z-50 overflow-y-auto"
                     >
                         {options.map((option, index) => {
                             const isSelected = index === selectedIndex;
@@ -226,18 +243,17 @@ export function Select({
                                     id={optionId(index)}
                                     role="option"
                                     aria-selected={isSelected}
+                                    data-active={isHighlighted ? "" : undefined}
                                     onMouseEnter={() => {
                                         setHighlighted(index);
                                     }}
                                     onClick={() => {
                                         commit(index);
                                     }}
-                                    className={`flex cursor-pointer items-center justify-between gap-2 rounded px-2.5 py-1.5 text-sm whitespace-nowrap ${
-                                        isHighlighted ? "bg-accent text-accent-foreground" : "text-popover-foreground"
-                                    }`}
+                                    className="menu-item whitespace-nowrap"
                                 >
-                                    <span className="truncate">{option.label}</span>
-                                    {isSelected && <FiCheck aria-hidden className="h-4 w-4 shrink-0" />}
+                                    <span className="min-w-0 flex-1 truncate">{option.label}</span>
+                                    {isSelected && <FiCheck aria-hidden className="shrink-0" />}
                                 </div>
                             );
                         })}

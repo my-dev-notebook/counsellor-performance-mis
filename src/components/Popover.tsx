@@ -24,12 +24,15 @@ export function Popover({
     open,
     onClose,
     maxHeight = 320,
+    align = "start",
     children,
 }: {
     anchorRef: RefObject<HTMLElement | null>;
     open: boolean;
     onClose: () => void;
     maxHeight?: number;
+    /** Which edge of the anchor the panel lines up with. */
+    align?: "start" | "end";
     children: ReactNode;
 }) {
     const panelRef = useRef<HTMLDivElement>(null);
@@ -44,12 +47,13 @@ export function Popover({
         const spaceAbove = rect.top - GAP;
         const flipUp = spaceBelow < maxHeight && spaceAbove > spaceBelow;
         const width = panelRef.current?.offsetWidth ?? 0;
+        const left = align === "end" ? rect.right - width : rect.left;
         setPosition({
             ...(flipUp ? { bottom: window.innerHeight - rect.top + GAP } : { top: rect.bottom + GAP }),
-            left: Math.max(8, Math.min(rect.left, window.innerWidth - width - 8)),
+            left: Math.max(8, Math.min(left, window.innerWidth - width - 8)),
             maxHeight: Math.min(maxHeight, flipUp ? spaceAbove : spaceBelow),
         });
-    }, [open, anchorRef, maxHeight]);
+    }, [open, anchorRef, maxHeight, align]);
 
     useEffect(() => {
         if (!open) return;
@@ -79,23 +83,15 @@ export function Popover({
 
     if (!open) return null;
     return createPortal(
-        <div
-            data-component="Popover"
-            ref={panelRef}
-            style={position}
-            className="fixed z-50 overflow-auto rounded-md border border-border bg-popover p-2 text-popover-foreground shadow-lg"
-        >
+        <div data-component="Popover" ref={panelRef} style={position} className="popover fixed z-50 overflow-auto">
             {children}
         </div>,
         document.body,
     );
 }
 
-/** Shared trigger look for the picker controls, matching `Select`'s button. */
+/** Shared trigger look for the picker controls, matching `Select`'s button (the design system's `.select-trigger`). */
 export const PICKER_TRIGGER_CLASSES = {
-    sm: "px-2 py-1 text-sm",
-    md: "px-3 py-2 text-sm",
+    sm: "select-trigger sm",
+    md: "select-trigger",
 } as const;
-
-export const PICKER_TRIGGER_BASE =
-    "inline-flex items-center justify-between gap-2 rounded-md border border-input bg-background text-left text-foreground focus:border-ring focus:ring-1 focus:ring-ring focus:outline-none disabled:cursor-not-allowed disabled:opacity-50";

@@ -5,18 +5,10 @@ import type { CommitOutcome } from "@/db/queries/imports";
 import type { RowStatus } from "@/lib/import/decisions";
 import { formatMonthLabel } from "@/lib/format";
 import type { BulkActions } from "@/components/upload/import/ImportFilterBar";
+import { FiAlertCircle } from "react-icons/fi";
+import { Kpi } from "@/components/kpi/Kpi";
 
-const BUTTON =
-    "rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium text-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50";
-
-function Stat({ label, value, tone = "" }: { label: string; value: number; tone?: string }) {
-    return (
-        <div data-component="Stat" className="rounded-lg border border-border bg-card p-3">
-            <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{label}</p>
-            <p className={`mt-1 text-xl font-semibold ${tone || "text-foreground"}`}>{value}</p>
-        </div>
-    );
-}
+const BUTTON = "btn btn-secondary btn-sm";
 
 export function ImportSummary({
     counts,
@@ -50,21 +42,23 @@ export function ImportSummary({
     const willWrite = counts.insert + counts.update + counts.create;
 
     return (
-        <section data-component="ImportSummary" className="space-y-4">
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-                <Stat label="Rows" value={total} />
-                <Stat
+        <section data-component="ImportSummary" className="stack gap-4">
+            <div className="grid g6 gap-3">
+                <Kpi small label="Rows" value={total} />
+                <Kpi
+                    small
                     label="Needs attention"
-                    value={attention}
-                    tone={attention > 0 ? "text-warning" : "text-success"}
+                    value={
+                        <span className={attention > 0 ? "text-warn-soft-fg" : "text-good-soft-fg"}>{attention}</span>
+                    }
                 />
-                <Stat label="New entries" value={counts.insert} />
-                <Stat label="Updates" value={counts.update} />
-                <Stat label="New users" value={counts.create} />
-                <Stat label="No change / skipped" value={counts["no-change"] + counts.skip} />
+                <Kpi small label="New entries" value={counts.insert} />
+                <Kpi small label="Updates" value={counts.update} />
+                <Kpi small label="New users" value={counts.create} />
+                <Kpi small label="No change / skipped" value={counts["no-change"] + counts.skip} />
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card p-3">
+            <div className="card card-pad flex flex-wrap items-center gap-3">
                 <button
                     type="button"
                     className={BUTTON}
@@ -101,7 +95,7 @@ export function ImportSummary({
                 >
                     Fill default emails ({counts.invalid})
                 </button>
-                <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <label className="checkbox t-xs items-center">
                     <input
                         type="checkbox"
                         checked={includeSnapshots}
@@ -114,15 +108,18 @@ export function ImportSummary({
             </div>
 
             {error && (
-                <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                    {error.kind === "stale"
-                        ? `The month changed while you were reviewing (${String(error.rowIds.length)} row${error.rowIds.length === 1 ? "" : "s"}). The rows have been re-matched; please review and commit again.`
-                        : error.message}
-                </p>
+                <div className="alert alert-bad">
+                    <FiAlertCircle aria-hidden />
+                    <p>
+                        {error.kind === "stale"
+                            ? `The month changed while you were reviewing (${String(error.rowIds.length)} row${error.rowIds.length === 1 ? "" : "s"}). The rows have been re-matched; please review and commit again.`
+                            : error.message}
+                    </p>
+                </div>
             )}
 
             <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="text-sm text-muted-foreground">
+                <p className="t-sm ink-2">
                     {planning
                         ? "Matching rows against the roster…"
                         : attention > 0
@@ -133,8 +130,9 @@ export function ImportSummary({
                     type="button"
                     disabled={!committable || willWrite === 0}
                     onClick={onCommit}
-                    className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="btn btn-primary"
                 >
+                    {committing && <span className="spinner" aria-hidden />}
                     {committing ? "Importing…" : `Import into ${formatMonthLabel(date)}`}
                 </button>
             </div>

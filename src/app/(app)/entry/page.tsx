@@ -1,5 +1,8 @@
 import { getProgressForMonth, getMonthSummary, listMonthsWithData } from "@/db/queries/performance";
 import { EntryView } from "@/components/entry/EntryView";
+import { ExportButton } from "@/components/entry/ExportButton";
+import { MonthPicker } from "@/components/MonthPicker";
+import { PageHeader } from "@/components/shell/PageHeader";
 import { parseMonthDateParam } from "@/schemas/dates";
 import { requirePermission } from "@/lib/auth/session";
 
@@ -19,15 +22,18 @@ export default async function EntryPage({
     ]);
 
     return (
-        <div data-component="EntryPage" className="mx-auto w-full max-w-7xl flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-            <div>
-                <h1 className="text-xl font-semibold tracking-tight text-foreground">Monthly Performance Entry</h1>
-                <p className="mt-1 text-sm text-muted-foreground">
-                    Set each counsellor&apos;s monthly target (overall) and non-negotiable. Achieved is derived from
-                    daily admissions — expand a row and use &quot;Manage daily admissions&quot; to record those.
-                </p>
-            </div>
-            <EntryView date={date} progress={progress} summary={summary} existingMonths={months} />
+        <div data-component="EntryPage" className="stack gap-5">
+            <PageHeader
+                title="Monthly entry"
+                sub="Set each counsellor's monthly target (overall) and non-negotiable. Achieved is derived from daily admissions — expand a row and use “Manage daily admissions” to record those."
+                actions={
+                    <>
+                        <MonthPicker date={date} existingMonths={months} basePath="/entry" />
+                        <ExportButton date={date} />
+                    </>
+                }
+            />
+            <EntryView date={date} progress={progress} summary={summary} />
         </div>
     );
 }

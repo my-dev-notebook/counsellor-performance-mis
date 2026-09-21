@@ -17,9 +17,9 @@ export function ThemeToggle() {
                 data-component="ThemeToggle"
                 onClick={toggleTheme}
                 aria-label={label}
-                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                className="btn btn-ghost btn-icon btn-sm"
             >
-                {isDark ? <FiSun className="h-4 w-4" /> : <FiMoon className="h-4 w-4" />}
+                {isDark ? <FiSun aria-hidden /> : <FiMoon aria-hidden />}
             </button>
         </Tooltip>
     );

@@ -1,5 +1,6 @@
 "use client";
 
+import { FiX } from "react-icons/fi";
 import type { Counsellor } from "@/schemas/parser";
 import { counsellorOptions, teamOptions } from "@/lib/filters";
 import type { Filters } from "@/lib/filters";
@@ -23,18 +24,19 @@ function FilterSelect({
     disabledHint?: string;
 }) {
     return (
-        <div data-component="FilterSelect" className="flex flex-col gap-1">
-            <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{label}</span>
+        <div data-component="FilterSelect" className="field">
+            <span className="label">{label}</span>
             {disabled ? (
-                <span className="rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
-                    {disabledHint ?? "—"}
-                </span>
+                <span className="input readonly inline-flex items-center text-ink-3">{disabledHint ?? "—"}</span>
             ) : (
                 <Select
                     aria-label={label}
                     value={value}
                     onChange={onChange}
-                    options={[{ value: "All", label: "All" }, ...options.map((option) => ({ value: option, label: option }))]}
+                    options={[
+                        { value: "All", label: "All" },
+                        ...options.map((option) => ({ value: option, label: option })),
+                    ]}
                 />
             )}
         </div>
@@ -70,11 +72,8 @@ export function FilterBar({
 }) {
     const show = (field: FilterField) => fields.includes(field);
     return (
-        <div
-            data-component="FilterBar"
-            className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4 sm:flex-row sm:items-end sm:justify-between"
-        >
-            <div className={`grid grid-cols-1 gap-4 ${GRID_COLUMNS[fields.length] ?? "sm:grid-cols-4"}`}>
+        <div data-component="FilterBar" className="card card-pad flex flex-wrap items-end gap-x-4 gap-y-3">
+            <div className={`grid flex-1 grid-cols-1 gap-4 ${GRID_COLUMNS[fields.length] ?? "sm:grid-cols-4"}`}>
                 {show("team") && (
                     <FilterSelect
                         label="Team"
@@ -99,7 +98,7 @@ export function FilterBar({
                 )}
                 {show("status") && (
                     <FilterSelect
-                        label="Status"
+                        label="Band"
                         value={filters.status}
                         options={STATUS_OPTIONS}
                         onChange={(status) => {
@@ -118,12 +117,9 @@ export function FilterBar({
                     />
                 )}
             </div>
-            <button
-                type="button"
-                onClick={onReset}
-                className="rounded-md border border-input px-3 py-2 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground"
-            >
-                Reset filters
+            <button type="button" onClick={onReset} className="btn btn-ghost">
+                <FiX aria-hidden />
+                Reset
             </button>
         </div>
     );

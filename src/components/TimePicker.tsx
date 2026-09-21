@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FiClock } from "react-icons/fi";
-import { Popover, PICKER_TRIGGER_BASE, PICKER_TRIGGER_CLASSES } from "@/components/Popover";
+import { Popover, PICKER_TRIGGER_CLASSES } from "@/components/Popover";
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const MINUTES = Array.from({ length: 60 }, (_, i) => i);
@@ -48,27 +48,23 @@ function Column({
     }, [selected]);
 
     return (
-        <div data-component="Column" className="flex flex-col">
-            <span className="pb-1 text-center text-[10px] font-semibold text-muted-foreground">{label}</span>
-            <div ref={listRef} role="listbox" aria-label={label} className="h-48 w-14 overflow-y-auto">
+        <div data-component="Column" className="col">
+            <span className="lbl">{label}</span>
+            <div ref={listRef} role="listbox" aria-label={label} className="list">
                 {values.map((v) => {
                     const isSelected = v === selected;
                     return (
-                        <div
+                        <button
                             key={v}
+                            type="button"
                             role="option"
                             aria-selected={isSelected}
                             onClick={() => {
                                 onPick(v);
                             }}
-                            className={`cursor-pointer rounded-md px-2 py-1 text-center text-sm tabular-nums ${
-                                isSelected
-                                    ? "bg-primary font-medium text-primary-foreground"
-                                    : "text-popover-foreground hover:bg-accent hover:text-accent-foreground"
-                            }`}
                         >
                             {pad(v)}
-                        </div>
+                        </button>
                     );
                 })}
             </div>
@@ -129,15 +125,13 @@ export function TimePicker({
                 onClick={() => {
                     setOpen((o) => !o);
                 }}
-                className={`${PICKER_TRIGGER_BASE} ${PICKER_TRIGGER_CLASSES[size]} ${className}`}
+                className={`${PICKER_TRIGGER_CLASSES[size]} ${className}`}
             >
-                <span className={`truncate ${time ? "" : "text-muted-foreground"}`}>
-                    {time ? formatTime(value) : placeholder}
-                </span>
-                <FiClock aria-hidden className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <span className={time ? undefined : "placeholder"}>{time ? formatTime(value) : placeholder}</span>
+                <FiClock aria-hidden />
             </button>
             <Popover anchorRef={buttonRef} open={open} onClose={close}>
-                <div className="flex gap-1">
+                <div className="timepicker">
                     <Column
                         label="Hour"
                         values={HOURS}
@@ -156,14 +150,14 @@ export function TimePicker({
                     />
                 </div>
                 {value !== "" && (
-                    <div className="mt-2 border-t border-border pt-2">
+                    <div className="mt-2 border-t border-line-1 pt-2">
                         <button
                             type="button"
                             onClick={() => {
                                 close();
                                 onChange("");
                             }}
-                            className="rounded-md px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                            className="btn btn-ghost btn-sm"
                         >
                             Clear
                         </button>

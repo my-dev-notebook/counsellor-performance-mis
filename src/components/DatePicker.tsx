@@ -3,7 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import { FiCalendar, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { MONTH_NAMES } from "@/lib/format";
-import { Popover, PICKER_TRIGGER_BASE, PICKER_TRIGGER_CLASSES } from "@/components/Popover";
+import { Popover, PICKER_TRIGGER_CLASSES } from "@/components/Popover";
 
 const WEEKDAY_LABELS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
@@ -111,98 +111,94 @@ export function DatePicker({
                     if (open) close();
                     else openCalendar();
                 }}
-                className={`${PICKER_TRIGGER_BASE} ${PICKER_TRIGGER_CLASSES[size]} ${className}`}
+                className={`${PICKER_TRIGGER_CLASSES[size]} ${className}`}
             >
-                <span className={`truncate ${selected ? "" : "text-muted-foreground"}`}>
+                <span className={selected ? undefined : "placeholder"}>
                     {selected ? formatDayDate(value) : placeholder}
                 </span>
-                <FiCalendar aria-hidden className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <FiCalendar aria-hidden />
             </button>
             <Popover anchorRef={buttonRef} open={open} onClose={close}>
-                <div className="flex items-center justify-between gap-2 px-1 pb-2">
-                    <button
-                        type="button"
-                        aria-label="Previous month"
-                        onClick={() => {
-                            shiftMonth(-1);
-                        }}
-                        className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                    >
-                        <FiChevronLeft className="h-4 w-4" />
-                    </button>
-                    <span className="text-sm font-medium">
-                        {MONTH_NAMES[view.month - 1]} {view.year}
-                    </span>
-                    <button
-                        type="button"
-                        aria-label="Next month"
-                        onClick={() => {
-                            shiftMonth(1);
-                        }}
-                        className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                    >
-                        <FiChevronRight className="h-4 w-4" />
-                    </button>
-                </div>
-                <div role="grid" className="grid grid-cols-7 gap-0.5">
-                    {WEEKDAY_LABELS.map((w) => (
-                        <div key={w} className="w-8 pb-1 text-center text-[10px] font-semibold text-muted-foreground">
-                            {w}
-                        </div>
-                    ))}
-                    {Array.from({ length: leadingBlanks }, (_, i) => (
-                        <div key={`blank-${String(i)}`} />
-                    ))}
-                    {Array.from({ length: daysInView }, (_, i) => i + 1).map((day) => {
-                        const dDate = toDayDate(view.year, view.month, day);
-                        const isSelected = dDate === value;
-                        const isToday = dDate === todayDate;
-                        const outOfRange = (min !== undefined && dDate < min) || (max !== undefined && dDate > max);
-                        return (
-                            <button
-                                key={dDate}
-                                type="button"
-                                role="gridcell"
-                                aria-selected={isSelected}
-                                disabled={outOfRange}
-                                onClick={() => {
-                                    pick(dDate);
-                                }}
-                                className={`h-8 w-8 rounded-md text-xs tabular-nums ${
-                                    isSelected
-                                        ? "bg-primary font-medium text-primary-foreground"
-                                        : outOfRange
-                                          ? "text-muted-foreground/40"
-                                          : "text-popover-foreground hover:bg-accent hover:text-accent-foreground"
-                                } ${isToday && !isSelected ? "ring-1 ring-inset ring-primary/50" : ""}`}
-                            >
-                                {day}
-                            </button>
-                        );
-                    })}
-                </div>
-                <div className="mt-2 flex items-center justify-between border-t border-border pt-2">
-                    <button
-                        type="button"
-                        onClick={() => {
-                            pick(todayDate);
-                        }}
-                        className="rounded-md px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                    >
-                        Today
-                    </button>
-                    {value !== "" && (
+                <div className="datepicker">
+                    <div className="head">
+                        <button
+                            type="button"
+                            aria-label="Previous month"
+                            onClick={() => {
+                                shiftMonth(-1);
+                            }}
+                            className="btn btn-ghost btn-icon btn-sm"
+                        >
+                            <FiChevronLeft aria-hidden />
+                        </button>
+                        <span className="m">
+                            {MONTH_NAMES[view.month - 1]} {view.year}
+                        </span>
+                        <button
+                            type="button"
+                            aria-label="Next month"
+                            onClick={() => {
+                                shiftMonth(1);
+                            }}
+                            className="btn btn-ghost btn-icon btn-sm"
+                        >
+                            <FiChevronRight aria-hidden />
+                        </button>
+                    </div>
+                    <div role="grid" className="grid">
+                        {WEEKDAY_LABELS.map((w) => (
+                            <div key={w} className="dow">
+                                {w}
+                            </div>
+                        ))}
+                        {Array.from({ length: leadingBlanks }, (_, i) => (
+                            <div key={`blank-${String(i)}`} />
+                        ))}
+                        {Array.from({ length: daysInView }, (_, i) => i + 1).map((day) => {
+                            const dDate = toDayDate(view.year, view.month, day);
+                            const isSelected = dDate === value;
+                            const isToday = dDate === todayDate;
+                            const outOfRange = (min !== undefined && dDate < min) || (max !== undefined && dDate > max);
+                            return (
+                                <button
+                                    key={dDate}
+                                    type="button"
+                                    role="gridcell"
+                                    aria-selected={isSelected}
+                                    disabled={outOfRange}
+                                    onClick={() => {
+                                        pick(dDate);
+                                    }}
+                                    className={`d ${outOfRange ? "out" : ""} ${isToday && !isSelected ? "today" : ""}`}
+                                >
+                                    {day}
+                                </button>
+                            );
+                        })}
+                    </div>
+                    <div className="foot">
                         <button
                             type="button"
                             onClick={() => {
-                                close();
-                                onChange("");
+                                pick(todayDate);
                             }}
-                            className="rounded-md px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                            className="btn btn-ghost btn-sm"
                         >
-                            Clear
+                            Today
                         </button>
-                    )}
+                        {value !== "" && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    close();
+                                    onChange("");
+                                }}
+                                className="btn btn-ghost btn-sm"
+                            >
+                                Clear
+                            </button>
+                        )}
+                    </div>
                 </div>
             </Popover>
         </>

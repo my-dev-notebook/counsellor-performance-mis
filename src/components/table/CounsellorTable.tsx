@@ -1,37 +1,37 @@
 "use client";
 
-import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
-import { FiChevronDown, FiChevronUp } from "react-icons/fi";
+import { useMemo, useState, type ReactNode } from "react";
 import { formatInt, formatPct, formatText } from "@/lib/format";
-import type { Counsellor, Status } from "@/schemas/parser";
+import type { Counsellor } from "@/schemas/parser";
 import { DataTable } from "@/components/DataTable";
 import type { Column } from "@/components/DataTable";
+import { BandLegend, statusAccent, statusTextColor } from "@/components/StatusPill";
+import { initials } from "@/components/shell/nav";
 import { DrillDownPanel } from "@/components/drilldown/DrillDownPanel";
 
-type SortKey = "rank" | "name" | "team" | "agency" | "target" | "nonNegotiable" | "achieved" | "pctAchieved";
+type SortKey = "rank" | "name" | "agency" | "target" | "nonNegotiable" | "achieved" | "gap" | "pctAchieved";
 type SortDirection = "asc" | "desc";
 
-const COLUMNS: { key: SortKey; label: string }[] = [
-    { key: "rank", label: "Rank" },
-    { key: "name", label: "Counsellor" },
-    { key: "team", label: "Team" },
-    { key: "agency", label: "Agency" },
-    { key: "target", label: "Target" },
-    { key: "nonNegotiable", label: "Non-Neg" },
-    { key: "achieved", label: "Achieved" },
-    { key: "pctAchieved", label: "Ach %" },
+const COLUMNS: { key: SortKey; label: string; numeric: boolean }[] = [
+    { key: "rank", label: "#", numeric: false },
+    { key: "name", label: "Counsellor", numeric: false },
+    { key: "agency", label: "Agency", numeric: false },
+    { key: "target", label: "Target", numeric: true },
+    { key: "nonNegotiable", label: "Non-neg", numeric: true },
+    { key: "achieved", label: "Achieved", numeric: true },
+    { key: "gap", label: "Gap", numeric: true },
+    { key: "pctAchieved", label: "Ach %", numeric: true },
 ];
 
-/** Left-edge accent tint per status, faded out toward the row's background. Low-opacity overlay reads fine on both light and dark cards, so it stays a fixed value rather than a theme token. */
-const ROW_TINT: Record<Status, string> = {
-    Green: "rgba(16, 185, 129, 0.16)",
-    Yellow: "rgba(245, 158, 11, 0.16)",
-    Red: "rgba(239, 68, 68, 0.16)",
-    Unknown: "rgba(161, 161, 170, 0.14)",
-};
+/** Achieved minus target; null without a target. */
+function gap(c: Counsellor): number | null {
+    return c.target === null || c.achieved === null ? null : c.achieved - c.target;
+}
 
-function rowAccentStyle(status: Status): CSSProperties {
-    return { backgroundImage: `linear-gradient(to right, ${ROW_TINT[status]}, transparent 12rem)` };
+function formatGap(value: number | null): string {
+    if (value === null) return "—";
+    const abs = formatInt(Math.abs(value));
+    return value > 0 ? `+${abs}` : value < 0 ? `−${abs}` : abs;
 }
 
 /** Rank by achieved % descending; ties broken by name ascending (alphabetical), independent of the table's current sort. */
@@ -52,8 +52,6 @@ function sortValue(c: Counsellor, key: SortKey, ranks: Map<string, number>): str
             return ranks.get(c.id) ?? null;
         case "name":
             return c.name;
-        case "team":
-            return c.team;
         case "agency":
             return c.agency;
         case "target":
@@ -62,6 +60,8 @@ function sortValue(c: Counsellor, key: SortKey, ranks: Map<string, number>): str
             return c.nonNegotiable;
         case "achieved":
             return c.achieved;
+        case "gap":
+            return gap(c);
         case "pctAchieved":
             return c.pctAchieved;
     }
@@ -81,12 +81,22 @@ function compare(a: Counsellor, b: Counsellor, key: SortKey, dir: SortDirection,
 
 function renderCell(c: Counsellor, key: SortKey, ranks: Map<string, number>): ReactNode {
     switch (key) {
-        case "rank":
-            return ranks.get(c.id);
+        case "rank": {
+            const rank = ranks.get(c.id);
+            return <span className={`rank ${rank !== undefined && rank <= 3 ? "top" : ""}`}>{rank}</span>;
+        }
         case "name":
-            return c.name;
-        case "team":
-            return c.team;
+            return (
+                <div className="person">
+                    <span className="avatar" aria-hidden>
+                        {initials(c.name)}
+                    </span>
+                    <div className="min-w-0">
+                        <div className="name">{c.name}</div>
+                        <div className="sub">{c.team}</div>
+                    </div>
+                </div>
+            );
         case "agency":
             return formatText(c.agency);
         case "target":
@@ -95,21 +105,26 @@ function renderCell(c: Counsellor, key: SortKey, ranks: Map<string, number>): Re
             return formatInt(c.nonNegotiable);
         case "achieved":
             return formatInt(c.achieved);
+        case "gap": {
+            const g = gap(c);
+            return (
+                <span style={g !== null && g >= 0 ? { color: "var(--good-soft-fg)" } : undefined}>{formatGap(g)}</span>
+            );
+        }
         case "pctAchieved":
             return (
-                <div className="flex items-center gap-1.5">
-                    {formatPct(c.pctAchieved)}
-                    {c.belowNonNegotiable && c.status !== "Red" && (
-                        <span className="inline-flex items-center rounded-full bg-destructive/15 px-1.5 py-0.5 text-[10px] font-semibold text-nowrap text-destructive ring-1 ring-destructive/30 ring-inset">
-                            &lt; NN
-                        </span>
-                    )}
-                </div>
+                <span className="inline-flex items-center justify-end gap-1.5">
+                    {c.belowNonNegotiable && c.status !== "Red" && <span className="tag tag-bad">&lt; NN</span>}
+                    <b style={{ color: statusTextColor(c.status) }}>{formatPct(c.pctAchieved)}</b>
+                </span>
             );
     }
 }
 
-/** PLAN.md §5.6 — every counsellor, full sortable table, defaulting to Ach % descending. Clicking a row opens its drill-down. */
+/**
+ * PLAN.md §5.6 — every counsellor, full sortable table, defaulting to Ach % descending. The band is carried by
+ * the row's edge accent and the coloured Ach % (legend in the footer); clicking a row opens its drill-down.
+ */
 export function CounsellorTable({ counsellors }: { counsellors: readonly Counsellor[] }) {
     const [sort, setSort] = useState<{ key: SortKey; direction: SortDirection }>({
         key: "pctAchieved",
@@ -133,21 +148,12 @@ export function CounsellorTable({ counsellors }: { counsellors: readonly Counsel
 
     const columns: Column<Counsellor>[] = COLUMNS.map((col) => ({
         key: col.key,
-        header: (
-            <span className="inline-flex items-center gap-1">
-                {col.label}
-                {sort.key === col.key &&
-                    (sort.direction === "asc" ? (
-                        <FiChevronUp className="h-3 w-3" />
-                    ) : (
-                        <FiChevronDown className="h-3 w-3" />
-                    ))}
-            </span>
-        ),
+        header: col.label,
         onHeaderClick: () => {
             toggleSort(col.key);
         },
-        className: col.key === "name" ? "font-medium text-foreground" : "text-muted-foreground",
+        sort: sort.key === col.key ? (sort.direction === "asc" ? "ascending" : "descending") : undefined,
+        className: col.numeric ? "num" : col.key === "name" ? "primary" : col.key === "rank" ? "w-10" : "muted",
         render: (c) => renderCell(c, col.key, ranks),
     }));
 
@@ -158,8 +164,8 @@ export function CounsellorTable({ counsellors }: { counsellors: readonly Counsel
                 rows={sorted}
                 rowKey={(c) => c.id}
                 emptyMessage="No counsellors match the current filters."
-                rowStyle={(c) => rowAccentStyle(c.status)}
-                panelClassName="p-0"
+                rowAccent={(c) => statusAccent(c.status)}
+                footer={<BandLegend />}
                 renderExpanded={(c) => <DrillDownPanel counsellor={c} rank={ranks.get(c.id) ?? null} />}
             />
         </div>

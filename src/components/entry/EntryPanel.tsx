@@ -2,18 +2,16 @@
 
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
+import { FiAlertCircle, FiArrowRight } from "react-icons/fi";
 import type { ProgressRow } from "@/db/types";
 import { formatInt, formatText } from "@/lib/format";
 import { saveEntryAction, getPrefillAction } from "@/app/(app)/entry/actions";
 
-const fieldLabel = "flex flex-col gap-1 text-xs font-medium text-muted-foreground";
-const panelInput = "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground";
-
 function Detail({ label, value }: { label: string; value: string }) {
     return (
-        <div data-component="Detail" className="text-sm text-muted-foreground">
-            <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{label}</p>
-            <p>{value}</p>
+        <div data-component="Detail">
+            <div className="t-caps">{label}</div>
+            <div className="t-sm mt-0.5">{value}</div>
         </div>
     );
 }
@@ -74,20 +72,25 @@ export function EntryPanel({ row, date }: { row: ProgressRow; date: string }) {
                 e.preventDefault();
                 save();
             }}
-            className="space-y-5"
+            className="stack"
         >
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
                 <Detail label="Email" value={formatText(counsellor.email)} />
                 <Detail label="Meritto ID" value={counsellor.merittoUserId?.toString() ?? "—"} />
                 <Detail label="Team" value={formatText(row.teamName)} />
                 <Detail label="Agency" value={formatText(counsellor.agencyName)} />
             </div>
 
-            {loadingPrefill && <p className="text-xs text-muted-foreground">Loading last month&apos;s figures…</p>}
+            {loadingPrefill && (
+                <p className="hint inline-flex items-center gap-2">
+                    <span className="spinner" aria-hidden />
+                    Loading last month&apos;s figures…
+                </p>
+            )}
 
             <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
-                <label className={fieldLabel}>
-                    Overall / Target
+                <label className="field">
+                    <span className="label">Overall / Target</span>
                     <input
                         type="number"
                         min={0}
@@ -96,11 +99,11 @@ export function EntryPanel({ row, date }: { row: ProgressRow; date: string }) {
                         onChange={(e) => {
                             setOverall(e.target.value);
                         }}
-                        className={panelInput}
+                        className="input input-num"
                     />
                 </label>
-                <label className={fieldLabel}>
-                    Non-Negotiable
+                <label className="field">
+                    <span className="label">Non-negotiable</span>
                     <input
                         type="number"
                         min={0}
@@ -108,33 +111,37 @@ export function EntryPanel({ row, date }: { row: ProgressRow; date: string }) {
                         onChange={(e) => {
                             setNonNegotiable(e.target.value);
                         }}
-                        className={panelInput}
+                        className="input input-num"
                     />
                 </label>
-                <div className={fieldLabel}>
-                    Achieved
+                <div className="field">
+                    <span className="label">Achieved</span>
                     {/* Read-only: derived from daily admissions (live) or the finalize job (closed months). */}
-                    <span className="rounded-md border border-transparent px-3 py-2 text-sm text-foreground">
+                    <span className="input input-num readonly inline-flex items-center justify-end">
                         {formatInt(entry?.achieved ?? null)}
                     </span>
+                    <span className="hint">Derived from daily admissions</span>
                 </div>
             </div>
 
-            {error && <p className="text-xs text-destructive">{error}</p>}
+            {error && (
+                <p className="error-text">
+                    <FiAlertCircle aria-hidden />
+                    {error}
+                </p>
+            )}
 
-            <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
-                <button
-                    type="submit"
-                    disabled={pending}
-                    className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                >
+            <div className="row border-t border-line-1 pt-4">
+                <button type="submit" disabled={pending} className="btn btn-primary">
+                    {pending && <span className="spinner" aria-hidden />}
                     {pending ? "Saving…" : "Save"}
                 </button>
                 <Link
                     href={`/entry/daily?userId=${String(counsellor.id)}&date=${date}`}
-                    className="ml-auto text-xs font-medium text-primary hover:underline"
+                    className="btn btn-link ml-auto"
                 >
-                    Manage daily admissions →
+                    Manage daily admissions
+                    <FiArrowRight aria-hidden />
                 </Link>
             </div>
         </form>

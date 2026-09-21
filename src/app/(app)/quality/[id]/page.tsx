@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getCallAudit } from "@/db/queries/callAudits";
 import { listUsers } from "@/db/queries/users";
 import { CallAuditForm } from "@/components/quality/CallAuditForm";
+import { PageHeader } from "@/components/shell/PageHeader";
 import { requirePermission } from "@/lib/auth/session";
 
 export default async function EditCallAuditPage({ params }: { params: Promise<{ id: string }> }) {
@@ -17,18 +18,11 @@ export default async function EditCallAuditPage({ params }: { params: Promise<{ 
     if (!audit) notFound();
 
     return (
-        <div
-            data-component="EditCallAuditPage"
-            className="mx-auto w-full max-w-5xl flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-8"
-        >
-            <div>
-                <h1 className="text-xl font-semibold tracking-tight text-foreground">
-                    Call Audit · {audit.counsellorName}
-                </h1>
-                <p className="mt-1 text-sm text-muted-foreground">
-                    Audited by {audit.auditorName}. Any quality analyst may edit or delete this audit.
-                </p>
-            </div>
+        <div data-component="EditCallAuditPage" className="stack gap-5">
+            <PageHeader
+                title={`Call audit · ${audit.counsellorName}`}
+                sub={`Audited by ${audit.auditorName}. Any quality analyst may edit or delete this audit.`}
+            />
             <CallAuditForm counsellors={counsellors} audit={audit} />
         </div>
     );

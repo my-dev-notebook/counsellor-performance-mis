@@ -3,16 +3,18 @@ import type { Summary } from "@/lib/metrics/summarize";
 import type { Status } from "@/schemas/parser";
 import { deriveStatus } from "@/lib/metrics/buckets";
 import { formatInt, formatPct } from "@/lib/format";
+import { StatusPill } from "@/components/StatusPill";
 
-/** Same status hues as StatusPill / the health panel, as CSS vars so SVG strokes follow the theme. */
-const STATUS_STROKE: Record<Status, string> = {
-    Green: "var(--success)",
-    Yellow: "var(--warning)",
-    Red: "var(--destructive)",
-    Unknown: "var(--muted-foreground)",
+/** Status tokens as CSS vars so SVG strokes follow the theme: arc = band colour, track = its soft tint. */
+const STATUS_STROKE: Record<Status, { arc: string; track: string }> = {
+    Green: { arc: "var(--good)", track: "var(--good-soft)" },
+    Yellow: { arc: "var(--warn)", track: "var(--warn-soft)" },
+    Red: { arc: "var(--bad)", track: "var(--bad-soft)" },
+    Unknown: { arc: "var(--neutral)", track: "var(--neutral-soft)" },
 };
 
-const CONFETTI_COLORS = ["var(--success)", "var(--info)", "var(--warning)", "var(--destructive)", "var(--primary)"];
+/** Celebration only — chart series colours, never the status set, so the burst doesn't read as data. */
+const CONFETTI_COLORS = ["var(--series-1)", "var(--series-2)", "var(--series-3)", "var(--series-4)", "var(--series-5)"];
 
 /**
  * Deterministic pseudo-random (LCG) so the server and client render identical
@@ -46,7 +48,7 @@ const CONFETTI_PIECES: ConfettiPiece[] = (() => {
             dy: `${(-Math.sin(angle) * distance).toFixed(0)}px`,
             rot: `${(360 + 540 * rand()).toFixed(0)}deg`,
             delay: `${(rand() * 0.25).toFixed(2)}s`,
-            color: CONFETTI_COLORS[i % CONFETTI_COLORS.length] ?? "var(--success)",
+            color: CONFETTI_COLORS[i % CONFETTI_COLORS.length] ?? "var(--series-1)",
             round: i % 4 === 0,
         };
     });
@@ -55,15 +57,11 @@ const CONFETTI_PIECES: ConfettiPiece[] = (() => {
 /** Bursts on a loop for as long as the gauge is Green. Hidden for reduced-motion users. */
 function Confetti() {
     return (
-        <div
-            data-component="Confetti"
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 overflow-hidden motion-reduce:hidden"
-        >
+        <div data-component="Confetti" aria-hidden="true" className="confetti">
             {CONFETTI_PIECES.map((piece, i) => (
                 <span
                     key={i}
-                    className={`confetti-piece absolute top-[62%] left-1/2 block ${piece.round ? "h-2 w-2 rounded-full" : "h-2.5 w-1.5 rounded-[1px]"}`}
+                    className={`cf ${piece.round ? "h-2 w-2 rounded-full" : ""}`}
                     style={
                         {
                             backgroundColor: piece.color,
@@ -103,34 +101,24 @@ const ARC = `M ${String(CX - RADIUS)} ${String(CY)} A ${String(RADIUS)} ${String
 export function TargetGauge({ summary }: { summary: Summary }) {
     const pct = summary.pctAchieved;
     const status = deriveStatus(pct);
-    const stroke = STATUS_STROKE[status];
+    const { arc: stroke, track } = STATUS_STROKE[status];
     const frac = pct === null ? 0 : Math.min(1, Math.max(0, pct));
     const needleTip = pointAt(frac, RADIUS - TRACK_WIDTH - 10);
 
     return (
-        <div
-            data-component="TargetGauge"
-            className="relative flex flex-col items-center overflow-hidden rounded-lg border border-border bg-card p-4"
-        >
+        <div data-component="TargetGauge" className="gauge card card-pad">
             {status === "Green" && <Confetti />}
-            <p className="self-start text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                Target vs Achieved
-            </p>
+            <div className="kpi-label w-full">
+                <span>Target vs achieved</span>
+            </div>
             <svg
                 viewBox="0 0 200 118"
-                className="mt-2 w-full max-w-[220px]"
+                className="dial mt-1"
                 role="img"
                 aria-label={`Achieved ${formatInt(summary.achieved)} of target ${formatInt(summary.target)} (${formatPct(pct)})`}
             >
-                {/* Track: a lighter tint of the fill colour, so state reads across the whole arc. */}
-                <path
-                    d={ARC}
-                    fill="none"
-                    stroke={stroke}
-                    strokeOpacity={0.18}
-                    strokeWidth={TRACK_WIDTH}
-                    strokeLinecap="round"
-                />
+                {/* Track: the band's soft tint, so state reads across the whole arc. */}
+                <path d={ARC} fill="none" stroke={track} strokeWidth={TRACK_WIDTH} strokeLinecap="round" />
                 {frac > 0 && (
                     <path
                         d={ARC}
@@ -152,7 +140,7 @@ export function TargetGauge({ summary }: { summary: Summary }) {
                             y1={from.y}
                             x2={to.x}
                             y2={to.y}
-                            stroke="var(--muted-foreground)"
+                            stroke="var(--ink-3)"
                             strokeWidth={1.5}
                             strokeLinecap="round"
                         />
@@ -165,24 +153,25 @@ export function TargetGauge({ summary }: { summary: Summary }) {
                             y1={CY}
                             x2={needleTip.x}
                             y2={needleTip.y}
-                            stroke="var(--foreground)"
+                            stroke="var(--ink-1)"
                             strokeWidth={2}
                             strokeLinecap="round"
                         />
-                        <circle cx={CX} cy={CY} r={4} fill="var(--foreground)" />
+                        <circle cx={CX} cy={CY} r={4} fill="var(--ink-1)" />
                     </>
                 )}
-                <text x={CX - RADIUS} y={116} textAnchor="middle" className="fill-muted-foreground text-[9px]">
+                <text x={CX - RADIUS} y={116} textAnchor="middle" fontSize={9} fill="var(--ink-3)">
                     0
                 </text>
-                <text x={CX + RADIUS} y={116} textAnchor="middle" className="fill-muted-foreground text-[9px]">
+                <text x={CX + RADIUS} y={116} textAnchor="middle" fontSize={9} fill="var(--ink-3)">
                     100%
                 </text>
             </svg>
-            <p className="mt-1 text-2xl font-semibold text-foreground">{formatPct(pct)}</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
+            <div className="kpi-value t-num">{formatPct(pct)}</div>
+            <div className="kpi-foot justify-center">
                 {formatInt(summary.achieved)} of {formatInt(summary.target)} achieved
-            </p>
+            </div>
+            <StatusPill status={status} long className="mt-1" />
         </div>
     );
 }

@@ -122,16 +122,13 @@ export function QualityExportButton() {
     };
 
     return (
-        <div
-            data-component="QualityExportButton"
-            className="flex flex-wrap items-end gap-3 rounded-lg border border-border bg-card p-4"
-        >
-            <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
-                From
+        <div data-component="QualityExportButton" className="card card-pad flex flex-wrap items-end gap-x-4 gap-y-3">
+            <label className="field w-40">
+                <span className="label">From</span>
                 <DatePicker value={from} onChange={setFrom} max={to} size="sm" aria-label="Report start date" />
             </label>
-            <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
-                To
+            <label className="field w-40">
+                <span className="label">To</span>
                 <DatePicker value={to} onChange={setTo} min={from} size="sm" aria-label="Report end date" />
             </label>
             <button
@@ -140,15 +137,13 @@ export function QualityExportButton() {
                 onClick={() => {
                     void download();
                 }}
-                className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-50"
+                className="btn btn-secondary btn-sm"
             >
-                <FiDownload className="h-3.5 w-3.5" />
+                {busy ? <span className="spinner" aria-hidden /> : <FiDownload aria-hidden />}
                 {busy ? "Preparing…" : "Download Excel"}
             </button>
-            <span className="text-xs text-muted-foreground">
-                All active counsellors, lowest AQS among audits in the range, highest first.
-            </span>
-            {error && <p className="w-full text-xs text-destructive">{error}</p>}
+            <span className="hint">All active counsellors, lowest AQS among audits in the range, highest first.</span>
+            {error && <p className="error-text w-full">{error}</p>}
         </div>
     );
 }

@@ -1,22 +1,32 @@
 import type { RowStatus } from "@/lib/import/decisions";
 
-/** Label and chip colours for each review status; shared by the rows table and the filter bar. */
-export const STATUS_STYLES: Record<RowStatus, { label: string; className: string }> = {
-    "team-unmapped": { label: "Team unmapped", className: "bg-destructive/15 text-destructive ring-destructive/30" },
-    "agency-unmapped": {
-        label: "Agency unmapped",
-        className: "bg-destructive/15 text-destructive ring-destructive/30",
-    },
-    unresolved: { label: "Choose user", className: "bg-destructive/15 text-destructive ring-destructive/30" },
-    invalid: { label: "Email needed", className: "bg-destructive/15 text-destructive ring-destructive/30" },
-    confirm: { label: "Confirm match", className: "bg-warning/15 text-warning ring-warning/30" },
-    conflict: { label: "Conflict", className: "bg-warning/15 text-warning ring-warning/30" },
-    insert: { label: "New entry", className: "bg-success/15 text-success ring-success/30" },
-    create: { label: "New user", className: "bg-success/15 text-success ring-success/30" },
-    update: { label: "Update", className: "bg-info/15 text-info ring-info/30" },
-    "no-change": { label: "No change", className: "bg-muted text-muted-foreground ring-border" },
-    skip: { label: "Skipped", className: "bg-muted text-muted-foreground ring-border" },
+/** A status's tone in the design system: the chip/pill/dot variants all derive from it. */
+export type StatusTone = "bad" | "warn" | "good" | "info" | "neutral";
+
+/** Label and tone for each review status; shared by the rows table and the filter bar. */
+export const STATUS_STYLES: Record<RowStatus, { label: string; tone: StatusTone }> = {
+    "team-unmapped": { label: "Team unmapped", tone: "bad" },
+    "agency-unmapped": { label: "Agency unmapped", tone: "bad" },
+    unresolved: { label: "Choose user", tone: "bad" },
+    invalid: { label: "Email needed", tone: "bad" },
+    confirm: { label: "Confirm match", tone: "warn" },
+    conflict: { label: "Conflict", tone: "warn" },
+    insert: { label: "New entry", tone: "good" },
+    create: { label: "New user", tone: "good" },
+    update: { label: "Update", tone: "info" },
+    "no-change": { label: "No change", tone: "neutral" },
+    skip: { label: "Skipped", tone: "neutral" },
 };
+
+/** `.pill` variant class for a tone (the table's status column). */
+export function pillClass(tone: StatusTone): string {
+    return `pill pill-${tone}`;
+}
+
+/** `.chip` variant class for a tone (the filter bar); neutral chips use the plain accent highlight. */
+export function chipClass(tone: StatusTone): string {
+    return tone === "neutral" ? "chip" : `chip chip-${tone}`;
+}
 
 /** Display order for the filter chips: things to fix first, then what will be written, then the rest. */
 export const STATUS_ORDER: readonly RowStatus[] = [

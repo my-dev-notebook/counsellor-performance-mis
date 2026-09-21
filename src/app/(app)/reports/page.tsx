@@ -5,6 +5,7 @@ import type { TrendPoint } from "@/components/reports/TrendCharts";
 import { DailyChart } from "@/components/reports/DailyChart";
 import { CounsellorHistoryTable } from "@/components/reports/CounsellorHistoryTable";
 import { MonthPicker } from "@/components/MonthPicker";
+import { PageHeader } from "@/components/shell/PageHeader";
 import {
     getCompanyMonthlySeries,
     getDailyCounts,
@@ -41,7 +42,11 @@ async function subjectOptions(user: CurrentUser): Promise<SubjectOption[]> {
             const [teams, people] = await Promise.all([listTeams(), listPeopleForSelector(scope)]);
             return [
                 { subject: { kind: "company" }, label: "Company" },
-                ...teams.map((t): SubjectOption => ({ subject: { kind: "team", teamId: t.id }, label: `Team · ${t.name}`, teamName: t.name })),
+                ...teams.map((t): SubjectOption => ({
+                    subject: { kind: "team", teamId: t.id },
+                    label: `Team · ${t.name}`,
+                    teamName: t.name,
+                })),
                 ...people.map((p): SubjectOption => ({ subject: { kind: "person", userId: p.userId }, label: p.name })),
             ];
         }
@@ -49,7 +54,8 @@ async function subjectOptions(user: CurrentUser): Promise<SubjectOption[]> {
             const [teams, people] = await Promise.all([listTeams(), listPeopleForSelector(scope)]);
             const team = teams.find((t) => t.id === scope.teamId);
             const options: SubjectOption[] = [];
-            if (team) options.push({ subject: { kind: "team", teamId: team.id }, label: "My team", teamName: team.name });
+            if (team)
+                options.push({ subject: { kind: "team", teamId: team.id }, label: "My team", teamName: team.name });
             for (const p of people) options.push({ subject: { kind: "person", userId: p.userId }, label: p.name });
             return options;
         }
@@ -57,7 +63,8 @@ async function subjectOptions(user: CurrentUser): Promise<SubjectOption[]> {
             const options: SubjectOption[] = [{ subject: { kind: "person", userId: scope.userId }, label: "Me" }];
             if (scope.teamId !== null) {
                 const team = (await listTeams()).find((t) => t.id === scope.teamId);
-                if (team) options.push({ subject: { kind: "team", teamId: team.id }, label: "My team", teamName: team.name });
+                if (team)
+                    options.push({ subject: { kind: "team", teamId: team.id }, label: "My team", teamName: team.name });
             }
             return options;
         }
@@ -103,31 +110,32 @@ export default async function ReportsOverviewPage({
     const selectOptions: SelectOption[] = options.map((o) => ({ value: encodeSubject(o.subject), label: o.label }));
 
     return (
-        <div data-component="ReportsOverviewPage" className="space-y-6">
-            <div>
-                <h1 className="text-xl font-semibold tracking-tight text-foreground">Overview</h1>
-                <p className="mt-1 text-sm text-muted-foreground">
-                    Month-by-month Target, Achieved and Achievement % across every month on record, plus the daily
-                    admissions of one month.
-                </p>
-            </div>
+        <div data-component="ReportsOverviewPage" className="stack gap-5">
+            <PageHeader
+                title="Overview"
+                sub="Month-by-month Target, Achieved and Achievement % across every month on record, plus the daily admissions of one month."
+            />
             {options.length > 1 && selected && (
                 <SubjectSelector options={selectOptions} value={encodeSubject(selected.subject)} />
             )}
             {!selected ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">Nothing to report on yet.</p>
+                <div className="card">
+                    <p className="empty">Nothing to report on yet.</p>
+                </div>
             ) : (
                 <>
-                    <section className="space-y-3">
-                        <h2 className="text-sm font-semibold text-foreground">Monthly — {selected.label}</h2>
+                    <section className="stack gap-3">
+                        <h2 className="t-h3">Monthly — {selected.label}</h2>
                         <TrendCharts points={trend} />
                         {selected.subject.kind === "person" && history.length > 0 && (
                             <CounsellorHistoryTable points={history} />
                         )}
                     </section>
-                    <section className="space-y-3">
-                        <h2 className="text-sm font-semibold text-foreground">Daily — {selected.label}</h2>
-                        <MonthPicker date={date} existingMonths={months} basePath="/reports" />
+                    <section className="stack gap-3">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                            <h2 className="t-h3">Daily — {selected.label}</h2>
+                            <MonthPicker date={date} existingMonths={months} basePath="/reports" />
+                        </div>
                         <DailyChart points={daily} monthLabel={formatMonthLabel(date)} />
                     </section>
                 </>

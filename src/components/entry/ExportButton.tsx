@@ -93,9 +93,9 @@ export function ExportButton({ date }: { date: string }) {
             onClick={() => {
                 void download();
             }}
-            className="inline-flex items-center gap-1.5 rounded-md border border-input bg-card px-3 py-1.5 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-50"
+            className="btn btn-secondary"
         >
-            <FiDownload className="h-3.5 w-3.5" />
+            <FiDownload aria-hidden />
             {busy ? "Preparing…" : "Download Excel"}
         </button>
     );

@@ -16,7 +16,7 @@ const VIEWS: { value: View; label: string }[] = [
 
 function ViewToggle({ value, onChange }: { value: View; onChange: (view: View) => void }) {
     return (
-        <div data-component="ViewToggle" role="tablist" className="inline-flex rounded-lg border border-border bg-card p-1">
+        <div data-component="ViewToggle" role="tablist" className="segmented">
             {VIEWS.map((view) => (
                 <button
                     key={view.value}
@@ -26,11 +26,6 @@ function ViewToggle({ value, onChange }: { value: View; onChange: (view: View) =
                     onClick={() => {
                         onChange(view.value);
                     }}
-                    className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                        value === view.value
-                            ? "bg-primary text-primary-foreground"
-                            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                    }`}
                 >
                     {view.label}
                 </button>
@@ -63,25 +58,25 @@ export function CounsellorDashboard({
     const team = me ? workbook.teams.find((t) => t.team === me.team) : workbook.teams[0];
 
     return (
-        <div data-component="CounsellorDashboard" className="space-y-6">
+        <div data-component="CounsellorDashboard" className="stack gap-5">
             <ViewToggle value={view} onChange={setView} />
             {view === "me" ? (
                 me ? (
                     <PersonalKpis counsellor={me} />
                 ) : (
-                    <p className="rounded-lg border border-border bg-card px-4 py-8 text-center text-sm text-muted-foreground">
-                        No entry recorded for you in this period.
-                    </p>
+                    <div className="card">
+                        <p className="empty">No entry recorded for you in this period.</p>
+                    </div>
                 )
             ) : team ? (
-                <section className="space-y-3">
-                    <h2 className="text-sm font-semibold text-foreground">Team · {team.team}</h2>
+                <section className="stack gap-3">
+                    <h2 className="t-h3">Team · {team.team}</h2>
                     <KpiCards summary={team} />
                 </section>
             ) : (
-                <p className="rounded-lg border border-border bg-card px-4 py-8 text-center text-sm text-muted-foreground">
-                    No team data for this period.
-                </p>
+                <div className="card">
+                    <p className="empty">No team data for this period.</p>
+                </div>
             )}
             {monthDate !== undefined && admissions !== undefined && view === "me" && (
                 <AdmissionsCalendar monthDate={monthDate} admissions={admissions} />

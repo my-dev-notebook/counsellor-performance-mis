@@ -11,26 +11,21 @@ import { formatInt } from "@/lib/format";
 import { DataTable } from "@/components/DataTable";
 import type { Column, RowState } from "@/components/DataTable";
 import { Select } from "@/components/Select";
-import { STATUS_STYLES } from "@/components/upload/import/status-styles";
+import { pillClass, STATUS_STYLES } from "@/components/upload/import/status-styles";
 
 const FLAG_STYLES: Record<Flag["level"], string> = {
-    info: "bg-info/15 text-info ring-info/30",
-    warn: "bg-warning/15 text-warning ring-warning/30",
+    info: "tag-info",
+    warn: "tag-warn",
 };
 
-const SMALL_BUTTON =
-    "rounded-md border border-input bg-background px-2 py-1 text-xs font-medium text-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50";
-const SMALL_PRIMARY =
-    "rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50";
-const INPUT = "rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground";
+const SMALL_BUTTON = "btn btn-secondary btn-sm";
+const SMALL_PRIMARY = "btn btn-primary btn-sm";
+const INPUT = "input input-sm";
 
 function StatusChip({ status }: { status: RowStatus }) {
     const style = STATUS_STYLES[status];
     return (
-        <span
-            data-component="StatusChip"
-            className={`inline-flex items-center rounded-full px-1.5 py-px text-[11px] font-semibold whitespace-nowrap ring-1 ring-inset ${style.className}`}
-        >
+        <span data-component="StatusChip" className={pillClass(style.tone)}>
             {style.label}
         </span>
     );
@@ -49,9 +44,9 @@ function ExpandToggle({ state, label }: { state: RowState; label: string }) {
                 e.stopPropagation();
                 state.toggle();
             }}
-            className="inline-flex h-6 w-6 items-center justify-center rounded border border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+            className="btn btn-ghost btn-icon btn-sm"
         >
-            <Icon className="h-3.5 w-3.5" aria-hidden />
+            <Icon aria-hidden />
         </button>
     );
 }
@@ -70,10 +65,10 @@ function Figure({
 }) {
     if (db === undefined) return <span data-component="Figure">{formatInt(sheet)}</span>;
     return (
-        <span data-component="Figure" className={differs ? "font-medium text-warning" : ""}>
+        <span data-component="Figure" className={differs ? "text-warn-soft-fg font-semibold" : ""}>
             {formatInt(db)}
-            {note && <span className="text-xs text-muted-foreground"> {note}</span>}
-            <span className="text-muted-foreground"> → </span>
+            {note && <span className="t-xs ink-3"> {note}</span>}
+            <span className="ink-3"> → </span>
             {formatInt(sheet)}
         </span>
     );
@@ -132,8 +127,8 @@ export function ImportRowsTable({
             header: "Name in sheet",
             render: (v) => (
                 <div className="min-w-0">
-                    <span className="font-medium text-foreground">{v.row.input.name}</span>
-                    <div className="mt-0.5 flex items-center gap-x-2 text-xs whitespace-nowrap text-muted-foreground">
+                    <span className="font-medium">{v.row.input.name}</span>
+                    <div className="t-xs ink-3 mt-1 flex items-center gap-x-2 whitespace-nowrap">
                         <StatusChip status={v.status} />
                         <span className="whitespace-nowrap">
                             {v.row.input.sheet} · r{String(v.row.input.row)}
@@ -192,7 +187,7 @@ export function ImportRowsTable({
         {
             key: "overall",
             header: "Overall",
-            className: "text-right whitespace-nowrap",
+            className: "num whitespace-nowrap",
             render: (v) => (
                 <Figure
                     db={v.assessment?.existing ? v.assessment.existing.overall : undefined}
@@ -209,7 +204,7 @@ export function ImportRowsTable({
         {
             key: "nonNegotiable",
             header: "Non-neg.",
-            className: "text-right whitespace-nowrap",
+            className: "num whitespace-nowrap",
             render: (v) => (
                 <Figure
                     db={v.assessment?.existing ? v.assessment.existing.nonNegotiable : undefined}
@@ -228,7 +223,7 @@ export function ImportRowsTable({
         {
             key: "achieved",
             header: "Achieved",
-            className: "text-right whitespace-nowrap",
+            className: "num whitespace-nowrap",
             render: (v) => (
                 <Figure
                     db={v.assessment?.existing ? v.assessment.dbAchieved : undefined}
@@ -259,8 +254,7 @@ export function ImportRowsTable({
                 renderExpanded={(v) => (
                     <RowDetails view={v} locked={locked} rosterById={rosterById} onDecision={onDecision} />
                 )}
-                rowClassName={(v) => (v.needsAttention ? "bg-warning/5" : "")}
-                panelClassName="px-4 py-4 sm:px-6"
+                rowAccent={(v) => (v.needsAttention ? "var(--warn)" : undefined)}
             />
         </div>
     );
@@ -362,7 +356,7 @@ function RowAction({
             </div>
         );
     }
-    return <span data-component="RowAction" className="text-xs text-muted-foreground" />;
+    return <span data-component="RowAction" />;
 }
 
 function RowDetails({
@@ -382,39 +376,33 @@ function RowDetails({
     const ambiguousReason = row.match.kind === "ambiguous" ? row.match.reason : null;
 
     return (
-        <div data-component="RowDetails" className="grid gap-4 text-sm md:grid-cols-2">
-            <div className="space-y-3">
-                {ambiguousReason && <p className="text-destructive">{ambiguousReason}</p>}
+        <div data-component="RowDetails" className="t-sm grid gap-4 md:grid-cols-2">
+            <div className="stack gap-3">
+                {ambiguousReason && <p className="text-bad-soft-fg">{ambiguousReason}</p>}
                 {assessment && assessment.flags.length > 0 && (
-                    <ul className="space-y-1.5">
+                    <ul className="flex flex-col gap-1.5">
                         {assessment.flags.map((flag) => (
                             <li key={flag.code} className="flex items-start gap-2">
-                                <span
-                                    className={`mt-0.5 inline-flex shrink-0 items-center rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ring-1 ring-inset ${FLAG_STYLES[flag.level]}`}
-                                >
-                                    {flag.level}
-                                </span>
-                                <span className="text-foreground">{flag.message}</span>
+                                <span className={`tag mt-0.5 shrink-0 ${FLAG_STYLES[flag.level]}`}>{flag.level}</span>
+                                <span>{flag.message}</span>
                             </li>
                         ))}
                     </ul>
                 )}
                 {assessment && assessment.flags.length === 0 && decision.kind === "match" && (
-                    <p className="text-muted-foreground">Name, team and agency all agree with the roster.</p>
+                    <p className="ink-3">Name, team and agency all agree with the roster.</p>
                 )}
                 {row.match.candidates.length > 0 && (
                     <div>
-                        <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                            Similar roster users
-                        </p>
-                        <ul className="mt-1 space-y-1">
+                        <p className="t-caps">Similar roster users</p>
+                        <ul className="mt-1 flex flex-col gap-1">
                             {row.match.candidates.map((c) => {
                                 const user = rosterById.get(c.userId);
                                 if (!user) return null;
                                 const selected = decision.kind === "match" && decision.userId === user.id;
                                 return (
                                     <li key={c.userId} className="flex items-center justify-between gap-2">
-                                        <span className={selected ? "font-medium text-foreground" : "text-foreground"}>
+                                        <span className={selected ? "font-medium" : ""}>
                                             {userLabel(user, c.score)}
                                         </span>
                                         {!selected && (
@@ -436,7 +424,7 @@ function RowDetails({
                     </div>
                 )}
                 {decision.kind === "create" && (
-                    <p className="text-muted-foreground">
+                    <p className="ink-3">
                         A counsellor account will be created with the default password and no Meritto id. Add the
                         Meritto id on the Users page before using daily auto-fetch.
                     </p>
@@ -444,9 +432,9 @@ function RowDetails({
             </div>
 
             {decision.kind === "match" && assessment && (
-                <div className="space-y-3">
+                <div className="stack gap-3">
                     {assessment.existing && (
-                        <p className="text-muted-foreground">
+                        <p className="ink-3">
                             This month is already recorded for {assessment.user.name}
                             {assessment.existing.achievedSource === "import" &&
                                 " (achieved came from an earlier import)"}
@@ -454,10 +442,9 @@ function RowDetails({
                         </p>
                     )}
                     {assessment.differs.snapshot && assessment.existing && (
-                        <label className="flex items-start gap-2 text-foreground">
+                        <label className="checkbox">
                             <input
                                 type="checkbox"
-                                className="mt-0.5"
                                 disabled={locked || decision.take !== "sheet"}
                                 checked={decision.take === "sheet" && decision.rewriteSnapshot}
                                 onChange={(e) => {
@@ -467,19 +454,15 @@ function RowDetails({
                             <span>
                                 Rewrite the month&apos;s team/agency snapshot to the sheet&apos;s
                                 {decision.take !== "sheet" && (
-                                    <span className="text-muted-foreground">
-                                        {" "}
-                                        (choose &quot;Take sheet&quot; first)
-                                    </span>
+                                    <span className="ink-3"> (choose &quot;Take sheet&quot; first)</span>
                                 )}
                             </span>
                         </label>
                     )}
                     {rosterDiffers && (
-                        <label className="flex items-start gap-2 text-foreground">
+                        <label className="checkbox">
                             <input
                                 type="checkbox"
-                                className="mt-0.5"
                                 disabled={locked}
                                 checked={decision.updateRoster}
                                 onChange={(e) => {
@@ -492,7 +475,7 @@ function RowDetails({
                         </label>
                     )}
                     {!assessment.existing && (
-                        <p className="text-muted-foreground">
+                        <p className="ink-3">
                             No entry exists for this month yet; the sheet&apos;s figures will be recorded as-is.
                         </p>
                     )}

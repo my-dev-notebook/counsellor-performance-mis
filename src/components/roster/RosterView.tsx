@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { FiPlus } from "react-icons/fi";
+import { FiAlertCircle, FiPlus, FiSearch } from "react-icons/fi";
 import { RowMenu } from "@/components/RowMenu";
 import { Select } from "@/components/Select";
 import { DatePicker } from "@/components/DatePicker";
@@ -32,11 +32,9 @@ function parseMerittoId(text: string): number | null | undefined {
     return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
 }
 
-const inputClass = "mt-1 rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground";
-const primaryButton =
-    "rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50";
-const ghostButton =
-    "rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground";
+const inputClass = "input input-sm";
+const primaryButton = "btn btn-primary";
+const ghostButton = "btn btn-ghost";
 
 function AddUserForm({
     roles,
@@ -71,10 +69,10 @@ function AddUserForm({
                     onClick={() => {
                         setOpen(true);
                     }}
-                    className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                    className="btn btn-primary"
                 >
-                    <FiPlus className="h-3.5 w-3.5" />
-                    {canManageUsers ? "Add User" : "Add Counsellor"}
+                    <FiPlus aria-hidden />
+                    {canManageUsers ? "Add user" : "Add counsellor"}
                 </button>
             </div>
         );
@@ -133,10 +131,10 @@ function AddUserForm({
                 e.preventDefault();
                 submit();
             }}
-            className="flex flex-wrap items-end gap-3 rounded-lg border border-border bg-card p-4"
+            className="card card-pad flex flex-wrap items-end gap-x-4 gap-y-3"
         >
-            <label className="flex flex-col text-xs font-medium text-muted-foreground">
-                Name
+            <label className="field w-44">
+                <span className="label">Name</span>
                 <input
                     value={name}
                     onChange={(e) => {
@@ -145,8 +143,8 @@ function AddUserForm({
                     className={inputClass}
                 />
             </label>
-            <label className="flex flex-col text-xs font-medium text-muted-foreground">
-                Email (login)
+            <label className="field w-44">
+                <span className="label">Email (login)</span>
                 <input
                     type="email"
                     value={email}
@@ -156,8 +154,8 @@ function AddUserForm({
                     className={inputClass}
                 />
             </label>
-            <label className="flex flex-col text-xs font-medium text-muted-foreground">
-                Meritto User ID{roleRequiresMeritto(roleName) ? "" : " (optional)"}
+            <label className="field w-44">
+                <span className="label">Meritto User ID{roleRequiresMeritto(roleName) ? "" : " (optional)"}</span>
                 <input
                     inputMode="numeric"
                     value={merittoUserId}
@@ -168,22 +166,15 @@ function AddUserForm({
                     className={inputClass}
                 />
             </label>
-            <label className="flex flex-col text-xs font-medium text-muted-foreground">
-                Date of joining (optional)
-                <DatePicker
-                    size="sm"
-                    className="mt-1"
-                    value={dateOfJoining}
-                    onChange={setDateOfJoining}
-                    aria-label="Date of joining"
-                />
+            <label className="field w-44">
+                <span className="label">Date of joining (optional)</span>
+                <DatePicker size="sm" value={dateOfJoining} onChange={setDateOfJoining} aria-label="Date of joining" />
             </label>
             {canManageUsers && (
-                <label className="flex flex-col text-xs font-medium text-muted-foreground">
-                    Role
+                <label className="field w-44">
+                    <span className="label">Role</span>
                     <Select
                         size="sm"
-                        className="mt-1"
                         value={String(roleId)}
                         onChange={(value) => {
                             setRoleId(Number(value));
@@ -192,11 +183,10 @@ function AddUserForm({
                     />
                 </label>
             )}
-            <label className="flex flex-col text-xs font-medium text-muted-foreground">
-                {roleName === "team_leader" ? "Leads team" : "Team"}
+            <label className="field w-44">
+                <span className="label">{roleName === "team_leader" ? "Leads team" : "Team"}</span>
                 <Select
                     size="sm"
-                    className="mt-1"
                     value={String(teamId)}
                     onChange={(value) => {
                         setTeamId(value === "" ? "" : Number(value));
@@ -207,11 +197,10 @@ function AddUserForm({
                     ]}
                 />
             </label>
-            <label className="flex flex-col text-xs font-medium text-muted-foreground">
-                Agency
+            <label className="field w-44">
+                <span className="label">Agency</span>
                 <Select
                     size="sm"
-                    className="mt-1"
                     value={String(agencyId)}
                     onChange={(value) => {
                         setAgencyId(value === "" ? "" : Number(value));
@@ -222,7 +211,8 @@ function AddUserForm({
                     ]}
                 />
             </label>
-            <button type="submit" disabled={pending} className={primaryButton}>
+            <button type="submit" disabled={pending} className="btn btn-primary btn-sm">
+                {pending && <span className="spinner" aria-hidden />}
                 {pending ? "Saving…" : "Save"}
             </button>
             <button
@@ -230,20 +220,25 @@ function AddUserForm({
                 onClick={() => {
                     setOpen(false);
                 }}
-                className={ghostButton}
+                className="btn btn-ghost btn-sm"
             >
                 Cancel
             </button>
-            <p className="w-full text-xs text-muted-foreground">
+            <p className="hint w-full">
                 New users sign in with the default password and are asked to change it on first login.
             </p>
-            {error && <p className="w-full text-xs text-destructive">{error}</p>}
+            {error && (
+                <p className="error-text w-full">
+                    <FiAlertCircle aria-hidden />
+                    {error}
+                </p>
+            )}
         </form>
     );
 }
 
-const fieldLabel = "flex flex-col gap-1 text-xs font-medium text-muted-foreground";
-const panelInput = "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground";
+const fieldLabel = "field";
+const panelInput = "input";
 
 /** The full-width edit form shown under a clicked row. Mounted fresh each time a row opens, so its state starts from the row. */
 function UserEditPanel({
@@ -319,12 +314,12 @@ function UserEditPanel({
             onKeyDown={(e) => {
                 if (e.key === "Escape") onClose();
             }}
-            className="space-y-5"
+            className="stack gap-4"
         >
-            <p className="text-sm font-semibold text-foreground">Edit {user.name}</p>
+            <p className="t-h3">Edit {user.name}</p>
             <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
                 <label className={fieldLabel}>
-                    Name
+                    <span className="label">Name</span>
                     <input
                         autoFocus
                         value={name}
@@ -335,7 +330,7 @@ function UserEditPanel({
                     />
                 </label>
                 <label className={fieldLabel}>
-                    Email
+                    <span className="label">Email</span>
                     <input
                         type="email"
                         value={email}
@@ -346,7 +341,7 @@ function UserEditPanel({
                     />
                 </label>
                 <label className={fieldLabel}>
-                    Meritto User ID
+                    <span className="label">Meritto User ID</span>
                     <input
                         inputMode="numeric"
                         value={merittoUserId}
@@ -358,11 +353,16 @@ function UserEditPanel({
                     />
                 </label>
                 <label className={fieldLabel}>
-                    Date of joining
-                    <DatePicker className="w-full" value={dateOfJoining} onChange={setDateOfJoining} aria-label="Date of joining" />
+                    <span className="label">Date of joining</span>
+                    <DatePicker
+                        className="w-full"
+                        value={dateOfJoining}
+                        onChange={setDateOfJoining}
+                        aria-label="Date of joining"
+                    />
                 </label>
                 <label className={fieldLabel}>
-                    Role
+                    <span className="label">Role</span>
                     {canChangeRole ? (
                         <Select
                             className="w-full"
@@ -373,13 +373,11 @@ function UserEditPanel({
                             options={roles.map((r) => ({ value: String(r.id), label: roleLabel(r.name) }))}
                         />
                     ) : (
-                        <span className={`${panelInput} border-transparent bg-transparent px-0`}>
-                            {roleLabel(user.roleName)}
-                        </span>
+                        <input value={roleLabel(user.roleName)} readOnly className="input readonly" />
                     )}
                 </label>
                 <label className={fieldLabel}>
-                    {draftRoleName === "team_leader" ? "Leads team" : "Team"}
+                    <span className="label">{draftRoleName === "team_leader" ? "Leads team" : "Team"}</span>
                     <Select
                         className="w-full"
                         value={String(teamId)}
@@ -393,7 +391,7 @@ function UserEditPanel({
                     />
                 </label>
                 <label className={fieldLabel}>
-                    Agency
+                    <span className="label">Agency</span>
                     <Select
                         className="w-full"
                         value={String(agencyId)}
@@ -407,9 +405,15 @@ function UserEditPanel({
                     />
                 </label>
             </div>
-            {error && <p className="text-xs text-destructive">{error}</p>}
-            <div className="flex items-center gap-3 border-t border-border pt-4">
+            {error && (
+                <p className="error-text">
+                    <FiAlertCircle aria-hidden />
+                    {error}
+                </p>
+            )}
+            <div className="flex items-center gap-3 border-t border-line-1 pt-4">
                 <button type="submit" disabled={pending} className={primaryButton}>
+                    {pending && <span className="spinner" aria-hidden />}
                     {pending ? "Saving…" : "Save changes"}
                 </button>
                 <button type="button" onClick={onClose} className={ghostButton}>
@@ -526,34 +530,37 @@ export function RosterView({
         {
             key: "name",
             header: "Name",
-            className: "font-medium text-foreground",
+            className: "primary",
             render: (u) => (
                 <>
                     {u.name}
-                    {u.id === currentUserId && <span className="ml-1 text-xs text-muted-foreground">(you)</span>}
+                    {u.id === currentUserId && <span className="t-xs ink-3 ml-1 font-normal">(you)</span>}
                 </>
             ),
         },
-        { key: "role", header: "Role", className: "text-muted-foreground", render: (u) => roleLabel(u.roleName) },
-        { key: "team", header: "Team", className: "text-muted-foreground", render: (u) => formatText(u.teamName) },
+        { key: "role", header: "Role", className: "muted", render: (u) => roleLabel(u.roleName) },
+        { key: "team", header: "Team", className: "muted", render: (u) => formatText(u.teamName) },
         {
             key: "agency",
             header: "Agency",
-            className: "text-muted-foreground",
+            className: "muted",
             render: (u) => formatText(u.agencyName),
         },
-        { key: "email", header: "Email", className: "text-muted-foreground", render: (u) => u.email },
+        { key: "email", header: "Email", className: "muted", render: (u) => u.email },
         {
             key: "meritto",
             header: "Meritto ID",
-            className: "text-muted-foreground",
+            className: "muted t-num",
             render: (u) => u.merittoUserId ?? "—",
         },
         {
             key: "status",
             header: "Status",
-            className: "text-muted-foreground",
-            render: (u) => (u.isActive ? "Active" : "Inactive"),
+            render: (u) => (
+                <span className={`pill ${u.isActive ? "pill-good" : "pill-neutral"}`}>
+                    {u.isActive ? "Active" : "Inactive"}
+                </span>
+            ),
         },
         {
             key: "actions",
@@ -566,22 +573,26 @@ export function RosterView({
     ];
 
     return (
-        <div data-component="RosterView" className="space-y-4">
+        <div data-component="RosterView" className="stack gap-4">
             {permissions.manageRoster && (
                 <AddUserForm roles={roles} teams={teams} agencies={agencies} canManageUsers={permissions.manageUsers} />
             )}
 
-            <div className="flex flex-wrap items-center gap-3">
-                <input
-                    placeholder="Search by name or email…"
-                    value={search}
-                    onChange={(e) => {
-                        setSearch(e.target.value);
-                    }}
-                    className="rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
-                />
+            <div className="card card-pad flex flex-wrap items-center gap-3">
+                <div className="input-wrap w-64">
+                    <FiSearch className="lead" aria-hidden />
+                    <input
+                        placeholder="Search by name or email…"
+                        value={search}
+                        onChange={(e) => {
+                            setSearch(e.target.value);
+                        }}
+                        className="input input-sm"
+                    />
+                </div>
                 <Select
                     size="sm"
+                    className="w-40"
                     aria-label="Filter by role"
                     value={String(roleFilter)}
                     onChange={(value) => {
@@ -594,6 +605,7 @@ export function RosterView({
                 />
                 <Select
                     size="sm"
+                    className="w-40"
                     aria-label="Filter by team"
                     value={String(teamFilter)}
                     onChange={(value) => {
@@ -606,6 +618,7 @@ export function RosterView({
                 />
                 <Select
                     size="sm"
+                    className="w-40"
                     aria-label="Filter by agency"
                     value={String(agencyFilter)}
                     onChange={(value) => {
@@ -616,7 +629,7 @@ export function RosterView({
                         ...agencies.map((a) => ({ value: String(a.id), label: a.name })),
                     ]}
                 />
-                <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <label className="checkbox items-center">
                     <input
                         type="checkbox"
                         checked={showInactive}
@@ -633,7 +646,7 @@ export function RosterView({
                 rows={filtered}
                 rowKey={(u) => u.id}
                 emptyMessage="No users match the current filters."
-                rowClassName={(u) => (u.isActive ? "" : "opacity-50")}
+                rowClassName={(u) => (u.isActive ? "" : "opacity-60")}
                 expandable={(u) => permissions.manageRoster && u.isActive}
                 renderExpanded={(u, state) => (
                     <UserEditPanel

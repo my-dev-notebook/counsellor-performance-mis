@@ -3,37 +3,22 @@
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { TeamSeries } from "@/db/queries/reports";
 import { formatPct } from "@/lib/format";
-
-const TEAM_COLORS: Record<string, string> = {
-    Design: "#ec4899",
-    Engineering: "#2563eb",
-    Inbound: "#10b981",
-    Law: "#f59e0b",
-    Management: "#8b5cf6",
-    "Media/Liberal Arts": "#ef4444",
-};
-
-/** Teams added after the fixed map above cycle through these, by position in the series. */
-const EXTRA_COLORS = ["#0891b2", "#65a30d", "#d946ef", "#ea580c", "#0d9488", "#7c3aed"];
-
-function teamColor(team: string, index: number): string {
-    return TEAM_COLORS[team] ?? EXTRA_COLORS[index % EXTRA_COLORS.length] ?? "var(--muted-foreground)";
-}
-
-const TOOLTIP_STYLE = {
-    backgroundColor: "var(--popover)",
-    borderColor: "var(--border)",
-    color: "var(--popover-foreground)",
-    borderRadius: 6,
-    fontSize: 12,
-};
+import {
+    AXIS_STROKE,
+    AXIS_TICK,
+    GRID_STROKE,
+    LEGEND_STYLE,
+    seriesColor,
+    TOOLTIP_LABEL_STYLE,
+    TOOLTIP_STYLE,
+} from "./chart-theme";
 
 export function TeamTrendChart({ series }: { series: TeamSeries[] }) {
     if (series.length === 0) {
         return (
-            <p data-component="TeamTrendChart" className="py-8 text-center text-sm text-muted-foreground">
-                No monthly data yet.
-            </p>
+            <div data-component="TeamTrendChart" className="card">
+                <p className="empty">No monthly data yet.</p>
+            </div>
         );
     }
 
@@ -56,25 +41,32 @@ export function TeamTrendChart({ series }: { series: TeamSeries[] }) {
     });
 
     return (
-        <div data-component="TeamTrendChart" className="rounded-lg border border-border bg-card p-4">
-            <h3 className="mb-3 text-sm font-semibold text-foreground">Achievement % by Team</h3>
+        <div data-component="TeamTrendChart" className="card card-pad">
+            <h3 className="card-title mb-3">Achievement % by team</h3>
             <ResponsiveContainer width="100%" height={380}>
                 <LineChart data={rows}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                    <XAxis dataKey="monthLabel" tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
+                    <XAxis dataKey="monthLabel" tick={AXIS_TICK} stroke={AXIS_STROKE} tickLine={false} />
                     <YAxis
-                        tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
+                        tick={AXIS_TICK}
+                        stroke={AXIS_STROKE}
+                        tickLine={false}
+                        axisLine={false}
                         tickFormatter={(v: number) => formatPct(v)}
                     />
-                    <Tooltip formatter={(v) => formatPct(Number(v ?? 0))} contentStyle={TOOLTIP_STYLE} />
-                    <Legend wrapperStyle={{ color: "var(--foreground)", fontSize: 12 }} />
+                    <Tooltip
+                        formatter={(v) => formatPct(Number(v ?? 0))}
+                        contentStyle={TOOLTIP_STYLE}
+                        labelStyle={TOOLTIP_LABEL_STYLE}
+                    />
+                    <Legend wrapperStyle={LEGEND_STYLE} iconType="plainline" />
                     {series.map(({ team }, index) => (
                         <Line
                             key={team}
                             type="monotone"
                             dataKey={team}
                             name={team}
-                            stroke={teamColor(team, index)}
+                            stroke={seriesColor(index)}
                             strokeWidth={2}
                             connectNulls
                         />

@@ -33,20 +33,18 @@ export function UploadZone({ onFileSelected, busy }: { onFileSelected: (file: Fi
                 setIsDraggingOver(false);
             }}
             onDrop={onDrop}
-            className={`rounded-xl border-2 border-dashed p-12 text-center transition-colors ${
-                isDraggingOver ? "border-ring bg-accent" : "border-input bg-card"
-            }`}
+            className={`dropzone ${isDraggingOver ? "active" : ""}`}
         >
-            <FiUploadCloud className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
-            <p className="text-sm font-medium text-foreground">
-                {busy ? "Parsing workbook…" : "Drop a monthly performance .xlsx here"}
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">or</p>
+            <div className="icon">
+                {busy ? <span className="spinner" aria-hidden /> : <FiUploadCloud aria-hidden />}
+            </div>
+            <p className="t">{busy ? "Parsing workbook…" : "Drop a monthly performance .xlsx here"}</p>
+            <p className="d">or</p>
             <button
                 type="button"
                 disabled={busy}
                 onClick={() => inputRef.current?.click()}
-                className="mt-3 inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                className="btn btn-primary mt-4"
             >
                 Choose file
             </button>

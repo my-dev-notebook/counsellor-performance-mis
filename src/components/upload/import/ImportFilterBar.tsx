@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { FiSearch, FiX } from "react-icons/fi";
 import { ATTENTION_STATUSES } from "@/lib/import/decisions";
 import type { RowStatus, RowView } from "@/lib/import/decisions";
-import { STATUS_ORDER, STATUS_STYLES } from "@/components/upload/import/status-styles";
+import { chipClass, STATUS_ORDER, STATUS_STYLES } from "@/components/upload/import/status-styles";
 
 export interface RowFilter {
     status: "all" | "attention" | RowStatus;
@@ -34,8 +34,7 @@ export function applyRowFilter(
     return views.filter((view) => {
         if (!pinned.has(view.row.rowId)) {
             if (filter.status === "attention" && !view.needsAttention) return false;
-            if (filter.status !== "all" && filter.status !== "attention" && view.status !== filter.status)
-                return false;
+            if (filter.status !== "all" && filter.status !== "attention" && view.status !== filter.status) return false;
         }
         if (query === "") return true;
         const { name, email, sheet } = view.row.input;
@@ -47,8 +46,7 @@ export function applyRowFilter(
     });
 }
 
-const BULK_BUTTON =
-    "rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50";
+const BULK_BUTTON = "btn btn-primary btn-sm";
 
 /** One-click resolution for every row in the selected status, shown next to that status's chip. */
 function BulkForStatus({
@@ -106,14 +104,11 @@ function BulkForStatus({
     if (buttons === null) return null;
     return (
         <span data-component="BulkForStatus" className="flex items-center gap-1.5">
-            <span className="mx-1 h-5 w-px bg-border" aria-hidden />
+            <span className="bg-line-2 mx-1 h-5 w-px" aria-hidden />
             {buttons}
         </span>
     );
 }
-
-const CHIP =
-    "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset transition-colors";
 
 function FilterChip({
     active,
@@ -127,13 +122,7 @@ function FilterChip({
     children: ReactNode;
 }) {
     return (
-        <button
-            data-component="FilterChip"
-            type="button"
-            aria-pressed={active}
-            onClick={onClick}
-            className={`${CHIP} ${className} ${active ? "ring-2 ring-primary ring-offset-1 ring-offset-background" : "opacity-80 hover:opacity-100"}`}
-        >
+        <button data-component="FilterChip" type="button" aria-pressed={active} onClick={onClick} className={className}>
             {children}
         </button>
     );
@@ -166,29 +155,26 @@ export function ImportFilterBar({
     };
 
     return (
-        <div
-            data-component="ImportFilterBar"
-            className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-card p-3"
-        >
+        <div data-component="ImportFilterBar" className="card card-pad flex flex-wrap items-center gap-2">
             <FilterChip
                 active={filter.status === "all"}
                 onClick={() => {
                     setStatus("all");
                 }}
-                className="bg-muted text-foreground ring-border"
+                className="chip"
             >
-                All <span className="tabular-nums text-muted-foreground">{total}</span>
+                All <span className="count">{total}</span>
             </FilterChip>
             <FilterChip
                 active={filter.status === "attention"}
                 onClick={() => {
                     setStatus("attention");
                 }}
-                className="bg-warning/15 text-warning ring-warning/30"
+                className="chip chip-warn"
             >
-                Needs attention <span className="tabular-nums">{attention}</span>
+                Needs attention <span className="count">{attention}</span>
             </FilterChip>
-            <span className="mx-1 h-5 w-px bg-border" aria-hidden />
+            <span className="bg-line-2 mx-1 h-5 w-px" aria-hidden />
             {STATUS_ORDER.filter((status) => counts[status] > 0).map((status) => (
                 <FilterChip
                     key={status}
@@ -196,16 +182,16 @@ export function ImportFilterBar({
                     onClick={() => {
                         setStatus(status);
                     }}
-                    className={STATUS_STYLES[status].className}
+                    className={chipClass(STATUS_STYLES[status].tone)}
                 >
-                    {STATUS_STYLES[status].label} <span className="tabular-nums">{counts[status]}</span>
+                    {STATUS_STYLES[status].label} <span className="count">{counts[status]}</span>
                 </FilterChip>
             ))}
             {filter.status !== "all" && filter.status !== "attention" && (
                 <BulkForStatus status={filter.status} count={counts[filter.status]} bulk={bulk} locked={locked} />
             )}
-            <label className="relative ml-auto flex items-center">
-                <FiSearch className="pointer-events-none absolute left-2 h-4 w-4 text-muted-foreground" aria-hidden />
+            <label className="input-wrap ml-auto w-60">
+                <FiSearch className="lead" aria-hidden />
                 <input
                     type="search"
                     value={filter.query}
@@ -214,7 +200,7 @@ export function ImportFilterBar({
                     }}
                     placeholder="Search name, email or sheet"
                     aria-label="Search rows"
-                    className="w-56 rounded-md border border-input bg-background py-1 pr-7 pl-8 text-sm text-foreground"
+                    className="input input-sm has-trail"
                 />
                 {filter.query !== "" && (
                     <button
@@ -223,14 +209,14 @@ export function ImportFilterBar({
                         onClick={() => {
                             onChange({ ...filter, query: "" });
                         }}
-                        className="absolute right-1.5 rounded p-0.5 text-muted-foreground hover:text-foreground"
+                        className="btn btn-ghost btn-icon btn-sm absolute right-1"
                     >
-                        <FiX className="h-3.5 w-3.5" />
+                        <FiX aria-hidden />
                     </button>
                 )}
             </label>
             {shown !== total && (
-                <span className="w-full text-xs text-muted-foreground">
+                <span className="t-xs ink-3 w-full">
                     Showing {shown} of {total} rows
                 </span>
             )}

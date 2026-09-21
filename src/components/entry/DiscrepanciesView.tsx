@@ -9,12 +9,11 @@ import {
 } from "@/app/(app)/entry/discrepancies/actions";
 import type { AchievedDiscrepancy, SnapshotDiscrepancy } from "@/db/queries/discrepancies";
 import { formatInt, formatText } from "@/lib/format";
-import { MonthPicker } from "@/components/MonthPicker";
 import { DataTable } from "@/components/DataTable";
 import type { Column } from "@/components/DataTable";
 
-const BUTTON = "rounded-md border border-input bg-background px-2 py-1 text-xs font-medium text-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50";
-const INPUT = "w-20 rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground";
+const BUTTON = "btn btn-secondary btn-sm";
+const INPUT = "input input-sm input-num w-20";
 
 const SOURCE_LABELS = { admissions: "finalize", import: "import", manual: "manual" } as const;
 
@@ -67,7 +66,7 @@ function AchievedActions({ row }: { row: AchievedDiscrepancy }) {
             >
                 Set
             </button>
-            {error && <span className="text-xs text-destructive">{error}</span>}
+            {error && <span className="error-text">{error}</span>}
         </div>
     );
 }
@@ -109,48 +108,44 @@ function SnapshotActions({ row, canManageRoster }: { row: SnapshotDiscrepancy; c
                     Move user to month&apos;s team
                 </button>
             )}
-            {error && <span className="text-xs text-destructive">{error}</span>}
+            {error && <span className="error-text">{error}</span>}
         </div>
     );
 }
 
 export function DiscrepanciesView({
-    date,
     achieved,
     snapshots,
-    existingMonths,
     canManageRoster,
 }: {
-    date: string;
     achieved: AchievedDiscrepancy[];
     snapshots: SnapshotDiscrepancy[];
-    existingMonths: string[];
     canManageRoster: boolean;
 }) {
     const achievedColumns: Column<AchievedDiscrepancy>[] = [
-        { key: "name", header: "Counsellor", render: (r) => <span className="font-medium text-foreground">{r.userName}</span> },
-        { key: "team", header: "Team", className: "text-muted-foreground", render: (r) => formatText(r.teamName) },
+        { key: "name", header: "Counsellor", className: "primary", render: (r) => r.userName },
+        { key: "team", header: "Team", className: "muted", render: (r) => formatText(r.teamName) },
         {
             key: "stored",
             header: "Stored",
-            className: "text-right whitespace-nowrap",
+            className: "num whitespace-nowrap",
             render: (r) => (
                 <span>
-                    <span className="font-medium text-foreground">{formatInt(r.stored)}</span>
-                    <span className="ml-1 text-xs text-muted-foreground">
+                    <span className="font-semibold">{formatInt(r.stored)}</span>
+                    <span className="t-xs ink-3 ml-1">
                         via {SOURCE_LABELS[r.source]}
                         {r.importFileName ? ` (${r.importFileName})` : ""}
                     </span>
                 </span>
             ),
         },
-        { key: "live", header: "Daily count", className: "text-right", render: (r) => formatInt(r.live) },
+        { key: "live", header: "Daily count", className: "num", render: (r) => formatInt(r.live) },
         {
             key: "diff",
             header: "Diff",
-            className: "text-right",
+            className: "num",
             render: (r) => (
-                <span className={r.stored - r.live > 0 ? "text-success" : "text-destructive"}>
+                <span className={r.stored - r.live > 0 ? "text-good-soft-fg" : "text-bad-soft-fg"}>
                     {r.stored - r.live > 0 ? "+" : ""}
                     {formatInt(r.stored - r.live)}
                 </span>
@@ -163,11 +158,12 @@ export function DiscrepanciesView({
         {
             key: "name",
             header: "Counsellor",
+            className: "primary",
             render: (r) => (
-                <span className="font-medium text-foreground">
+                <>
                     {r.userName}
-                    {!r.isActive && <span className="ml-1 text-xs text-muted-foreground">(inactive)</span>}
-                </span>
+                    {!r.isActive && <span className="t-xs ink-3 ml-1 font-normal">(inactive)</span>}
+                </>
             ),
         },
         {
@@ -189,15 +185,13 @@ export function DiscrepanciesView({
     ];
 
     return (
-        <div data-component="DiscrepanciesView" className="space-y-8">
-            <MonthPicker date={date} existingMonths={existingMonths} basePath="/entry/discrepancies" />
-
-            <section className="space-y-3">
+        <div data-component="DiscrepanciesView" className="stack gap-6">
+            <section className="stack gap-3">
                 <div>
-                    <h2 className="text-base font-semibold text-foreground">Achieved: stored total vs daily admissions</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        &quot;Use live count&quot; drops the stored total so the month follows the daily rows again. A manual
-                        figure is kept until changed here; finalize never overwrites it.
+                    <h2 className="t-h3">Achieved: stored total vs daily admissions</h2>
+                    <p className="t-sm ink-2 mt-1">
+                        &quot;Use live count&quot; drops the stored total so the month follows the daily rows again. A
+                        manual figure is kept until changed here; finalize never overwrites it.
                     </p>
                 </div>
                 <DataTable
@@ -208,12 +202,12 @@ export function DiscrepanciesView({
                 />
             </section>
 
-            <section className="space-y-3">
+            <section className="stack gap-3">
                 <div>
-                    <h2 className="text-base font-semibold text-foreground">Team snapshot vs roster</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        A month keeps the team it was recorded under. That is usually right after a mid-year move; fix it
-                        only if the month is filed under the wrong team.
+                    <h2 className="t-h3">Team snapshot vs roster</h2>
+                    <p className="t-sm ink-2 mt-1">
+                        A month keeps the team it was recorded under. That is usually right after a mid-year move; fix
+                        it only if the month is filed under the wrong team.
                     </p>
                 </div>
                 <DataTable

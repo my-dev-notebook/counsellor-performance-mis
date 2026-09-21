@@ -7,56 +7,57 @@ import type { Team, UserRow } from "@/db/types";
 import { DataTable } from "@/components/DataTable";
 import type { Column } from "@/components/DataTable";
 import { Select } from "@/components/Select";
-import { AqsPill } from "@/components/quality/AqsPill";
+import { BandLegend, statusAccent } from "@/components/StatusPill";
+import { AqsCell } from "@/components/quality/AqsCell";
 import { QualityExportButton } from "@/components/quality/QualityExportButton";
-import { computeAqs, formatDuration, OVERALL_RATING_LABELS } from "@/schemas/call-audit";
+import { aqsStatus, computeAqs, formatDuration, OVERALL_RATING_LABELS } from "@/schemas/call-audit";
 import { formatText } from "@/lib/format";
 
 const COLUMNS: Column<CallAuditRow>[] = [
     {
         key: "callAt",
         header: "Call",
-        className: "whitespace-nowrap text-muted-foreground tabular-nums",
+        className: "muted t-num whitespace-nowrap",
         render: (a) => a.callAt,
     },
     {
         key: "counsellor",
         header: "Counsellor",
-        className: "font-medium text-foreground",
+        className: "primary",
         render: (a) => a.counsellorName,
     },
-    { key: "team", header: "Team", className: "text-muted-foreground", render: (a) => a.teamName },
+    { key: "team", header: "Team", className: "muted", render: (a) => a.teamName },
     {
         key: "period",
         header: "Period",
-        className: "whitespace-nowrap text-muted-foreground tabular-nums",
+        className: "muted t-num whitespace-nowrap",
         render: (a) => `${a.periodStart} → ${a.periodEnd}`,
     },
     {
         key: "duration",
         header: "Duration",
-        className: "whitespace-nowrap text-muted-foreground",
+        className: "muted whitespace-nowrap",
         render: (a) => formatDuration(a.durationSeconds),
     },
     {
         key: "application",
         header: "Application ID",
-        className: "text-muted-foreground",
+        className: "muted",
         render: (a) => formatText(a.applicationId),
     },
     {
         key: "aqs",
         header: "AQS",
-        className: "whitespace-nowrap",
-        render: (a) => <AqsPill aqs={computeAqs(a.ratings)} />,
+        className: "num whitespace-nowrap",
+        render: (a) => <AqsCell aqs={computeAqs(a.ratings)} />,
     },
     {
         key: "overall",
         header: "Overall",
-        className: "whitespace-nowrap text-muted-foreground",
+        className: "muted whitespace-nowrap",
         render: (a) => OVERALL_RATING_LABELS[a.overallRating],
     },
-    { key: "auditor", header: "Audited by", className: "text-muted-foreground", render: (a) => a.auditorName },
+    { key: "auditor", header: "Audited by", className: "muted", render: (a) => a.auditorName },
 ];
 
 export function CallAuditsView({
@@ -95,11 +96,11 @@ export function CallAuditsView({
     );
 
     return (
-        <div data-component="CallAuditsView" className="space-y-4">
+        <div data-component="CallAuditsView" className="stack gap-4">
             <QualityExportButton />
-            <div className="flex flex-wrap items-end gap-3">
-                <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
-                    Team
+            <div className="card card-pad flex flex-wrap items-end gap-x-4 gap-y-3">
+                <label className="field w-48">
+                    <span className="label">Team</span>
                     <Select
                         value={teamId}
                         onChange={(v) => {
@@ -111,8 +112,8 @@ export function CallAuditsView({
                         aria-label="Filter by team"
                     />
                 </label>
-                <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
-                    Counsellor
+                <label className="field w-56">
+                    <span className="label">Counsellor</span>
                     <Select
                         value={userId}
                         onChange={setUserId}
@@ -121,7 +122,7 @@ export function CallAuditsView({
                         aria-label="Filter by counsellor"
                     />
                 </label>
-                <span className="ml-auto text-xs text-muted-foreground">
+                <span className="t-xs ink-3 ml-auto">
                     {rows.length} of {audits.length} audits
                 </span>
             </div>
@@ -130,6 +131,8 @@ export function CallAuditsView({
                 rows={rows}
                 rowKey={(a) => a.id}
                 emptyMessage="No call audits yet."
+                rowAccent={(a) => statusAccent(aqsStatus(computeAqs(a.ratings)))}
+                footer={<BandLegend scale="aqs" />}
                 onRowClick={(a) => {
                     router.push(`/quality/${String(a.id)}`);
                 }}

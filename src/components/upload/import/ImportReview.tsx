@@ -207,19 +207,19 @@ export function ImportReview({
     const { year, month } = { year: Number(date.slice(0, 4)), month: Number(date.slice(5, 7)) };
 
     return (
-        <section data-component="ImportReview" className="space-y-6">
-            <div className="flex flex-wrap items-end justify-between gap-4 rounded-lg border border-border bg-card p-4">
-                <div>
-                    <h2 className="text-base font-semibold text-foreground">Import {workbook.sourceFileName}</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">
+        <section data-component="ImportReview" className="stack gap-5">
+            <div className="card card-pad flex flex-wrap items-end justify-between gap-4">
+                <div className="max-w-prose">
+                    <h2 className="card-title">Import {workbook.sourceFileName}</h2>
+                    <p className="card-meta mt-1">
                         Confirm the month, map anything the file could not place, resolve each flagged row, then commit.
                         The workbook&apos;s monthly total becomes the figure of record for the month, even where the
                         daily admissions add up differently.
                     </p>
                 </div>
-                <div className="flex flex-wrap items-center gap-3">
-                    <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                        Month
+                <div className="flex flex-wrap items-end gap-3">
+                    <label className="field w-36">
+                        <span className="label">Month</span>
                         <Select
                             size="sm"
                             value={String(month)}
@@ -230,8 +230,8 @@ export function ImportReview({
                             options={MONTH_NAMES.map((name, i) => ({ value: String(i + 1), label: name }))}
                         />
                     </label>
-                    <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                        Year
+                    <label className="field w-24">
+                        <span className="label">Year</span>
                         <input
                             type="number"
                             value={year}
@@ -242,13 +242,13 @@ export function ImportReview({
                                     setDate(`${String(y)}-${String(month).padStart(2, "0")}`);
                                 }
                             }}
-                            className="w-24 rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
+                            className="input input-sm input-num"
                         />
                     </label>
                 </div>
             </div>
 
-            {planError && <p className="text-sm text-destructive">{planError}</p>}
+            {planError && <p className="error-text">{planError}</p>}
 
             <ImportMappings
                 workbook={workbook}

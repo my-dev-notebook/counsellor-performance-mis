@@ -3,17 +3,15 @@
 import type { AdmissionRecord } from "@/db/types";
 import type { AdmissionChange, AdmissionConflict, DayDiff } from "@/lib/admissions/diff";
 import type { AdmissionFetchDiff } from "@/app/(app)/entry/actions";
+import { FiAlertCircle, FiAlertTriangle } from "react-icons/fi";
 import { MONTH_NAMES } from "@/lib/format";
-
-const BUTTON =
-    "rounded-md border border-input bg-background px-2 py-1 text-xs font-medium text-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50";
 
 type RowStatus = "added" | "changed" | "removed";
 
-const STATUS_STYLE: Record<RowStatus, { label: string; badge: string; row: string }> = {
-    added: { label: "Added", badge: "bg-success/15 text-success", row: "bg-success/5" },
-    changed: { label: "Changed", badge: "bg-warning/15 text-warning", row: "bg-warning/5" },
-    removed: { label: "Removed", badge: "bg-destructive/15 text-destructive", row: "bg-destructive/5 line-through" },
+const STATUS_STYLE: Record<RowStatus, { label: string; tag: string; row: string }> = {
+    added: { label: "Added", tag: "tag-good", row: "" },
+    changed: { label: "Changed", tag: "tag-warn", row: "" },
+    removed: { label: "Removed", tag: "tag-bad", row: "line-through" },
 };
 
 const FIELDS: { key: keyof AdmissionRecord; header: string }[] = [
@@ -34,10 +32,7 @@ export function formatDay(date: string): string {
 function StatusBadge({ status }: { status: RowStatus }) {
     const style = STATUS_STYLE[status];
     return (
-        <span
-            data-component="StatusBadge"
-            className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase ${style.badge}`}
-        >
+        <span data-component="StatusBadge" className={`tag ${style.tag}`}>
             {style.label}
         </span>
     );
@@ -49,14 +44,12 @@ export type RowNotes = ReadonlyMap<string, string>;
 function DiffRow({ status, record, note }: { status: "added" | "removed"; record: AdmissionRecord; note?: string }) {
     return (
         <tr data-component="DiffRow" className={STATUS_STYLE[status].row}>
-            <td className="px-2 py-1">
+            <td>
                 <StatusBadge status={status} />
-                {note && <span className="mt-0.5 block text-[10px] whitespace-nowrap text-muted-foreground no-underline">{note}</span>}
+                {note && <span className="t-xs ink-3 mt-0.5 block whitespace-nowrap no-underline">{note}</span>}
             </td>
             {FIELDS.map((f) => (
-                <td key={f.key} className="px-2 py-1 text-foreground">
-                    {String(record[f.key])}
-                </td>
+                <td key={f.key}>{String(record[f.key])}</td>
             ))}
         </tr>
     );
@@ -66,20 +59,20 @@ function DiffRow({ status, record, note }: { status: "added" | "removed"; record
 function ChangedRow({ change }: { change: AdmissionChange }) {
     return (
         <tr data-component="ChangedRow" className={STATUS_STYLE.changed.row}>
-            <td className="px-2 py-1">
+            <td>
                 <StatusBadge status="changed" />
             </td>
             {FIELDS.map((f) => {
                 const before = String(change.before[f.key]);
                 const after = String(change.after[f.key]);
                 return (
-                    <td key={f.key} className="px-2 py-1 text-foreground">
+                    <td key={f.key}>
                         {before === after ? (
                             after
                         ) : (
                             <span className="flex flex-col">
-                                <span className="text-destructive line-through">{before}</span>
-                                <span className="text-success">{after}</span>
+                                <span className="text-bad-soft-fg line-through">{before}</span>
+                                <span className="text-good-soft-fg">{after}</span>
                             </span>
                         )}
                     </td>
@@ -97,42 +90,47 @@ export function DayDiffSection({ diff, notes }: { diff: DayDiff; notes?: RowNote
         `${String(diff.unchanged)} unchanged`,
     ].filter((p) => p !== null);
     return (
-        <div data-component="DayDiffSection" className="space-y-1.5">
-            <p className="text-xs font-semibold text-foreground">
+        <div data-component="DayDiffSection" className="stack gap-1.5">
+            <p className="t-sm font-semibold">
                 {formatDay(diff.date)}
-                <span className="ml-2 font-normal text-muted-foreground">
+                <span className="ink-3 ml-2 font-normal">
                     {parts.join(" · ")} → {diff.fetched.length} after apply
                 </span>
             </p>
-            <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-border text-xs">
-                    <thead>
-                        <tr>
-                            <th className="px-2 py-1 text-left font-semibold tracking-wide text-muted-foreground uppercase">
-                                Change
-                            </th>
-                            {FIELDS.map((f) => (
-                                <th
-                                    key={f.key}
-                                    className="px-2 py-1 text-left font-semibold tracking-wide text-muted-foreground uppercase"
-                                >
-                                    {f.header}
-                                </th>
+            <div className="table-wrap">
+                <div className="scroll">
+                    <table className="table text-xs">
+                        <thead>
+                            <tr>
+                                <th>Change</th>
+                                {FIELDS.map((f) => (
+                                    <th key={f.key}>{f.header}</th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {diff.added.map((r) => (
+                                <DiffRow
+                                    key={r.applicationNumber}
+                                    status="added"
+                                    record={r}
+                                    note={notes?.get(r.applicationNumber)}
+                                />
                             ))}
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                        {diff.added.map((r) => (
-                            <DiffRow key={r.applicationNumber} status="added" record={r} note={notes?.get(r.applicationNumber)} />
-                        ))}
-                        {diff.changed.map((c) => (
-                            <ChangedRow key={c.after.applicationNumber} change={c} />
-                        ))}
-                        {diff.removed.map((r) => (
-                            <DiffRow key={r.applicationNumber} status="removed" record={r} note={notes?.get(r.applicationNumber)} />
-                        ))}
-                    </tbody>
-                </table>
+                            {diff.changed.map((c) => (
+                                <ChangedRow key={c.after.applicationNumber} change={c} />
+                            ))}
+                            {diff.removed.map((r) => (
+                                <DiffRow
+                                    key={r.applicationNumber}
+                                    status="removed"
+                                    record={r}
+                                    note={notes?.get(r.applicationNumber)}
+                                />
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );
@@ -140,18 +138,22 @@ export function DayDiffSection({ diff, notes }: { diff: DayDiff; notes?: RowNote
 
 export function ConflictList({ conflicts }: { conflicts: AdmissionConflict[] }) {
     return (
-        <div data-component="ConflictList" className="rounded-md border border-warning/40 bg-warning/5 px-3 py-2">
-            <p className="text-xs font-semibold text-warning">
-                {conflicts.length} fetched row{conflicts.length === 1 ? "" : "s"} skipped — already recorded elsewhere
-            </p>
-            <ul className="mt-1 space-y-0.5 text-xs text-muted-foreground">
-                {conflicts.map((c) => (
-                    <li key={c.record.applicationNumber}>
-                        <span className="text-foreground">{c.record.applicationNumber}</span> ({c.record.applicantName}) on{" "}
-                        {formatDay(c.date)} — credited to {c.ownerName} on {c.ownerDate}
-                    </li>
-                ))}
-            </ul>
+        <div data-component="ConflictList" className="alert alert-warn">
+            <FiAlertTriangle aria-hidden />
+            <div>
+                <div className="title">
+                    {conflicts.length} fetched row{conflicts.length === 1 ? "" : "s"} skipped — already recorded
+                    elsewhere
+                </div>
+                <ul className="t-xs mt-1 flex flex-col gap-0.5">
+                    {conflicts.map((c) => (
+                        <li key={c.record.applicationNumber}>
+                            <b>{c.record.applicationNumber}</b> ({c.record.applicantName}) on {formatDay(c.date)} —
+                            credited to {c.ownerName} on {c.ownerDate}
+                        </li>
+                    ))}
+                </ul>
+            </div>
         </div>
     );
 }
@@ -187,35 +189,31 @@ export function AdmissionDiffPanel({
     );
 
     return (
-        <div data-component="AdmissionDiffPanel" className="space-y-3 rounded-lg border border-border bg-card px-4 py-3">
+        <div data-component="AdmissionDiffPanel" className="card card-pad stack gap-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                    <p className="text-sm font-semibold text-foreground">{title}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="card-title">{title}</p>
+                    <p className="card-meta">
                         Meritto returned {diff.fetchedCount} row{diff.fetchedCount === 1 ? "" : "s"}.{" "}
                         {dayCount === 0
                             ? "Nothing differs from what is saved."
                             : `${String(dayCount)} day${dayCount === 1 ? "" : "s"} differ: +${String(totals.added)} added, ${String(totals.changed)} changed, −${String(totals.removed)} removed.`}
                     </p>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="row gap-2">
                     {dayCount > 0 && (
-                        <button
-                            type="button"
-                            disabled={applying}
-                            onClick={onApply}
-                            className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                        >
+                        <button type="button" disabled={applying} onClick={onApply} className="btn btn-primary btn-sm">
+                            {applying && <span className="spinner" aria-hidden />}
                             {applying ? "Applying…" : `Apply ${String(dayCount)} day${dayCount === 1 ? "" : "s"} to DB`}
                         </button>
                     )}
-                    <button type="button" disabled={applying} onClick={onDiscard} className={BUTTON}>
+                    <button type="button" disabled={applying} onClick={onDiscard} className="btn btn-secondary btn-sm">
                         {dayCount === 0 ? "Close" : "Discard"}
                     </button>
                 </div>
             </div>
             {dayCount > 0 && (
-                <p className="text-xs text-muted-foreground">
+                <p className="hint">
                     Applying replaces each listed day in the DB with Meritto&apos;s rows: removed rows are deleted, and
                     unsaved edits in the grid are dropped.
                 </p>
@@ -224,7 +222,12 @@ export function AdmissionDiffPanel({
             {diff.days.map((d) => (
                 <DayDiffSection key={d.date} diff={d} />
             ))}
-            {error && <p className="text-xs text-destructive">{error}</p>}
+            {error && (
+                <p className="error-text">
+                    <FiAlertCircle aria-hidden />
+                    {error}
+                </p>
+            )}
         </div>
     );
 }

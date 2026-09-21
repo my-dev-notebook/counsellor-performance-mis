@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { FiAlertCircle } from "react-icons/fi";
 import type { AgencyWithUsage } from "@/db/queries/agencies";
 import { RowMenu } from "@/components/RowMenu";
 import type { MenuItem } from "@/components/RowMenu";
@@ -12,12 +13,11 @@ function errorMessage(error: unknown, fallback: string): string {
     return error instanceof Error && error.message !== "" ? error.message : fallback;
 }
 
-const inputClass = "rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground";
-const primaryButton =
-    "rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50";
-const ghostButton =
-    "rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground";
-const panelInput = "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground";
+const inputClass = "input input-sm";
+const primaryButton = "btn btn-primary";
+const ghostButton = "btn btn-ghost";
+const fieldLabel = "field";
+const panelInput = "input";
 
 function AddAgencyForm() {
     const [name, setName] = useState("");
@@ -47,22 +47,28 @@ function AddAgencyForm() {
                 e.preventDefault();
                 submit();
             }}
-            className="flex flex-wrap items-end gap-3 rounded-lg border border-border bg-card p-4"
+            className="card card-pad flex flex-wrap items-end gap-x-4 gap-y-3"
         >
-            <label className="flex flex-col text-xs font-medium text-muted-foreground">
-                New agency name
+            <label className="field w-64">
+                <span className="label">New agency name</span>
                 <input
                     value={name}
                     onChange={(e) => {
                         setName(e.target.value);
                     }}
-                    className={`mt-1 ${inputClass}`}
+                    className={inputClass}
                 />
             </label>
-            <button type="submit" disabled={pending} className={primaryButton}>
+            <button type="submit" disabled={pending} className="btn btn-primary btn-sm">
+                {pending && <span className="spinner" aria-hidden />}
                 {pending ? "Adding…" : "Add"}
             </button>
-            {error && <p className="text-xs text-destructive">{error}</p>}
+            {error && (
+                <p className="error-text w-full">
+                    <FiAlertCircle aria-hidden />
+                    {error}
+                </p>
+            )}
         </form>
     );
 }
@@ -99,12 +105,12 @@ function AgencyEditPanel({ agency, onClose }: { agency: AgencyWithUsage; onClose
             onKeyDown={(e) => {
                 if (e.key === "Escape") onClose();
             }}
-            className="space-y-5"
+            className="stack gap-4"
         >
-            <p className="text-sm font-semibold text-foreground">Edit {agency.name}</p>
+            <p className="t-h3">Edit {agency.name}</p>
             <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
-                <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
-                    Name
+                <label className={fieldLabel}>
+                    <span className="label">Name</span>
                     <input
                         autoFocus
                         value={name}
@@ -115,9 +121,15 @@ function AgencyEditPanel({ agency, onClose }: { agency: AgencyWithUsage; onClose
                     />
                 </label>
             </div>
-            {error && <p className="text-xs text-destructive">{error}</p>}
-            <div className="flex items-center gap-3 border-t border-border pt-4">
+            {error && (
+                <p className="error-text">
+                    <FiAlertCircle aria-hidden />
+                    {error}
+                </p>
+            )}
+            <div className="flex items-center gap-3 border-t border-line-1 pt-4">
                 <button type="submit" disabled={pending} className={primaryButton}>
+                    {pending && <span className="spinner" aria-hidden />}
                     {pending ? "Saving…" : "Save changes"}
                 </button>
                 <button type="button" onClick={onClose} className={ghostButton}>
@@ -160,8 +172,8 @@ function AgencyActions({ agency, state }: { agency: AgencyWithUsage; state: RowS
 }
 
 const COLUMNS: Column<AgencyWithUsage>[] = [
-    { key: "name", header: "Agency", className: "font-medium text-foreground", render: (a) => a.name },
-    { key: "users", header: "Active users", className: "text-muted-foreground", render: (a) => a.memberCount },
+    { key: "name", header: "Agency", className: "primary", render: (a) => a.name },
+    { key: "users", header: "Active users", className: "num", render: (a) => a.memberCount },
     {
         key: "actions",
         header: "",
@@ -172,7 +184,7 @@ const COLUMNS: Column<AgencyWithUsage>[] = [
 
 export function AgenciesView({ agencies }: { agencies: AgencyWithUsage[] }) {
     return (
-        <div data-component="AgenciesView" className="space-y-4">
+        <div data-component="AgenciesView" className="stack gap-4">
             <AddAgencyForm />
             <DataTable
                 columns={COLUMNS}

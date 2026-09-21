@@ -2,9 +2,20 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import {
+    FiAlertCircle,
+    FiArrowLeft,
+    FiDownloadCloud,
+    FiRotateCcw,
+    FiRotateCw,
+    FiSearch,
+    FiTrash2,
+    FiX,
+} from "react-icons/fi";
 import type { AdmissionRecord, AdmissionRow, UserRow } from "@/db/types";
 import { MONTH_NAMES } from "@/lib/format";
 import { cellTone } from "@/lib/admissions/calendar-tone";
+import { MonthPicker } from "@/components/MonthPicker";
 import { Select } from "@/components/Select";
 import { Tooltip } from "@/components/Tooltip";
 import {
@@ -41,9 +52,9 @@ function firstWeekday(date: string): number {
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const PICKER_COLUMNS: Column<UserRow>[] = [
-    { key: "name", header: "Counsellor", className: "font-medium text-foreground", render: (c) => c.name },
-    { key: "team", header: "Team", className: "text-muted-foreground", render: (c) => c.teamName ?? "—" },
-    { key: "agency", header: "Agency", className: "text-muted-foreground", render: (c) => c.agencyName ?? "—" },
+    { key: "name", header: "Counsellor", className: "primary", render: (c) => c.name },
+    { key: "team", header: "Team", className: "muted", render: (c) => c.teamName ?? "—" },
+    { key: "agency", header: "Agency", className: "muted", render: (c) => c.agencyName ?? "—" },
 ];
 
 function parseMonthDate(date: string): { year: number; month: number } {
@@ -51,8 +62,9 @@ function parseMonthDate(date: string): { year: number; month: number } {
     return { year: Number.parseInt(yearStr ?? "", 10), month: Number.parseInt(monthStr ?? "", 10) };
 }
 
-function toMonthDate(year: number, month: number): string {
-    return `${String(year)}-${String(month).padStart(2, "0")}`;
+function todayDayDate(): string {
+    const now = new Date();
+    return `${String(now.getFullYear())}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 }
 
 function CounsellorPicker({ counsellors, date }: { counsellors: UserRow[]; date: string }) {
@@ -71,24 +83,30 @@ function CounsellorPicker({ counsellors, date }: { counsellors: UserRow[]; date:
     }, [counsellors, search]);
 
     return (
-        <div data-component="CounsellorPicker" className="space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <input
-                    placeholder="Search by name, team, agency…"
-                    value={search}
-                    onChange={(e) => {
-                        setSearch(e.target.value);
-                    }}
-                    className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm text-foreground sm:w-80"
-                />
+        <div data-component="CounsellorPicker" className="stack">
+            <div className="card card-pad flex flex-wrap items-center justify-between gap-3">
+                <div className="input-wrap w-full sm:w-80">
+                    <FiSearch className="lead" aria-hidden />
+                    <input
+                        type="search"
+                        placeholder="Search by name, team, agency…"
+                        aria-label="Search counsellors"
+                        value={search}
+                        onChange={(e) => {
+                            setSearch(e.target.value);
+                        }}
+                        className="input"
+                    />
+                </div>
                 <Tooltip content="Fetch this month from Meritto for every counsellor listed here and compare with what is saved">
                     <button
                         type="button"
                         onClick={() => {
                             router.push(`/entry/fetch?date=${date}`);
                         }}
-                        className="rounded-md border border-input px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent"
+                        className="btn btn-secondary"
                     >
+                        <FiDownloadCloud aria-hidden />
                         Auto-fetch all counsellors
                     </button>
                 </Tooltip>
@@ -101,44 +119,35 @@ function CounsellorPicker({ counsellors, date }: { counsellors: UserRow[]; date:
                 onRowClick={(c) => {
                     router.push(`/entry/daily?userId=${String(c.id)}&date=${date}`);
                 }}
+                footer={<span>Click a counsellor to open their month</span>}
             />
         </div>
     );
 }
 
-function MonthNav({ date, userId }: { date: string; userId: number }) {
+/** Which counsellor and which month — both navigate via the URL so the page re-fetches the admissions. */
+function ScopeCard({ counsellors, userId, date }: { counsellors: UserRow[]; userId: number; date: string }) {
     const router = useRouter();
-    const { year, month } = parseMonthDate(date);
-
-    const navigate = (y: number, m: number) => {
-        router.push(`/entry/daily?userId=${String(userId)}&date=${toMonthDate(y, m)}`);
-    };
-
     return (
-        <div data-component="MonthNav" className="flex flex-wrap items-center gap-3">
-            <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                Month
+        <div data-component="ScopeCard" className="card card-pad stack gap-3">
+            <div className="field">
+                <span className="label">Counsellor</span>
                 <Select
-                    size="sm"
-                    value={String(month)}
+                    aria-label="Counsellor"
+                    value={String(userId)}
                     onChange={(value) => {
-                        navigate(year, Number(value));
+                        router.push(`/entry/daily?userId=${value}&date=${date}`);
                     }}
-                    options={MONTH_NAMES.map((name, i) => ({ value: String(i + 1), label: name }))}
+                    options={counsellors.map((c) => ({
+                        value: String(c.id),
+                        label: c.teamName ? `${c.name} · ${c.teamName}` : c.name,
+                    }))}
                 />
-            </label>
-            <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                Year
-                <input
-                    type="number"
-                    value={year}
-                    onChange={(e) => {
-                        const y = Number.parseInt(e.target.value, 10);
-                        if (Number.isFinite(y)) navigate(y, month);
-                    }}
-                    className="w-24 rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
-                />
-            </label>
+            </div>
+            <div className="field">
+                <span className="label">Month</span>
+                <MonthPicker date={date} existingMonths={[]} basePath="/entry/daily" />
+            </div>
         </div>
     );
 }
@@ -157,40 +166,57 @@ function CalendarGrid({
     const days = Array.from({ length: daysInMonth(date) }, (_, i) => i + 1);
     const leadingBlanks = Array.from({ length: firstWeekday(date) }, (_, i) => i);
     const maxCount = Math.max(0, ...counts.values());
+    const today = todayDayDate();
+    const total = Array.from(counts.values()).reduce((sum, n) => sum + n, 0);
 
     return (
-        <div data-component="CalendarGrid" className="w-fit rounded-lg border border-border bg-card p-3">
-            <div className="grid grid-cols-7 gap-1.5">
-                {WEEKDAY_LABELS.map((w) => (
-                    <div key={w} className="w-12 pb-1 text-center text-[11px] font-semibold text-muted-foreground">
-                        {w}
-                    </div>
-                ))}
-                {leadingBlanks.map((i) => (
-                    <div key={`blank-${String(i)}`} />
-                ))}
-                {days.map((day) => {
-                    const dDate = dayDate(date, day);
-                    const count = counts.get(dDate) ?? 0;
-                    const selected = dDate === selectedDate;
-                    return (
-                        <button
-                            key={dDate}
-                            type="button"
-                            onClick={() => {
-                                onSelect(selected ? null : dDate);
-                            }}
-                            aria-pressed={selected}
-                            aria-label={`${dDate}: ${String(count)} applications`}
-                            className={`flex h-12 w-12 flex-col items-center justify-center rounded-md border text-sm leading-none transition-colors hover:border-primary/60 ${
-                                selected ? "border-primary ring-1 ring-primary" : "border-border"
-                            } ${cellTone(count, maxCount)}`}
-                        >
-                            <span className="text-xs">{day}</span>
-                            {count > 0 && <span className="mt-1 text-base font-semibold">{count}</span>}
-                        </button>
-                    );
-                })}
+        <div data-component="CalendarGrid" className="card">
+            <div className="card-head">
+                <h3 className="card-title">Days</h3>
+                <span className="card-meta">{total} in month</span>
+            </div>
+            <div className="card-pad">
+                <div className="cal compact">
+                    {WEEKDAY_LABELS.map((w) => (
+                        <div key={w} className="dow">
+                            {w.slice(0, 2)}
+                        </div>
+                    ))}
+                    {leadingBlanks.map((i) => (
+                        <div key={`blank-${String(i)}`} className="day blank" />
+                    ))}
+                    {days.map((day) => {
+                        const dDate = dayDate(date, day);
+                        const count = counts.get(dDate) ?? 0;
+                        const selected = dDate === selectedDate;
+                        return (
+                            <button
+                                key={dDate}
+                                type="button"
+                                onClick={() => {
+                                    onSelect(selected ? null : dDate);
+                                }}
+                                aria-selected={selected}
+                                aria-label={`${dDate}: ${String(count)} applications`}
+                                className={`day ${cellTone(count, maxCount)} ${dDate === today ? "today" : ""} ${dDate > today ? "future" : ""}`}
+                            >
+                                <span className="n">{day}</span>
+                                {count > 0 && <span className="c">{count}</span>}
+                            </button>
+                        );
+                    })}
+                </div>
+                {today.startsWith(date) && (
+                    <button
+                        type="button"
+                        className="btn btn-link mt-3"
+                        onClick={() => {
+                            onSelect(today);
+                        }}
+                    >
+                        Jump to today
+                    </button>
+                )}
             </div>
         </div>
     );
@@ -300,7 +326,9 @@ function useAdmissionFetch(userId: number, onApplied: (days: { date: string; rec
         void fetchAdmissionDiffAction(session.url, session.headers, userId, range)
             .then(setDiff)
             .catch(() => {
-                setError("Auto-fetch failed. Check the saved session is still valid and the counsellor has a Meritto id.");
+                setError(
+                    "Auto-fetch failed. Check the saved session is still valid and the counsellor has a Meritto id.",
+                );
             })
             .finally(() => {
                 setFetching(false);
@@ -443,12 +471,12 @@ function DayEditor({
     const filledCount = records.filter((r) => !isEmptyDraft(r)).length;
 
     return (
-        <div data-component="DayEditor" className="rounded-lg border border-border bg-card px-4 py-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-semibold text-foreground">
-                    Day {day} — {filledCount} admission{filledCount === 1 ? "" : "s"}
-                </p>
-                <div className="flex items-center gap-1">
+        <div data-component="DayEditor" className="card">
+            <div className="card-head items-center">
+                <h3 className="card-title">
+                    Day {day} · {filledCount} admission{filledCount === 1 ? "" : "s"}
+                </h3>
+                <div className="row gap-1">
                     <Tooltip content="Fetch this day's online-paid applicants from Meritto and compare with what is saved">
                         <button
                             type="button"
@@ -456,8 +484,13 @@ function DayEditor({
                             onClick={() => {
                                 autoFetch.fetchDiff({ day: date });
                             }}
-                            className="rounded-md border border-input px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent disabled:opacity-40"
+                            className="btn btn-secondary btn-sm"
                         >
+                            {autoFetch.fetching ? (
+                                <span className="spinner" aria-hidden />
+                            ) : (
+                                <FiDownloadCloud aria-hidden />
+                            )}
                             {autoFetch.fetching ? "Fetching…" : "Auto-fetch"}
                         </button>
                     </Tooltip>
@@ -466,9 +499,10 @@ function DayEditor({
                             type="button"
                             disabled={past.length === 0}
                             onClick={undo}
-                            className="rounded-md border border-input px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent disabled:opacity-40"
+                            aria-label="Undo"
+                            className="btn btn-ghost btn-icon btn-sm"
                         >
-                            Undo
+                            <FiRotateCcw aria-hidden />
                         </button>
                     </Tooltip>
                     <Tooltip content="Redo (Ctrl+Y)">
@@ -476,9 +510,10 @@ function DayEditor({
                             type="button"
                             disabled={future.length === 0}
                             onClick={redo}
-                            className="rounded-md border border-input px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent disabled:opacity-40"
+                            aria-label="Redo"
+                            className="btn btn-ghost btn-icon btn-sm"
                         >
-                            Redo
+                            <FiRotateCw aria-hidden />
                         </button>
                     </Tooltip>
                     <Tooltip content="Close day editor">
@@ -486,16 +521,21 @@ function DayEditor({
                             type="button"
                             onClick={onClose}
                             aria-label="Close day editor"
-                            className="rounded-md border border-input px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent"
+                            className="btn btn-ghost btn-icon btn-sm"
                         >
-                            ✕
+                            <FiX aria-hidden />
                         </button>
                     </Tooltip>
                 </div>
             </div>
-            {autoFetch.error && !autoFetch.diff && <p className="mt-2 text-xs text-destructive">{autoFetch.error}</p>}
+            {autoFetch.error && !autoFetch.diff && (
+                <p className="error-text px-4 pt-3">
+                    <FiAlertCircle aria-hidden />
+                    {autoFetch.error}
+                </p>
+            )}
             {autoFetch.diff && (
-                <div className="mt-3">
+                <div className="px-4 pt-3">
                     <AdmissionDiffPanel
                         title={`Meritto vs saved — day ${String(day)}`}
                         diff={autoFetch.diff}
@@ -506,39 +546,35 @@ function DayEditor({
                     />
                 </div>
             )}
-            <div className="mt-3 overflow-x-auto">
-                <table className="min-w-full divide-y divide-border text-sm">
+            <div className="scroll mt-3 border-t border-line-1">
+                <table className="table">
                     <thead>
                         <tr>
-                            {["Application no", "Applicant ID", "Applicant name", "Form ID", "Form name", ""].map(
-                                (h) => (
-                                    <th
-                                        key={h}
-                                        className="px-2 py-1.5 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase"
-                                    >
-                                        {h}
-                                    </th>
-                                ),
-                            )}
+                            {["Application no", "Applicant ID", "Applicant name", "Form ID", "Form name"].map((h) => (
+                                <th key={h}>{h}</th>
+                            ))}
+                            <th>
+                                <span className="sr-only">Remove</span>
+                            </th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-border">
+                    <tbody>
                         {records.map((record, index) => {
                             const blank = isEmptyDraft(record);
                             const isSentinel = blank && index === records.length - 1;
                             return (
                                 <tr key={index}>
-                                    <td className="px-2 py-1">
+                                    <td className="px-2 py-1.5">
                                         <input
                                             value={record.applicationNumber}
                                             placeholder="Application no"
                                             onChange={(e) => {
                                                 updateRecord(index, "applicationNumber", e.target.value);
                                             }}
-                                            className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
+                                            className="input input-sm"
                                         />
                                     </td>
-                                    <td className="px-2 py-1">
+                                    <td className="px-2 py-1.5">
                                         <input
                                             value={record.applicantUserId}
                                             inputMode="numeric"
@@ -546,20 +582,20 @@ function DayEditor({
                                             onChange={(e) => {
                                                 updateRecord(index, "applicantUserId", e.target.value);
                                             }}
-                                            className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
+                                            className="input input-sm"
                                         />
                                     </td>
-                                    <td className="px-2 py-1">
+                                    <td className="px-2 py-1.5">
                                         <input
                                             value={record.applicantName}
                                             placeholder="Applicant name"
                                             onChange={(e) => {
                                                 updateRecord(index, "applicantName", e.target.value);
                                             }}
-                                            className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
+                                            className="input input-sm"
                                         />
                                     </td>
-                                    <td className="px-2 py-1">
+                                    <td className="px-2 py-1.5">
                                         <input
                                             value={record.formId}
                                             inputMode="numeric"
@@ -567,30 +603,31 @@ function DayEditor({
                                             onChange={(e) => {
                                                 updateRecord(index, "formId", e.target.value);
                                             }}
-                                            className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
+                                            className="input input-sm"
                                         />
                                     </td>
-                                    <td className="px-2 py-1">
+                                    <td className="px-2 py-1.5">
                                         <input
                                             value={record.formName}
                                             placeholder="Form name"
                                             onChange={(e) => {
                                                 updateRecord(index, "formName", e.target.value);
                                             }}
-                                            className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
+                                            className="input input-sm"
                                         />
                                     </td>
-                                    <td className="px-2 py-1">
+                                    <td className="px-2 py-1.5">
                                         {!isSentinel && (
                                             <Tooltip content="Delete row">
                                                 <button
                                                     type="button"
+                                                    aria-label="Delete row"
                                                     onClick={() => {
                                                         removeRecord(index);
                                                     }}
-                                                    className="rounded-md border border-input px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent"
+                                                    className="btn btn-danger btn-icon btn-sm"
                                                 >
-                                                    Delete
+                                                    <FiTrash2 aria-hidden />
                                                 </button>
                                             </Tooltip>
                                         )}
@@ -601,17 +638,18 @@ function DayEditor({
                     </tbody>
                 </table>
             </div>
-            <div className="mt-3 flex flex-wrap items-center gap-3">
-                <button
-                    type="button"
-                    disabled={pending}
-                    onClick={save}
-                    className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                >
+            <div className="row border-t border-line-1 px-4 py-3">
+                <button type="button" disabled={pending} onClick={save} className="btn btn-primary">
+                    {pending && <span className="spinner" aria-hidden />}
                     {pending ? "Saving…" : "Save day"}
                 </button>
-                {!saved && !pending && <span className="text-xs text-muted-foreground">Unsaved changes</span>}
-                {error && <p className="text-xs text-destructive">{error}</p>}
+                {!saved && !pending && <span className="unsaved">Unsaved changes</span>}
+                {error && (
+                    <p className="error-text">
+                        <FiAlertCircle aria-hidden />
+                        {error}
+                    </p>
+                )}
             </div>
         </div>
     );
@@ -677,60 +715,79 @@ export function DailyEntryView({
     };
 
     return (
-        <div data-component="DailyEntryView" className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
+        <div data-component="DailyEntryView" className="stack">
+            <div className="row justify-between">
+                <button
+                    type="button"
+                    onClick={() => {
+                        router.push(`/entry/daily?date=${date}`);
+                    }}
+                    className="btn btn-ghost btn-sm"
+                >
+                    <FiArrowLeft aria-hidden />
+                    Back to counsellor list
+                </button>
+                <Tooltip content="Fetch the whole month's online-paid applicants from Meritto and compare with what is saved">
                     <button
                         type="button"
+                        disabled={monthFetch.fetching || monthFetch.applying}
                         onClick={() => {
-                            router.push(`/entry/daily?date=${date}`);
+                            monthFetch.fetchDiff({ month: date });
                         }}
-                        className="text-xs font-medium text-muted-foreground hover:text-foreground"
+                        className="btn btn-secondary"
                     >
-                        ← Back to counsellor list
+                        {monthFetch.fetching ? (
+                            <span className="spinner" aria-hidden />
+                        ) : (
+                            <FiDownloadCloud aria-hidden />
+                        )}
+                        {monthFetch.fetching ? "Fetching month…" : "Auto-fetch month"}
                     </button>
-                    <h2 className="mt-1 text-base font-semibold text-foreground">{counsellorName}</h2>
+                </Tooltip>
+            </div>
+            <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[320px_1fr]">
+                <div className="stack">
+                    <ScopeCard counsellors={counsellors} userId={selectedUserId} date={date} />
+                    <CalendarGrid date={date} counts={counts} selectedDate={selectedDate} onSelect={setSelectedDate} />
                 </div>
-                <div className="flex flex-wrap items-center gap-3">
-                    <MonthNav date={date} userId={selectedUserId} />
-                    <Tooltip content="Fetch the whole month's online-paid applicants from Meritto and compare with what is saved">
-                        <button
-                            type="button"
-                            disabled={monthFetch.fetching || monthFetch.applying}
-                            onClick={() => {
-                                monthFetch.fetchDiff({ month: date });
+                <div className="stack">
+                    {monthFetch.error && !monthFetch.diff && (
+                        <p className="error-text">
+                            <FiAlertCircle aria-hidden />
+                            {monthFetch.error}
+                        </p>
+                    )}
+                    {monthFetch.diff && (
+                        <AdmissionDiffPanel
+                            title={`Meritto vs saved — ${MONTH_NAMES[parseMonthDate(date).month - 1] ?? ""} ${String(parseMonthDate(date).year)}`}
+                            diff={monthFetch.diff}
+                            applying={monthFetch.applying}
+                            error={monthFetch.error}
+                            onApply={monthFetch.apply}
+                            onDiscard={monthFetch.discard}
+                        />
+                    )}
+                    {selectedDate ? (
+                        <DayEditor
+                            key={`${selectedDate}-${String(editorVersion)}`}
+                            userId={selectedUserId}
+                            date={selectedDate}
+                            initialRecords={recordsByDate.get(selectedDate) ?? []}
+                            onSaved={handleSaved}
+                            onClose={() => {
+                                setSelectedDate(null);
                             }}
-                            className="rounded-md border border-input px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent disabled:opacity-40"
-                        >
-                            {monthFetch.fetching ? "Fetching month…" : "Auto-fetch month"}
-                        </button>
-                    </Tooltip>
+                        />
+                    ) : (
+                        <div className="card">
+                            <div className="empty">
+                                <div className="title">{counsellorName}</div>
+                                <p>Pick a day on the calendar to record or review its admissions.</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
-            <CalendarGrid date={date} counts={counts} selectedDate={selectedDate} onSelect={setSelectedDate} />
-            {monthFetch.error && !monthFetch.diff && <p className="text-xs text-destructive">{monthFetch.error}</p>}
-            {monthFetch.diff && (
-                <AdmissionDiffPanel
-                    title={`Meritto vs saved — ${MONTH_NAMES[parseMonthDate(date).month - 1] ?? ""} ${String(parseMonthDate(date).year)}`}
-                    diff={monthFetch.diff}
-                    applying={monthFetch.applying}
-                    error={monthFetch.error}
-                    onApply={monthFetch.apply}
-                    onDiscard={monthFetch.discard}
-                />
-            )}
-            {selectedDate && (
-                <DayEditor
-                    key={`${selectedDate}-${String(editorVersion)}`}
-                    userId={selectedUserId}
-                    date={selectedDate}
-                    initialRecords={recordsByDate.get(selectedDate) ?? []}
-                    onSaved={handleSaved}
-                    onClose={() => {
-                        setSelectedDate(null);
-                    }}
-                />
-            )}
         </div>
     );
 }

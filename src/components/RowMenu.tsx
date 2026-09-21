@@ -61,16 +61,16 @@ export function RowMenu({ items, label }: { items: MenuItem[]; label: string }) 
                 aria-label={label}
                 aria-haspopup="menu"
                 aria-expanded={open}
-                className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                className="btn btn-ghost btn-icon btn-sm"
             >
-                <FiMoreHorizontal className="h-4 w-4" />
+                <FiMoreHorizontal aria-hidden />
             </button>
             {open && (
                 <div
                     ref={menuRef}
                     role="menu"
                     style={{ top: position.top, right: position.right }}
-                    className="fixed z-50 min-w-40 rounded-md border border-border bg-popover p-1 shadow-lg"
+                    className="popover menu fixed z-50"
                 >
                     {items.map((item) => (
                         <button
@@ -82,11 +82,7 @@ export function RowMenu({ items, label }: { items: MenuItem[]; label: string }) 
                                 setOpen(false);
                                 item.onSelect();
                             }}
-                            className={`block w-full rounded px-2.5 py-1.5 text-left text-sm whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent ${
-                                item.destructive
-                                    ? "text-destructive hover:bg-destructive/10"
-                                    : "text-popover-foreground hover:bg-accent hover:text-accent-foreground"
-                            }`}
+                            className={`menu-item whitespace-nowrap ${item.destructive ? "danger" : ""}`}
                         >
                             {item.label}
                         </button>

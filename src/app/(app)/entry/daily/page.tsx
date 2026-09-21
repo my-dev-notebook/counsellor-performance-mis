@@ -1,6 +1,7 @@
 import { listUsers } from "@/db/queries/users";
 import { getDailyAdmissionsForMonth } from "@/db/queries/dailyAdmissions";
 import { DailyEntryView } from "@/components/entry/DailyEntryView";
+import { PageHeader } from "@/components/shell/PageHeader";
 import { parseMonthDateParam } from "@/schemas/dates";
 import { requirePermission } from "@/lib/auth/session";
 
@@ -27,17 +28,11 @@ export default async function DailyEntryPage({
     const admissions = counsellor ? await getDailyAdmissionsForMonth(counsellor.id, date) : [];
 
     return (
-        <div
-            data-component="DailyEntryPage"
-            className="mx-auto w-full max-w-5xl flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-8"
-        >
-            <div>
-                <h1 className="text-xl font-semibold tracking-tight text-foreground">Daily Admissions Entry</h1>
-                <p className="mt-1 text-sm text-muted-foreground">
-                    Record each admission with the lead&apos;s details. The daily count is derived automatically
-                    from the number of records entered.
-                </p>
-            </div>
+        <div data-component="DailyEntryPage" className="stack gap-5">
+            <PageHeader
+                title={counsellor ? `Daily entry · ${counsellor.name}` : "Daily entry"}
+                sub="Record each admission with the lead's details. The daily count is derived automatically from the number of records entered."
+            />
             <DailyEntryView
                 key={`${String(counsellor?.id ?? "none")}-${date}`}
                 date={date}

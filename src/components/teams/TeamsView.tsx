@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { FiAlertCircle } from "react-icons/fi";
 import type { TeamWithUsage } from "@/db/queries/teams";
 import { RowMenu } from "@/components/RowMenu";
 import { Select } from "@/components/Select";
@@ -23,11 +24,9 @@ function errorMessage(error: unknown, fallback: string): string {
     return error instanceof Error && error.message !== "" ? error.message : fallback;
 }
 
-const inputClass = "rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground";
-const primaryButton =
-    "rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50";
-const ghostButton =
-    "rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground";
+const inputClass = "input input-sm";
+const primaryButton = "btn btn-primary";
+const ghostButton = "btn btn-ghost";
 
 function AddTeamForm() {
     const [name, setName] = useState("");
@@ -57,28 +56,34 @@ function AddTeamForm() {
                 e.preventDefault();
                 submit();
             }}
-            className="flex flex-wrap items-end gap-3 rounded-lg border border-border bg-card p-4"
+            className="card card-pad flex flex-wrap items-end gap-x-4 gap-y-3"
         >
-            <label className="flex flex-col text-xs font-medium text-muted-foreground">
-                New team name
+            <label className="field w-64">
+                <span className="label">New team name</span>
                 <input
                     value={name}
                     onChange={(e) => {
                         setName(e.target.value);
                     }}
-                    className={`mt-1 ${inputClass}`}
+                    className={inputClass}
                 />
             </label>
-            <button type="submit" disabled={pending} className={primaryButton}>
+            <button type="submit" disabled={pending} className="btn btn-primary btn-sm">
+                {pending && <span className="spinner" aria-hidden />}
                 {pending ? "Adding…" : "Add"}
             </button>
-            {error && <p className="text-xs text-destructive">{error}</p>}
+            {error && (
+                <p className="error-text w-full">
+                    <FiAlertCircle aria-hidden />
+                    {error}
+                </p>
+            )}
         </form>
     );
 }
 
-const fieldLabel = "flex flex-col gap-1 text-xs font-medium text-muted-foreground";
-const panelInput = "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground";
+const fieldLabel = "field";
+const panelInput = "input";
 
 /** The full-width edit form shown under a clicked row. Mounted fresh each time a row opens. */
 function TeamEditPanel({
@@ -147,12 +152,12 @@ function TeamEditPanel({
             onKeyDown={(e) => {
                 if (e.key === "Escape") onClose();
             }}
-            className="space-y-5"
+            className="stack gap-4"
         >
-            <p className="text-sm font-semibold text-foreground">Edit {team.name}</p>
+            <p className="t-h3">Edit {team.name}</p>
             <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
                 <label className={fieldLabel}>
-                    Name
+                    <span className="label">Name</span>
                     <input
                         autoFocus
                         value={name}
@@ -163,7 +168,7 @@ function TeamEditPanel({
                     />
                 </label>
                 <label className={fieldLabel}>
-                    Leader
+                    <span className="label">Leader</span>
                     <Select
                         className="w-full"
                         value={String(leaderId)}
@@ -181,13 +186,17 @@ function TeamEditPanel({
                 </label>
             </div>
             {team.leaders.length > 1 && (
-                <p className="text-xs text-muted-foreground">
-                    This team has {team.leaders.length} leaders; saving keeps only the one selected.
+                <p className="hint">This team has {team.leaders.length} leaders; saving keeps only the one selected.</p>
+            )}
+            {error && (
+                <p className="error-text">
+                    <FiAlertCircle aria-hidden />
+                    {error}
                 </p>
             )}
-            {error && <p className="text-xs text-destructive">{error}</p>}
-            <div className="flex items-center gap-3 border-t border-border pt-4">
+            <div className="flex items-center gap-3 border-t border-line-1 pt-4">
                 <button type="submit" disabled={pending} className={primaryButton}>
+                    {pending && <span className="spinner" aria-hidden />}
                     {pending ? "Saving…" : "Save changes"}
                 </button>
                 <button type="button" onClick={onClose} className={ghostButton}>
@@ -230,17 +239,17 @@ function TeamActions({ team, state }: { team: TeamWithUsage; state: RowState }) 
 }
 
 const COLUMNS: Column<TeamWithUsage>[] = [
-    { key: "name", header: "Team", className: "font-medium text-foreground", render: (t) => t.name },
+    { key: "name", header: "Team", className: "primary", render: (t) => t.name },
     {
         key: "leader",
         header: "Leader",
-        className: "text-muted-foreground",
+        className: "muted",
         render: (t) => (t.leaders.length === 0 ? "—" : t.leaders.map((l) => l.name).join(", ")),
     },
     {
         key: "members",
         header: "Active members",
-        className: "text-muted-foreground",
+        className: "num",
         render: (t) => String(t.memberCount),
     },
     { key: "actions", header: "", srLabel: "Actions", render: (t, state) => <TeamActions team={t} state={state} /> },
@@ -248,7 +257,7 @@ const COLUMNS: Column<TeamWithUsage>[] = [
 
 export function TeamsView({ teams, candidates }: { teams: TeamWithUsage[]; candidates: LeaderCandidate[] }) {
     return (
-        <div data-component="TeamsView" className="space-y-4">
+        <div data-component="TeamsView" className="stack gap-4">
             <AddTeamForm />
             <DataTable
                 columns={COLUMNS}

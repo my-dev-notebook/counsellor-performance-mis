@@ -14,12 +14,11 @@ export function SubjectSelector({ options, value }: { options: readonly SelectOp
     const searchParams = useSearchParams();
 
     return (
-        <div data-component="SubjectSelector" className="flex items-center gap-2">
-            <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                Show
+        <div data-component="SubjectSelector" className="card card-pad flex flex-wrap items-end gap-3">
+            <label className="field w-64">
+                <span className="label">Show</span>
                 <Select
                     size="sm"
-                    className="min-w-56"
                     value={value}
                     onChange={(subject) => {
                         const params = new URLSearchParams(searchParams);

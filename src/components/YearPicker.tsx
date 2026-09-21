@@ -1,12 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { formatSessionSpan } from "@/schemas/dates";
 
 /**
- * `MonthPicker`'s yearly sibling — pushes `?year=YYYY` onto `basePath`. The
- * year is a SESSION year (Oct → Sep, named after the calendar year it ends in),
- * so the control spells out the calendar span next to the number.
+ * `MonthPicker`'s yearly sibling — a session stepper that pushes `?year=YYYY` onto `basePath`. The year is a
+ * SESSION year (Oct → Sep, named after the calendar year it ends in), so the control spells out the calendar span
+ * under the session name. Sessions that already have data are listed as quick jumps.
  */
 export function YearPicker({
     year,
@@ -18,41 +19,53 @@ export function YearPicker({
     basePath: string;
 }) {
     const router = useRouter();
+    const current = Number.parseInt(year, 10);
 
     const navigate = (y: number) => {
-        router.push(`${basePath}?year=${String(y)}`);
+        if (y >= 1000 && y <= 9999) router.push(`${basePath}?year=${String(y)}`);
     };
 
     return (
         <div data-component="YearPicker" className="flex flex-wrap items-center gap-3">
-            <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                Session
-                <input
-                    type="number"
-                    value={Number.parseInt(year, 10)}
-                    onChange={(e) => {
-                        const y = Number.parseInt(e.target.value, 10);
-                        if (Number.isFinite(y) && y >= 1000 && y <= 9999) navigate(y);
+            <div className="row gap-2">
+                <button
+                    type="button"
+                    aria-label="Previous session"
+                    onClick={() => {
+                        navigate(current - 1);
                     }}
-                    className="w-24 rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
-                />
-                <span className="text-xs">({formatSessionSpan(year)})</span>
-            </label>
+                    className="btn btn-secondary btn-icon btn-sm"
+                >
+                    <FiChevronLeft aria-hidden />
+                </button>
+                <div className="min-w-40 text-center">
+                    <div className="t-sm font-semibold">
+                        Session {String(current - 1)}–{year.slice(-2)}
+                    </div>
+                    <div className="t-xs ink-3">{formatSessionSpan(year)}</div>
+                </div>
+                <button
+                    type="button"
+                    aria-label="Next session"
+                    onClick={() => {
+                        navigate(current + 1);
+                    }}
+                    className="btn btn-secondary btn-icon btn-sm"
+                >
+                    <FiChevronRight aria-hidden />
+                </button>
+            </div>
             {existingYears.length > 0 && (
-                <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="text-xs text-muted-foreground">Existing:</span>
+                <div className="row gap-1.5">
                     {existingYears.map((y) => (
                         <button
                             key={y}
                             type="button"
+                            aria-pressed={y === year}
                             onClick={() => {
                                 navigate(Number.parseInt(y, 10));
                             }}
-                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                                y === year
-                                    ? "bg-primary text-primary-foreground"
-                                    : "bg-muted text-muted-foreground hover:bg-accent"
-                            }`}
+                            className="chip"
                         >
                             {y}
                         </button>

@@ -1,7 +1,8 @@
 import { getYearlyWorkbook } from "@/db/queries/dashboard";
 import { listYearsWithData } from "@/db/queries/performance";
-import { Header } from "@/components/Header";
+import { PageHeader } from "@/components/shell/PageHeader";
 import { CompanyDashboard } from "@/components/dashboard/CompanyDashboard";
+import { DashboardSwitch } from "@/components/dashboard/DashboardSwitch";
 import { TeamDashboard } from "@/components/dashboard/TeamDashboard";
 import { CounsellorDashboard } from "@/components/dashboard/CounsellorDashboard";
 import { YearPicker } from "@/components/YearPicker";
@@ -14,13 +15,29 @@ import type { ParsedWorkbook } from "@/schemas/parser";
 function DashboardForScope({ user, workbook }: { user: CurrentUser; workbook: ParsedWorkbook }) {
     switch (user.scope.kind) {
         case "all":
-            return <CompanyDashboard workbook={workbook} />;
+            return (
+                <div data-component="DashboardForScope" className="contents">
+                    <CompanyDashboard workbook={workbook} />
+                </div>
+            );
         case "team":
-            return <TeamDashboard workbook={workbook} />;
+            return (
+                <div data-component="DashboardForScope" className="contents">
+                    <TeamDashboard workbook={workbook} />
+                </div>
+            );
         case "self":
-            return <CounsellorDashboard workbook={workbook} userId={user.id} />;
+            return (
+                <div data-component="DashboardForScope" className="contents">
+                    <CounsellorDashboard workbook={workbook} userId={user.id} />
+                </div>
+            );
         case "none":
-            return <p className="py-8 text-center text-sm text-muted-foreground">Nothing to show for your account.</p>;
+            return (
+                <p data-component="DashboardForScope" className="empty">
+                    Nothing to show for your account.
+                </p>
+            );
     }
 }
 
@@ -38,25 +55,26 @@ export default async function YearlyDashboardPage({
     const workbook = await getYearlyWorkbook(year, user.scope);
 
     return (
-        <div data-component="YearlyDashboardPage" className="flex min-h-full flex-1 flex-col bg-background">
-            <Header
-                monthLabel={workbook.monthLabel}
-                counsellorCount={workbook.counsellors.length}
-                teamCount={workbook.teams.length}
+        <div data-component="YearlyDashboardPage" className="stack gap-5">
+            <PageHeader
+                title="Yearly dashboard"
+                sub={`${workbook.monthLabel} · ${String(workbook.counsellors.length)} counsellors · ${String(workbook.teams.length)} teams`}
+                actions={
+                    <>
+                        <DashboardSwitch active="yearly" />
+                        <YearPicker year={year} existingYears={years} basePath="/yearly" />
+                    </>
+                }
             />
-            <main className="mx-auto w-full max-w-7xl flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-                <div>
-                    <h2 className="text-xl font-semibold tracking-tight text-foreground">Yearly (session)</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        A session runs October to September and is named after the year it ends in (October 2026
-                        to September 2027 is session 2027). Every month of the session rolled into one: each
-                        counsellor&apos;s Target, Non-Negotiable and Achieved are summed across the months on
-                        record, filed under the team they were on most recently.
-                    </p>
-                </div>
-                <YearPicker year={year} existingYears={years} basePath="/yearly" />
-                <DashboardForScope user={user} workbook={workbook} />
-            </main>
+            <p className="alert alert-info">
+                <span>
+                    A session runs October to September and is named after the year it ends in (October 2026 to
+                    September 2027 is session 2027). Every month of the session is rolled into one: each
+                    counsellor&apos;s Target, Non-Negotiable and Achieved are summed across the months on record, filed
+                    under the team they were on most recently.
+                </span>
+            </p>
+            <DashboardForScope user={user} workbook={workbook} />
         </div>
     );
 }

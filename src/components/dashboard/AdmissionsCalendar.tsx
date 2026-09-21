@@ -17,11 +17,17 @@ function dayDate(monthDate: string, day: number): string {
 }
 
 /**
- * One counsellor's month as a calendar: each day carries its admission count,
- * and clicking a day lists the applicants credited to it. `admissions` are the
- * rows of that one month; days with none are blank.
+ * One counsellor's month as a calendar heatmap: each day carries its admission
+ * count, and clicking a day lists the applicants credited to it. `admissions`
+ * are the rows of that one month; days with none are blank.
  */
-export function AdmissionsCalendar({ monthDate, admissions }: { monthDate: string; admissions: readonly AdmissionRow[] }) {
+export function AdmissionsCalendar({
+    monthDate,
+    admissions,
+}: {
+    monthDate: string;
+    admissions: readonly AdmissionRow[];
+}) {
     const [selectedDay, setSelectedDay] = useState<number | null>(null);
 
     const { year, month } = parseMonth(monthDate);
@@ -47,61 +53,65 @@ export function AdmissionsCalendar({ monthDate, admissions }: { monthDate: strin
     ];
 
     return (
-        <div data-component="AdmissionsCalendar" className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">
-            <div className="rounded-lg border border-border bg-card p-4">
-                <div className="mb-3 flex items-baseline justify-between">
-                    <h3 className="text-sm font-semibold text-foreground">Daily applications</h3>
-                    <span className="text-xs text-muted-foreground">{formatInt(admissions.length)} in month</span>
+        <div data-component="AdmissionsCalendar" className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
+            <div className="card">
+                <div className="card-head">
+                    <h3 className="card-title">Daily applications</h3>
+                    <span className="card-meta">{formatInt(admissions.length)} in month</span>
                 </div>
-                <div className="grid grid-cols-7 gap-1 text-center">
-                    {WEEKDAY_LABELS.map((label) => (
-                        <div key={label} className="py-1 text-xs font-medium text-muted-foreground">
-                            {label}
-                        </div>
-                    ))}
-                    {cells.map((day, index) => {
-                        if (day === null) return <div key={`blank-${String(index)}`} />;
-                        const count = byDay.get(dayDate(monthDate, day))?.length ?? 0;
-                        const isSelected = day === selectedDay;
-                        return (
-                            <button
-                                key={day}
-                                type="button"
-                                disabled={count === 0}
-                                onClick={() => {
-                                    setSelectedDay(isSelected ? null : day);
-                                }}
-                                aria-pressed={isSelected}
-                                aria-label={`${dayDate(monthDate, day)}: ${String(count)} applications`}
-                                className={`flex aspect-square flex-col items-center justify-center rounded-md border text-sm transition-colors disabled:cursor-default ${
-                                    isSelected ? "border-primary ring-1 ring-primary" : "border-border"
-                                } ${cellTone(count, maxCount)} ${count > 0 ? "hover:border-primary/60" : ""}`}
-                            >
-                                <span className="text-xs leading-none">{day}</span>
-                                {count > 0 && <span className="mt-1 text-base leading-none font-semibold">{count}</span>}
-                            </button>
-                        );
-                    })}
+                <div className="card-pad">
+                    <div className="cal">
+                        {WEEKDAY_LABELS.map((label) => (
+                            <div key={label} className="dow">
+                                {label}
+                            </div>
+                        ))}
+                        {cells.map((day, index) => {
+                            if (day === null) return <div key={`blank-${String(index)}`} className="day blank" />;
+                            const count = byDay.get(dayDate(monthDate, day))?.length ?? 0;
+                            const isSelected = day === selectedDay;
+                            return (
+                                <button
+                                    key={day}
+                                    type="button"
+                                    disabled={count === 0}
+                                    onClick={() => {
+                                        setSelectedDay(isSelected ? null : day);
+                                    }}
+                                    aria-selected={isSelected}
+                                    aria-label={`${dayDate(monthDate, day)}: ${String(count)} applications`}
+                                    className={`day ${cellTone(count, maxCount)} ${count === 0 ? "cursor-default" : ""}`}
+                                >
+                                    <span className="n">{day}</span>
+                                    {count > 0 && <span className="c">{count}</span>}
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
-            <div className="rounded-lg border border-border bg-card p-4">
-                <h3 className="mb-3 text-sm font-semibold text-foreground">
-                    {selectedDay === null ? "Select a day" : `Applications on ${dayDate(monthDate, selectedDay)}`}
-                </h3>
-                {selectedDay === null ? (
-                    <p className="text-sm text-muted-foreground">Click a day with applications to see who was admitted.</p>
-                ) : (
-                    <ul className="divide-y divide-border">
-                        {selectedRows.map((row) => (
-                            <li key={row.id} className="py-2 text-sm">
-                                <p className="font-medium text-foreground">{row.applicantName}</p>
-                                <p className="text-xs text-muted-foreground">
-                                    {row.applicationNumber} · {row.formName}
-                                </p>
-                            </li>
-                        ))}
-                    </ul>
-                )}
+            <div className="card">
+                <div className="card-head">
+                    <h3 className="card-title">
+                        {selectedDay === null ? "Select a day" : `Applications on ${dayDate(monthDate, selectedDay)}`}
+                    </h3>
+                </div>
+                <div className="card-pad">
+                    {selectedDay === null ? (
+                        <p className="t-sm ink-3">Click a day with applications to see who was admitted.</p>
+                    ) : (
+                        <ul className="divide-y divide-line-1">
+                            {selectedRows.map((row) => (
+                                <li key={row.id} className="py-2">
+                                    <p className="t-sm font-medium">{row.applicantName}</p>
+                                    <p className="t-xs ink-3">
+                                        {row.applicationNumber} · {row.formName}
+                                    </p>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
             </div>
         </div>
     );

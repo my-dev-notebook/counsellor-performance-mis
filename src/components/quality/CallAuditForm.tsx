@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { FiAlertCircle, FiTrash2 } from "react-icons/fi";
 import type { CallAuditRow } from "@/db/queries/callAudits";
 import type { UserRow } from "@/db/types";
 import { DatePicker } from "@/components/DatePicker";
@@ -26,15 +27,11 @@ function errorMessage(error: unknown, fallback: string): string {
     return error instanceof Error && error.message !== "" ? error.message : fallback;
 }
 
-const inputClass =
-    "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:border-ring focus:ring-1 focus:ring-ring focus:outline-none";
-const labelClass = "flex flex-col gap-1 text-xs font-medium text-muted-foreground";
-const primaryButton =
-    "rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50";
-const ghostButton =
-    "rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground";
-const dangerButton =
-    "rounded-md px-3 py-1.5 text-sm font-medium text-destructive hover:bg-destructive/10 disabled:opacity-50";
+const inputClass = "input";
+const labelClass = "field";
+const primaryButton = "btn btn-primary";
+const ghostButton = "btn btn-ghost";
+const dangerButton = "btn btn-danger";
 
 const RATING_OPTIONS = RATINGS.map((r) => ({ value: r, label: RATING_LABELS[r] }));
 const OVERALL_OPTIONS = OVERALL_RATINGS.map((r) => ({ value: r, label: OVERALL_RATING_LABELS[r] }));
@@ -185,13 +182,15 @@ export function CallAuditForm({ counsellors, audit }: { counsellors: UserRow[]; 
                 e.preventDefault();
                 submit();
             }}
-            className="space-y-6"
+            className="stack gap-5"
         >
-            <section className="space-y-4 rounded-lg border border-border bg-card p-4">
-                <h2 className="text-sm font-semibold text-foreground">Call details</h2>
-                <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+            <section className="card">
+                <div className="card-head">
+                    <h2 className="card-title">Call details</h2>
+                </div>
+                <div className="card-pad grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
                     <label className={labelClass}>
-                        Counsellor
+                        <span className="label">Counsellor</span>
                         <Select
                             value={userId === "" ? "" : String(userId)}
                             onChange={(v) => {
@@ -204,16 +203,11 @@ export function CallAuditForm({ counsellors, audit }: { counsellors: UserRow[]; 
                         />
                     </label>
                     <label className={labelClass}>
-                        Team
-                        <input
-                            value={counsellor?.teamName ?? ""}
-                            readOnly
-                            placeholder="—"
-                            className={`${inputClass} opacity-70`}
-                        />
+                        <span className="label">Team</span>
+                        <input value={counsellor?.teamName ?? ""} readOnly placeholder="—" className="input readonly" />
                     </label>
                     <label className={labelClass}>
-                        Application ID (optional)
+                        <span className="label">Application ID (optional)</span>
                         <input
                             value={applicationId}
                             onChange={(e) => {
@@ -223,7 +217,7 @@ export function CallAuditForm({ counsellors, audit }: { counsellors: UserRow[]; 
                         />
                     </label>
                     <label className={labelClass}>
-                        Call date
+                        <span className="label">Call date</span>
                         <DatePicker
                             value={callDate}
                             onChange={setCallDate}
@@ -234,11 +228,11 @@ export function CallAuditForm({ counsellors, audit }: { counsellors: UserRow[]; 
                         />
                     </label>
                     <label className={labelClass}>
-                        Call time
+                        <span className="label">Call time</span>
                         <TimePicker value={callTime} onChange={setCallTime} className="w-full" aria-label="Call time" />
                     </label>
                     <div className={labelClass}>
-                        Duration
+                        <span className="label">Duration</span>
                         <div className="flex items-center gap-2">
                             <input
                                 inputMode="numeric"
@@ -248,9 +242,9 @@ export function CallAuditForm({ counsellors, audit }: { counsellors: UserRow[]; 
                                 }}
                                 aria-label="Minutes"
                                 placeholder="0"
-                                className={inputClass}
+                                className="input input-num"
                             />
-                            <span className="text-xs text-muted-foreground">min</span>
+                            <span className="t-xs ink-3">min</span>
                             <input
                                 inputMode="numeric"
                                 value={seconds}
@@ -259,13 +253,13 @@ export function CallAuditForm({ counsellors, audit }: { counsellors: UserRow[]; 
                                 }}
                                 aria-label="Seconds"
                                 placeholder="0"
-                                className={inputClass}
+                                className="input input-num"
                             />
-                            <span className="text-xs text-muted-foreground">sec</span>
+                            <span className="t-xs ink-3">sec</span>
                         </div>
                     </div>
                     <label className={labelClass}>
-                        Phone number
+                        <span className="label">Phone number</span>
                         <input
                             inputMode="tel"
                             value={phone}
@@ -276,7 +270,7 @@ export function CallAuditForm({ counsellors, audit }: { counsellors: UserRow[]; 
                         />
                     </label>
                     <label className={labelClass}>
-                        Period start
+                        <span className="label">Period start</span>
                         <DatePicker
                             value={periodStart}
                             onChange={setPeriodStart}
@@ -286,7 +280,7 @@ export function CallAuditForm({ counsellors, audit }: { counsellors: UserRow[]; 
                         />
                     </label>
                     <label className={labelClass}>
-                        Period end
+                        <span className="label">Period end</span>
                         <DatePicker
                             value={periodEnd}
                             onChange={setPeriodEnd}
@@ -298,9 +292,11 @@ export function CallAuditForm({ counsellors, audit }: { counsellors: UserRow[]; 
                 </div>
             </section>
 
-            <section className="space-y-4 rounded-lg border border-border bg-card p-4">
-                <h2 className="text-sm font-semibold text-foreground">Parameters</h2>
-                <div className="divide-y divide-border">
+            <section className="card">
+                <div className="card-head">
+                    <h2 className="card-title">Parameters</h2>
+                </div>
+                <div className="card-pad divide-y divide-line-1 pt-1">
                     {PARAMETER_KEYS.map((key) => (
                         <ParameterRow
                             key={key}
@@ -315,17 +311,19 @@ export function CallAuditForm({ counsellors, audit }: { counsellors: UserRow[]; 
                 </div>
             </section>
 
-            <section className="space-y-4 rounded-lg border border-border bg-card p-4">
-                <h2 className="text-sm font-semibold text-foreground">Result</h2>
-                <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
+            <section className="card">
+                <div className="card-head">
+                    <h2 className="card-title">Result</h2>
+                </div>
+                <div className="card-pad grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
                     <div className={labelClass}>
-                        AQS
+                        <span className="label">AQS</span>
                         <div className="py-1.5">
                             <AqsPill aqs={aqs} />
                         </div>
                     </div>
                     <label className={labelClass}>
-                        Overall rating
+                        <span className="label">Overall rating</span>
                         <Select
                             value={overallRating}
                             onChange={(v) => {
@@ -337,22 +335,28 @@ export function CallAuditForm({ counsellors, audit }: { counsellors: UserRow[]; 
                         />
                     </label>
                     <label className={`${labelClass} sm:col-span-2`}>
-                        Feedback / coaching area
+                        <span className="label">Feedback / coaching area</span>
                         <textarea
                             rows={3}
                             value={feedback}
                             onChange={(e) => {
                                 setFeedback(e.target.value);
                             }}
-                            className={inputClass}
+                            className="textarea"
                         />
                     </label>
                 </div>
             </section>
 
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && (
+                <p className="error-text">
+                    <FiAlertCircle aria-hidden />
+                    {error}
+                </p>
+            )}
             <div className="flex flex-wrap items-center gap-3">
                 <button type="submit" disabled={pending} className={primaryButton}>
+                    {pending && <span className="spinner" aria-hidden />}
                     {pending ? "Saving…" : audit ? "Save changes" : "Save audit"}
                 </button>
                 <button
@@ -366,6 +370,7 @@ export function CallAuditForm({ counsellors, audit }: { counsellors: UserRow[]; 
                 </button>
                 {audit && (
                     <button type="button" disabled={pending} onClick={remove} className={`${dangerButton} ml-auto`}>
+                        <FiTrash2 aria-hidden />
                         Delete audit
                     </button>
                 )}
@@ -391,10 +396,8 @@ function ParameterRow({
             data-component="ParameterRow"
             className="grid grid-cols-1 gap-x-4 gap-y-2 py-3 md:grid-cols-[2rem_1fr_11rem_1fr] md:items-start"
         >
-            <span className="text-sm font-semibold text-muted-foreground">
-                {String(PARAMETER_KEYS.indexOf(parameter) + 1)}
-            </span>
-            <span className="text-sm text-foreground">{PARAMETER_LABELS[parameter]}</span>
+            <span className="t-sm ink-3 t-num font-semibold">{String(PARAMETER_KEYS.indexOf(parameter) + 1)}</span>
+            <span className="t-sm">{PARAMETER_LABELS[parameter]}</span>
             <Select
                 value={rating}
                 onChange={(v) => {
@@ -412,9 +415,8 @@ function ParameterRow({
                 }}
                 placeholder={rating === "fail" ? "Detailed reason (required)" : "Detailed reason (optional)"}
                 aria-label={`Reason for ${PARAMETER_LABELS[parameter]}`}
-                className={`rounded-md border bg-background px-2 py-1 text-sm text-foreground ${
-                    reasonMissing ? "border-destructive" : "border-input"
-                }`}
+                aria-invalid={reasonMissing ? "true" : undefined}
+                className="input input-sm"
             />
         </div>
     );

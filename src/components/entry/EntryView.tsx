@@ -1,39 +1,63 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { FiCheck, FiSearch } from "react-icons/fi";
 import type { MonthSummary, ProgressRow } from "@/db/types";
 import { formatInt, formatText } from "@/lib/format";
-import { MonthPicker } from "@/components/MonthPicker";
 import { DataTable } from "@/components/DataTable";
 import type { Column } from "@/components/DataTable";
+import { Kpi } from "@/components/kpi/Kpi";
 import { EntryPanel } from "@/components/entry/EntryPanel";
-import { ExportButton } from "@/components/entry/ExportButton";
 
-type StatusFilter = "all" | "filled" | "pending";
+type StatusFilter = "all" | "pending" | "filled";
+
+const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
+    { value: "all", label: "All" },
+    { value: "pending", label: "Pending" },
+    { value: "filled", label: "Filled" },
+];
 
 const COLUMNS: Column<ProgressRow>[] = [
     {
         key: "name",
         header: "Counsellor",
-        render: (r) => <span className="font-medium text-foreground">{r.counsellor.name}</span>,
+        className: "primary",
+        render: (r) => r.counsellor.name,
     },
-    { key: "team", header: "Team", className: "text-muted-foreground", render: (r) => formatText(r.teamName) },
+    { key: "team", header: "Team", className: "muted", render: (r) => formatText(r.teamName) },
     {
         key: "agency",
         header: "Agency",
-        className: "text-muted-foreground",
+        className: "muted",
         render: (r) => formatText(r.counsellor.agencyName),
     },
     {
-        key: "status",
-        header: "Status",
+        key: "target",
+        header: "Target",
+        className: "num",
+        render: (r) => formatInt(r.entry?.overall ?? null),
+    },
+    {
+        key: "nonNegotiable",
+        header: "Non-neg",
+        className: "num",
+        render: (r) => formatInt(r.entry?.nonNegotiable ?? null),
+    },
+    {
+        key: "achieved",
+        header: "Achieved",
+        className: "num",
+        render: (r) => formatInt(r.entry?.achieved ?? null),
+    },
+    {
+        key: "state",
+        header: "State",
         render: (r) =>
             r.entry === null ? (
-                <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground ring-1 ring-border">
-                    Pending
-                </span>
+                <span className="unsaved">Pending</span>
             ) : (
-                <span className="inline-flex items-center rounded-full bg-success/15 px-2 py-0.5 text-xs font-semibold text-success ring-1 ring-success/30">
+                <span className="saved">
+                    <FiCheck aria-hidden />
                     Filled
                 </span>
             ),
@@ -42,21 +66,10 @@ const COLUMNS: Column<ProgressRow>[] = [
 
 function SummaryBar({ summary }: { summary: MonthSummary }) {
     return (
-        <div data-component="SummaryBar" className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <div className="rounded-lg border border-border bg-card p-4">
-                <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Filled</p>
-                <p className="mt-1 text-2xl font-semibold text-foreground">
-                    {summary.filledCount} / {summary.totalCount}
-                </p>
-            </div>
-            <div className="rounded-lg border border-border bg-card p-4">
-                <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Target so far</p>
-                <p className="mt-1 text-2xl font-semibold text-foreground">{formatInt(summary.targetSoFar)}</p>
-            </div>
-            <div className="rounded-lg border border-border bg-card p-4">
-                <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Achieved so far</p>
-                <p className="mt-1 text-2xl font-semibold text-foreground">{formatInt(summary.achievedSoFar)}</p>
-            </div>
+        <div data-component="SummaryBar" className="grid g3">
+            <Kpi label="Filled" value={`${String(summary.filledCount)} / ${String(summary.totalCount)}`} />
+            <Kpi label="Target so far" value={formatInt(summary.targetSoFar)} />
+            <Kpi label="Achieved so far" value={formatInt(summary.achievedSoFar)} />
         </div>
     );
 }
@@ -65,12 +78,10 @@ export function EntryView({
     date,
     progress,
     summary,
-    existingMonths,
 }: {
     date: string;
     progress: ProgressRow[];
     summary: MonthSummary;
-    existingMonths: string[];
 }) {
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
@@ -95,42 +106,39 @@ export function EntryView({
     }, [progress, search, statusFilter, showInactive]);
 
     return (
-        <div data-component="EntryView" className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <MonthPicker date={date} existingMonths={existingMonths} basePath="/entry" />
-                <ExportButton date={date} />
-            </div>
-
+        <div data-component="EntryView" className="stack">
             <SummaryBar summary={summary} />
 
-            <div className="flex flex-wrap items-center gap-3">
-                <input
-                    placeholder="Search by name, team, agency…"
-                    value={search}
-                    onChange={(e) => {
-                        setSearch(e.target.value);
-                    }}
-                    className="rounded-md border border-input bg-background px-2 py-1.5 text-sm text-foreground"
-                />
-                <div className="flex gap-1">
-                    {(["all", "pending", "filled"] as const).map((s) => (
+            <div className="card card-pad flex flex-wrap items-center gap-x-4 gap-y-3">
+                <div className="input-wrap w-72 max-w-full">
+                    <FiSearch className="lead" aria-hidden />
+                    <input
+                        type="search"
+                        placeholder="Search by name, team, agency…"
+                        aria-label="Search counsellors"
+                        value={search}
+                        onChange={(e) => {
+                            setSearch(e.target.value);
+                        }}
+                        className="input"
+                    />
+                </div>
+                <div className="segmented" role="tablist" aria-label="Show">
+                    {STATUS_FILTERS.map((s) => (
                         <button
-                            key={s}
+                            key={s.value}
                             type="button"
+                            role="tab"
+                            aria-selected={statusFilter === s.value}
                             onClick={() => {
-                                setStatusFilter(s);
+                                setStatusFilter(s.value);
                             }}
-                            className={`rounded-full px-2.5 py-1 text-xs font-medium capitalize ${
-                                statusFilter === s
-                                    ? "bg-primary text-primary-foreground"
-                                    : "bg-muted text-muted-foreground hover:bg-accent"
-                            }`}
                         >
-                            {s}
+                            {s.label}
                         </button>
                     ))}
                 </div>
-                <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <label className="checkbox">
                     <input
                         type="checkbox"
                         checked={showInactive}
@@ -147,8 +155,9 @@ export function EntryView({
                 rows={filtered}
                 rowKey={(r) => r.counsellor.id}
                 emptyMessage="No counsellors match the current filters."
-                rowClassName={(r) => (r.counsellor.isActive ? "" : "opacity-50")}
+                rowClassName={(r) => (r.counsellor.isActive ? "" : "opacity-60")}
                 renderExpanded={(r) => <EntryPanel row={r} date={date} />}
+                footer={<span>Click a row to edit its targets</span>}
             />
         </div>
     );

@@ -3,8 +3,8 @@
 import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import type { AdmissionRow, UserRow } from "@/db/types";
+import { FiAlertOctagon, FiChevronDown, FiChevronRight } from "react-icons/fi";
 import { MONTH_NAMES } from "@/lib/format";
-import { MonthPicker } from "@/components/MonthPicker";
 import { Tooltip } from "@/components/Tooltip";
 import { applyFetchedAdmissionsAction } from "@/app/(app)/entry/actions";
 import { loadNpfSession } from "@/lib/nopaperformsSession";
@@ -13,10 +13,8 @@ import type { CounsellorDiff, DuplicateOwnership, ExistingAdmission, FetchedAdmi
 import { ConflictList, DayDiffSection, formatDay } from "@/components/entry/AdmissionDiffPanel";
 import type { RowNotes } from "@/components/entry/AdmissionDiffPanel";
 
-const BUTTON =
-    "rounded-md border border-input bg-background px-2 py-1 text-xs font-medium text-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50";
-const PRIMARY =
-    "rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50";
+const BUTTON = "btn btn-secondary btn-sm";
+const PRIMARY = "btn btn-primary btn-sm";
 
 /**
  * How many counsellors are in flight at once. Each is a count request plus
@@ -43,7 +41,8 @@ async function fetchCounsellorMonth(
     });
     const body: unknown = await response.json().catch(() => null);
     if (!response.ok) {
-        const message = typeof body === "object" && body !== null && "error" in body ? String(body.error) : "Fetch failed";
+        const message =
+            typeof body === "object" && body !== null && "error" in body ? String(body.error) : "Fetch failed";
         throw new Error(message);
     }
     return body as FetchedAdmission[];
@@ -96,14 +95,9 @@ function diffTotals(diff: CounsellorDiff): DiffTotals {
 }
 
 function Chip({ tone, children }: { tone: "success" | "warning" | "destructive" | "muted"; children: ReactNode }) {
-    const style = {
-        success: "bg-success/15 text-success",
-        warning: "bg-warning/15 text-warning",
-        destructive: "bg-destructive/15 text-destructive",
-        muted: "bg-muted text-muted-foreground",
-    }[tone];
+    const style = { success: "tag-good", warning: "tag-warn", destructive: "tag-bad", muted: "tag-neutral" }[tone];
     return (
-        <span data-component="Chip" className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold whitespace-nowrap ${style}`}>
+        <span data-component="Chip" className={`tag whitespace-nowrap ${style}`}>
             {children}
         </span>
     );
@@ -112,8 +106,15 @@ function Chip({ tone, children }: { tone: "success" | "warning" | "destructive" 
 function ProgressBar({ done, total }: { done: number; total: number }) {
     const pct = total === 0 ? 0 : Math.round((done / total) * 100);
     return (
-        <div data-component="ProgressBar" className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-            <div className="h-full bg-primary transition-[width]" style={{ width: `${String(pct)}%` }} />
+        <div
+            data-component="ProgressBar"
+            className="meter"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={pct}
+        >
+            <span style={{ width: `${String(pct)}%` }} />
         </div>
     );
 }
@@ -136,85 +137,108 @@ function DuplicateList({
 }) {
     const unresolved = duplicates.filter((d) => (resolutions.get(d.applicationNumber) ?? null) === null).length;
     return (
-        <div data-component="DuplicateList" className="space-y-3 rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3">
-            <div>
-                <p className="text-sm font-semibold text-destructive">
-                    {duplicates.length} application{duplicates.length === 1 ? "" : "s"} credited to more than one counsellor in Meritto
-                </p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                    Meritto returned each of these under every counsellor listed. Fix the ownership in Meritto and
-                    re-fetch, or choose who gets it here. {unresolved > 0 ? `${String(unresolved)} unresolved — those rows are left out of every counsellor's apply.` : "All resolved."}
-                </p>
+        <div data-component="DuplicateList" className="stack gap-3">
+            <div className="alert alert-bad">
+                <FiAlertOctagon aria-hidden />
+                <div>
+                    <div className="title">
+                        {duplicates.length} application{duplicates.length === 1 ? "" : "s"} credited to more than one
+                        counsellor in Meritto
+                    </div>
+                    <p className="t-xs">
+                        Meritto returned each of these under every counsellor listed. Fix the ownership in Meritto and
+                        re-fetch, or choose who gets it here.{" "}
+                        {unresolved > 0
+                            ? `${String(unresolved)} unresolved — those rows are left out of every counsellor's apply.`
+                            : "All resolved."}
+                    </p>
+                </div>
             </div>
-            <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-border text-xs">
-                    <thead>
-                        <tr>
-                            {["Application no", "Applicant", "Applicant ID", "Form", "Approved on", "Saved under", "Credit to"].map((h) => (
-                                <th key={h} className="px-2 py-1 text-left font-semibold tracking-wide text-muted-foreground uppercase">
-                                    {h}
-                                </th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                        {duplicates.map((d) => {
-                            const first = d.claims[0];
-                            if (!first) return null;
-                            const dates = Array.from(new Set(d.claims.map((c) => c.date)));
-                            const chosen = resolutions.get(d.applicationNumber) ?? null;
-                            return (
-                                <tr key={d.applicationNumber} className="align-top">
-                                    <td className="px-2 py-1.5 font-medium text-foreground">{d.applicationNumber}</td>
-                                    <td className="px-2 py-1.5 text-foreground">{first.record.applicantName}</td>
-                                    <td className="px-2 py-1.5 text-foreground">{first.record.applicantUserId}</td>
-                                    <td className="px-2 py-1.5 text-foreground">
-                                        {first.record.formName}
-                                        <span className="block text-muted-foreground">Form {first.record.formId}</span>
-                                    </td>
-                                    <td className="px-2 py-1.5 text-foreground">{dates.map(formatDay).join(", ")}</td>
-                                    <td className="px-2 py-1.5 text-foreground">
-                                        {d.existing ? `${d.existing.userName} · ${formatDay(d.existing.date)}` : <span className="text-muted-foreground">Not saved</span>}
-                                    </td>
-                                    <td className="px-2 py-1.5">
-                                        <div className="flex flex-col gap-1">
-                                            {d.claims.map((c) => {
-                                                const counsellor = counsellorsById.get(c.userId);
-                                                return (
-                                                    <label key={c.userId} className="flex items-center gap-1.5 text-foreground">
-                                                        <input
-                                                            type="radio"
-                                                            name={`dup-${d.applicationNumber}`}
-                                                            checked={chosen === c.userId}
-                                                            onChange={() => {
-                                                                onResolve(d.applicationNumber, c.userId);
-                                                            }}
-                                                        />
-                                                        {counsellor?.name ?? `User ${String(c.userId)}`}
-                                                        <span className="text-muted-foreground">
-                                                            (Meritto {String(counsellor?.merittoUserId ?? "?")} · {formatDay(c.date)})
-                                                        </span>
-                                                    </label>
-                                                );
-                                            })}
-                                            <label className="flex items-center gap-1.5 text-muted-foreground">
-                                                <input
-                                                    type="radio"
-                                                    name={`dup-${d.applicationNumber}`}
-                                                    checked={chosen === null}
-                                                    onChange={() => {
-                                                        onResolve(d.applicationNumber, null);
-                                                    }}
-                                                />
-                                                Leave unresolved
-                                            </label>
-                                        </div>
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
+            <div className="table-wrap">
+                <div className="scroll">
+                    <table className="table text-xs">
+                        <thead>
+                            <tr>
+                                {[
+                                    "Application no",
+                                    "Applicant",
+                                    "Applicant ID",
+                                    "Form",
+                                    "Approved on",
+                                    "Saved under",
+                                    "Credit to",
+                                ].map((h) => (
+                                    <th key={h}>{h}</th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {duplicates.map((d) => {
+                                const first = d.claims[0];
+                                if (!first) return null;
+                                const dates = Array.from(new Set(d.claims.map((c) => c.date)));
+                                const chosen = resolutions.get(d.applicationNumber) ?? null;
+                                return (
+                                    <tr key={d.applicationNumber} className="align-top">
+                                        <td className="primary">{d.applicationNumber}</td>
+                                        <td>{first.record.applicantName}</td>
+                                        <td>{first.record.applicantUserId}</td>
+                                        <td>
+                                            {first.record.formName}
+                                            <span className="ink-3 block">Form {first.record.formId}</span>
+                                        </td>
+                                        <td>{dates.map(formatDay).join(", ")}</td>
+                                        <td>
+                                            {d.existing ? (
+                                                `${d.existing.userName} · ${formatDay(d.existing.date)}`
+                                            ) : (
+                                                <span className="ink-3">Not saved</span>
+                                            )}
+                                        </td>
+                                        <td>
+                                            <div className="flex flex-col gap-1">
+                                                {d.claims.map((c) => {
+                                                    const counsellor = counsellorsById.get(c.userId);
+                                                    return (
+                                                        <label
+                                                            key={c.userId}
+                                                            className="checkbox radio t-xs items-center"
+                                                        >
+                                                            <input
+                                                                type="radio"
+                                                                name={`dup-${d.applicationNumber}`}
+                                                                checked={chosen === c.userId}
+                                                                onChange={() => {
+                                                                    onResolve(d.applicationNumber, c.userId);
+                                                                }}
+                                                            />
+                                                            {counsellor?.name ?? `User ${String(c.userId)}`}
+                                                            <span className="ink-3">
+                                                                (Meritto {String(counsellor?.merittoUserId ?? "?")} ·{" "}
+                                                                {formatDay(c.date)})
+                                                            </span>
+                                                        </label>
+                                                    );
+                                                })}
+                                                <label className="checkbox radio t-xs ink-3 items-center">
+                                                    <input
+                                                        type="radio"
+                                                        name={`dup-${d.applicationNumber}`}
+                                                        checked={chosen === null}
+                                                        onChange={() => {
+                                                            onResolve(d.applicationNumber, null);
+                                                        }}
+                                                    />
+                                                    Leave unresolved
+                                                </label>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );
@@ -246,9 +270,13 @@ function CounsellorCard({
     const notes: RowNotes = useMemo(() => {
         const map = new Map<string, string>();
         if (!diff) return map;
-        for (const m of diff.movedIn) map.set(m.applicationNumber, `moved from ${m.fromUserName} (${formatDay(m.fromDate)})`);
+        for (const m of diff.movedIn)
+            map.set(m.applicationNumber, `moved from ${m.fromUserName} (${formatDay(m.fromDate)})`);
         for (const m of diff.movedOut) {
-            map.set(m.applicationNumber, `moved to ${counsellorsById.get(m.toUserId)?.name ?? `user ${String(m.toUserId)}`}`);
+            map.set(
+                m.applicationNumber,
+                `moved to ${counsellorsById.get(m.toUserId)?.name ?? `user ${String(m.toUserId)}`}`,
+            );
         }
         return map;
     }, [diff, counsellorsById]);
@@ -270,7 +298,7 @@ function CounsellorCard({
         case "done":
             status = (
                 <>
-                    <span className="text-xs text-muted-foreground">{fetchState.rows.length} rows</span>
+                    <span className="t-xs ink-3">{fetchState.rows.length} rows</span>
                     {applied ? (
                         <Chip tone="success">Applied</Chip>
                     ) : totals && hasDiff ? (
@@ -284,40 +312,55 @@ function CounsellorCard({
                     )}
                     {diff && diff.movedIn.length > 0 && <Chip tone="warning">{diff.movedIn.length} moved in</Chip>}
                     {diff && diff.movedOut.length > 0 && <Chip tone="warning">{diff.movedOut.length} moved out</Chip>}
-                    {diff && diff.conflicts.length > 0 && <Chip tone="destructive">{diff.conflicts.length} conflict{diff.conflicts.length === 1 ? "" : "s"}</Chip>}
+                    {diff && diff.conflicts.length > 0 && (
+                        <Chip tone="destructive">
+                            {diff.conflicts.length} conflict{diff.conflicts.length === 1 ? "" : "s"}
+                        </Chip>
+                    )}
                 </>
             );
             break;
     }
 
     return (
-        <div data-component="CounsellorCard" className="rounded-lg border border-border bg-card">
+        <div data-component="CounsellorCard" className="card">
             <div className="flex flex-wrap items-center gap-2 px-3 py-2">
                 <button
                     type="button"
                     onClick={onToggle}
                     disabled={fetchState.status !== "done" && fetchState.status !== "error"}
                     aria-expanded={expanded}
-                    className="flex min-w-0 flex-1 items-center gap-2 text-left disabled:cursor-default"
+                    className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 border-0 bg-transparent p-0 text-left disabled:cursor-default"
                 >
-                    <span className="w-3 text-xs text-muted-foreground">{expanded ? "▾" : "▸"}</span>
-                    <span className="truncate text-sm font-medium text-foreground">{counsellor.name}</span>
-                    {counsellor.teamName && <span className="truncate text-xs text-muted-foreground">{counsellor.teamName}</span>}
+                    <span className="ink-3 flex w-4 items-center" aria-hidden>
+                        {expanded ? <FiChevronDown /> : <FiChevronRight />}
+                    </span>
+                    <span className="t-sm truncate font-medium">{counsellor.name}</span>
+                    {counsellor.teamName && <span className="t-xs ink-3 truncate">{counsellor.teamName}</span>}
                 </button>
                 <div className="flex flex-wrap items-center gap-1">{status}</div>
                 {hasDiff && !applied && (
-                    <button type="button" disabled={applyState?.status === "applying"} onClick={onApply} className={PRIMARY}>
-                        {applyState?.status === "applying" ? "Applying…" : `Apply ${String(diff.days.length)} day${diff.days.length === 1 ? "" : "s"}`}
+                    <button
+                        type="button"
+                        disabled={applyState?.status === "applying"}
+                        onClick={onApply}
+                        className={PRIMARY}
+                    >
+                        {applyState?.status === "applying"
+                            ? "Applying…"
+                            : `Apply ${String(diff.days.length)} day${diff.days.length === 1 ? "" : "s"}`}
                     </button>
                 )}
             </div>
-            {applyState?.status === "error" && <p className="px-3 pb-2 text-xs text-destructive">{applyState.message}</p>}
-            {expanded && fetchState.status === "error" && <p className="border-t border-border px-3 py-2 text-xs text-destructive">{fetchState.message}</p>}
+            {applyState?.status === "error" && <p className="error-text px-3 pb-2">{applyState.message}</p>}
+            {expanded && fetchState.status === "error" && (
+                <p className="error-text border-t border-line-1 px-3 py-2">{fetchState.message}</p>
+            )}
             {expanded && diff && (
-                <div className="space-y-3 border-t border-border px-3 py-3">
+                <div className="stack gap-3 border-t border-line-1 px-3 py-3">
                     {diff.conflicts.length > 0 && <ConflictList conflicts={diff.conflicts} />}
                     {diff.days.length === 0 ? (
-                        <p className="text-xs text-muted-foreground">Nothing differs from what is saved.</p>
+                        <p className="t-xs ink-3">Nothing differs from what is saved.</p>
                     ) : (
                         diff.days.map((d) => <DayDiffSection key={d.date} diff={d} notes={notes} />)
                     )}
@@ -409,7 +452,11 @@ export function AllCounsellorsFetchView({
         for (const d of duplicates) {
             const picked = chosen.get(d.applicationNumber);
             if (picked !== undefined) map.set(d.applicationNumber, picked);
-            else map.set(d.applicationNumber, d.existing && d.claims.some((c) => c.userId === d.existing?.userId) ? d.existing.userId : null);
+            else
+                map.set(
+                    d.applicationNumber,
+                    d.existing && d.claims.some((c) => c.userId === d.existing?.userId) ? d.existing.userId : null,
+                );
         }
         return map;
     }, [duplicates, chosen]);
@@ -429,7 +476,12 @@ export function AllCounsellorsFetchView({
         try {
             await applyFetchedAdmissionsAction({ userId, days, reclaim });
         } catch {
-            setApplyStates((prev) => new Map(prev).set(userId, { status: "error", message: "Apply failed. Nothing was written for this counsellor." }));
+            setApplyStates((prev) =>
+                new Map(prev).set(userId, {
+                    status: "error",
+                    message: "Apply failed. Nothing was written for this counsellor.",
+                }),
+            );
             return;
         }
         // Mirror what the DB now holds so the diff recomputes to "up to date"
@@ -437,8 +489,12 @@ export function AllCounsellorsFetchView({
         const dates = new Set(days.map((d) => d.date));
         const reclaimed = new Set(reclaim);
         setExisting((prev) => [
-            ...prev.filter((e) => !(e.userId === userId && dates.has(e.date)) && !reclaimed.has(e.record.applicationNumber)),
-            ...days.flatMap((d) => d.records.map((record) => ({ userId, userName: counsellor.name, date: d.date, record }))),
+            ...prev.filter(
+                (e) => !(e.userId === userId && dates.has(e.date)) && !reclaimed.has(e.record.applicationNumber),
+            ),
+            ...days.flatMap((d) =>
+                d.records.map((record) => ({ userId, userName: counsellor.name, date: d.date, record })),
+            ),
         ]);
         setApplyStates((prev) => new Map(prev).set(userId, { status: "applied" }));
     };
@@ -483,38 +539,50 @@ export function AllCounsellorsFetchView({
     });
 
     return (
-        <div data-component="AllCounsellorsFetchView" className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <MonthPicker date={date} existingMonths={[]} basePath="/entry/fetch" />
-                <div className="flex items-center gap-2">
-                    {phase === "done" && applicable.length > 0 && (
-                        <button
-                            type="button"
-                            disabled={applyingAll}
-                            onClick={() => {
-                                void applyAll();
-                            }}
-                            className={PRIMARY}
-                        >
-                            {applyingAll ? "Applying…" : `Apply all (${String(applicable.length)} counsellor${applicable.length === 1 ? "" : "s"})`}
-                        </button>
-                    )}
-                    <Tooltip content={`Fetch ${monthLabel(date)} for every active counsellor with a Meritto id (${String(fetchable)} of ${String(counsellors.length)})`}>
-                        <button type="button" disabled={phase === "fetching" || applyingAll} onClick={fetchAll} className={BUTTON}>
-                            {phase === "fetching" ? "Fetching…" : phase === "done" ? "Re-fetch" : `Fetch ${monthLabel(date)}`}
-                        </button>
-                    </Tooltip>
-                </div>
+        <div data-component="AllCounsellorsFetchView" className="stack gap-4">
+            <div className="flex flex-wrap items-center justify-end gap-2">
+                {phase === "done" && applicable.length > 0 && (
+                    <button
+                        type="button"
+                        disabled={applyingAll}
+                        onClick={() => {
+                            void applyAll();
+                        }}
+                        className={PRIMARY}
+                    >
+                        {applyingAll
+                            ? "Applying…"
+                            : `Apply all (${String(applicable.length)} counsellor${applicable.length === 1 ? "" : "s"})`}
+                    </button>
+                )}
+                <Tooltip
+                    content={`Fetch ${monthLabel(date)} for every active counsellor with a Meritto id (${String(fetchable)} of ${String(counsellors.length)})`}
+                >
+                    <button
+                        type="button"
+                        disabled={phase === "fetching" || applyingAll}
+                        onClick={fetchAll}
+                        className={BUTTON}
+                    >
+                        {phase === "fetching" && <span className="spinner" aria-hidden />}
+                        {phase === "fetching"
+                            ? "Fetching…"
+                            : phase === "done"
+                              ? "Re-fetch"
+                              : `Fetch ${monthLabel(date)}`}
+                    </button>
+                </Tooltip>
             </div>
-            {sessionError && <p className="text-xs text-destructive">{sessionError}</p>}
+            {sessionError && <p className="error-text">{sessionError}</p>}
 
             {phase !== "idle" && (
-                <div className="space-y-1.5 rounded-lg border border-border bg-card px-4 py-3">
-                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+                <div className="card card-pad stack gap-2">
+                    <div className="t-xs ink-3 flex flex-wrap items-center justify-between gap-2">
                         <span>
                             {finished} / {fetchable} counsellors · {rowsSoFar} rows
-                            {failed > 0 && <span className="text-destructive"> · {failed} failed</span>}
-                            {fetchable < counsellors.length && ` · ${String(counsellors.length - fetchable)} skipped (no Meritto id)`}
+                            {failed > 0 && <span className="text-bad-soft-fg"> · {failed} failed</span>}
+                            {fetchable < counsellors.length &&
+                                ` · ${String(counsellors.length - fetchable)} skipped (no Meritto id)`}
                         </span>
                         {phase === "done" && (
                             <span>
@@ -540,9 +608,9 @@ export function AllCounsellorsFetchView({
             )}
 
             {phase !== "idle" && (
-                <div className="space-y-2">
+                <div className="stack gap-2">
                     {phase === "done" && (
-                        <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <label className="checkbox t-xs ink-3 items-center">
                             <input
                                 type="checkbox"
                                 checked={onlyChanges}

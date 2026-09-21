@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { FiAlertCircle, FiCheckCircle } from "react-icons/fi";
 import type { Applicant } from "@/utils/meritto/fetch-applicants";
 import { verifyMerittoSessionAction } from "@/app/(app)/tools/meritto-auth/actions";
 import { saveNpfSession } from "@/lib/nopaperformsSession";
@@ -271,79 +272,87 @@ export function MerittoAuth() {
     };
 
     return (
-        <div data-component="MerittoAuth" className="space-y-4">
-            <div className="space-y-2">
-                <label htmlFor="curl-input" className="text-sm font-medium text-foreground">
-                    Paste a curl from Meritto
+        <div data-component="MerittoAuth" className="stack gap-4">
+            <div className="card card-pad stack gap-3">
+                <label htmlFor="curl-input" className="field">
+                    <span className="label">Paste a curl from Meritto</span>
+                    <textarea
+                        id="curl-input"
+                        value={input}
+                        onChange={(e) => {
+                            setInput(e.target.value);
+                        }}
+                        placeholder={SAMPLE_CURL}
+                        rows={8}
+                        className="textarea mono"
+                        spellCheck={false}
+                    />
                 </label>
-                <textarea
-                    id="curl-input"
-                    value={input}
-                    onChange={(e) => {
-                        setInput(e.target.value);
-                    }}
-                    placeholder={SAMPLE_CURL}
-                    rows={8}
-                    className="w-full rounded-lg border border-border bg-card p-3 font-mono text-xs text-foreground focus:outline-none"
-                    spellCheck={false}
-                />
-                <p className="text-xs text-muted-foreground">
+                <p className="hint">
                     Only the URL, headers and cookies are taken from the curl — the request body is rebuilt on the
                     server. Connecting fetches the first page of the application listing to prove the session works,
                     then stores the credentials for the daily-entry auto-fetch. Don&apos;t share this page while a real
                     session cookie is pasted in.
                 </p>
-            </div>
-
-            <div className="space-y-2">
-                <button
-                    type="button"
-                    onClick={run}
-                    disabled={pending || blockedReason !== null}
-                    className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
-                >
-                    {pending ? "Connecting…" : "Connect"}
-                </button>
-                {input.trim().length > 0 && blockedReason !== null && (
-                    <p className="text-xs text-destructive">{blockedReason}</p>
-                )}
-                {error && <p className="text-xs text-destructive">{error}</p>}
+                <div className="flex flex-wrap items-center gap-3">
+                    <button
+                        type="button"
+                        onClick={run}
+                        disabled={pending || blockedReason !== null}
+                        className="btn btn-primary"
+                    >
+                        {pending && <span className="spinner" aria-hidden />}
+                        {pending ? "Connecting…" : "Connect"}
+                    </button>
+                    {input.trim().length > 0 && blockedReason !== null && (
+                        <p className="error-text">
+                            <FiAlertCircle aria-hidden />
+                            {blockedReason}
+                        </p>
+                    )}
+                    {error && (
+                        <p className="error-text">
+                            <FiAlertCircle aria-hidden />
+                            {error}
+                        </p>
+                    )}
+                </div>
             </div>
 
             {result && (
-                <div className="space-y-2">
-                    <p className={`text-xs font-medium ${result.length > 0 ? "text-primary" : "text-destructive"}`}>
-                        {result.length > 0
-                            ? `Connected — got ${String(result.length)} applicant(s). Session saved for reuse.`
-                            : "Returned an empty list — the session doesn't look usable."}
-                    </p>
+                <div className="stack gap-3">
+                    <div className={`alert ${result.length > 0 ? "alert-good" : "alert-bad"}`}>
+                        {result.length > 0 ? <FiCheckCircle aria-hidden /> : <FiAlertCircle aria-hidden />}
+                        <p>
+                            {result.length > 0
+                                ? `Connected — got ${String(result.length)} applicant(s). Session saved for reuse.`
+                                : "Returned an empty list — the session doesn't look usable."}
+                        </p>
+                    </div>
                     {result.length > 0 && (
-                        <div className="overflow-x-auto rounded-md border border-border">
-                            <table className="w-full text-xs">
-                                <thead>
-                                    <tr className="border-b border-border bg-muted/40">
-                                        <th className="px-2 py-1 text-left font-medium text-foreground">User ID</th>
-                                        <th className="px-2 py-1 text-left font-medium text-foreground">Name</th>
-                                        <th className="px-2 py-1 text-left font-medium text-foreground">
-                                            Application No
-                                        </th>
-                                        <th className="px-2 py-1 text-left font-medium text-foreground">Form</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {result.map((row, i) => (
-                                        <tr
-                                            key={`${row.userId}-${String(i)}`}
-                                            className="border-b border-border last:border-0"
-                                        >
-                                            <td className="px-2 py-1 text-muted-foreground">{row.userId}</td>
-                                            <td className="px-2 py-1 text-muted-foreground">{row.registeredName}</td>
-                                            <td className="px-2 py-1 text-muted-foreground">{row.applicationNumber}</td>
-                                            <td className="px-2 py-1 text-muted-foreground">{row.formName}</td>
+                        <div className="table-wrap">
+                            <div className="scroll">
+                                <table className="table text-xs">
+                                    <thead>
+                                        <tr>
+                                            <th>User ID</th>
+                                            <th>Name</th>
+                                            <th>Application No</th>
+                                            <th>Form</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {result.map((row, i) => (
+                                            <tr key={`${row.userId}-${String(i)}`}>
+                                                <td className="muted t-num">{row.userId}</td>
+                                                <td className="primary">{row.registeredName}</td>
+                                                <td className="muted t-num">{row.applicationNumber}</td>
+                                                <td className="muted">{row.formName}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     )}
                 </div>
