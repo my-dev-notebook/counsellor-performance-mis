@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = { allowedDevOrigins: ["116.74.252.63"] };
+const nextConfig: NextConfig = { allowedDevOrigins: ["116.74.252.63", "mis.xail.in"] };
 
 export default nextConfig;
 
