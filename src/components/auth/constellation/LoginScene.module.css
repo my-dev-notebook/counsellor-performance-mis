@@ -1,0 +1,466 @@
+/*
+  Sign-in scene: aurora + constellation canvas behind a hero, a glass card and two tickers.
+  Everything scoped here; design-system classes (.card, .input, .btn-primary, .avatar) reached via :global.
+  Perf notes: aurora is two radial washes rotated on the compositor (no `filter: blur`), the only backdrop blur
+  is the card and only on hover-capable devices, all loops are transform/opacity-only.
+*/
+
+.scene {
+    flex: 1;
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 26px;
+    padding: 36px 24px 0;
+    overflow: hidden;
+    background: var(--canvas);
+    perspective: 1200px;
+}
+
+/* ---------- aurora ---------- */
+.aur {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 140vmax;
+    height: 140vmax;
+    margin: -70vmax 0 0 -70vmax;
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0.75;
+    will-change: transform;
+    animation: aur 70s linear infinite;
+    background:
+        radial-gradient(circle at 32% 36%, var(--accent-soft) 0, transparent 26%),
+        radial-gradient(circle at 68% 64%, var(--good-soft) 0, transparent 22%);
+}
+.aurB {
+    opacity: 0.5;
+    animation-duration: 95s;
+    animation-direction: reverse;
+    background:
+        radial-gradient(circle at 60% 30%, var(--warn-soft) 0, transparent 20%),
+        radial-gradient(circle at 30% 70%, var(--accent-soft) 0, transparent 24%);
+}
+@keyframes aur {
+    to {
+        transform: rotate(1turn);
+    }
+}
+
+.canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+.hd,
+.formcol,
+.tk {
+    position: relative;
+    z-index: 1;
+}
+
+/* ---------- hover label (positioned by the scene loop via transform) ---------- */
+.lab {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 3;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    will-change: transform;
+    background: var(--surface);
+    border: 1px solid var(--line-2);
+    border-radius: 10px;
+    padding: 8px 10px;
+    box-shadow: var(--shadow-3);
+    font-size: var(--text-xs);
+    color: var(--ink-2);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.labOn {
+    opacity: 1;
+}
+.lab b {
+    color: var(--ink-1);
+    font-weight: 600;
+    display: block;
+}
+
+/* ---------- hero ---------- */
+.hd {
+    text-align: center;
+    max-width: 800px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    will-change: transform;
+}
+.mark {
+    position: relative;
+    width: 34px;
+    height: 34px;
+    border-radius: var(--r-md);
+    background: var(--accent);
+    color: var(--accent-fg);
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    font-size: 14px;
+}
+.mark::after {
+    content: "";
+    position: absolute;
+    inset: -5px;
+    border-radius: 14px;
+    border: 2px solid var(--accent);
+    opacity: 0;
+    animation: ring 3.2s var(--ease-out) infinite;
+}
+@keyframes ring {
+    0% {
+        transform: scale(0.85);
+        opacity: 0.6;
+    }
+    60%,
+    100% {
+        transform: scale(1.3);
+        opacity: 0;
+    }
+}
+.h1 {
+    margin: 0;
+    font-size: 46px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    min-height: 2.2em;
+    font-variant-ligatures: none;
+    background: linear-gradient(120deg, var(--ink-1) 20%, var(--accent) 50%, var(--ink-1) 80%);
+    background-size: 220% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shine 7s linear infinite;
+}
+@keyframes shine {
+    to {
+        background-position: -220% 0;
+    }
+}
+.sc {
+    -webkit-text-fill-color: var(--ink-3);
+    font-weight: 400;
+}
+.ld {
+    display: inline-block;
+    animation: land 0.28s var(--ease-out) both;
+}
+@keyframes land {
+    from {
+        transform: translateY(-0.25em) scale(1.15);
+        opacity: 0;
+    }
+}
+.sub {
+    margin: 0;
+    font-size: var(--text-md);
+    color: var(--ink-2);
+    height: 1.5em;
+    overflow: hidden;
+    white-space: nowrap;
+}
+.em {
+    font-style: normal;
+    color: var(--accent);
+    font-weight: 600;
+}
+.em i {
+    font-style: normal;
+    display: inline-block;
+    animation: letter 0.5s var(--ease-out) both;
+    animation-delay: calc(var(--n) * 18ms);
+}
+@keyframes letter {
+    from {
+        opacity: 0;
+        filter: blur(4px);
+        transform: translateY(5px);
+    }
+}
+.greet {
+    font-size: var(--text-xs);
+    color: var(--ink-3);
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    padding: 4px 10px;
+    border: 1px solid var(--line-1);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 80%, transparent);
+}
+.dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--good);
+    animation: pulse 2s infinite;
+}
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 var(--good-soft);
+    }
+    70% {
+        box-shadow: 0 0 0 6px transparent;
+    }
+    100% {
+        box-shadow: 0 0 0 0 transparent;
+    }
+}
+
+/* ---------- glass card ---------- */
+.formcol {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    padding: 0 0 26px;
+    perspective: 1000px;
+}
+.glass {
+    --mx: 50%;
+    --my: 50%;
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    gap: 20px;
+    padding: 28px;
+    background: color-mix(in srgb, var(--surface) 82%, transparent);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    box-shadow: var(--shadow-3);
+    transform-style: preserve-3d;
+    transition: transform 0.12s var(--ease-out);
+    animation: rise 0.6s var(--ease-out) both;
+}
+@keyframes rise {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+}
+/* spotlight border that follows the pointer (--mx/--my set by TiltCard) */
+.glass::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: radial-gradient(240px circle at var(--mx) var(--my), var(--accent), transparent 60%);
+    -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+.glass:hover::before {
+    opacity: 0.9;
+}
+.glass > * {
+    transform: translateZ(18px);
+}
+.glass :global(.input:focus) {
+    box-shadow:
+        0 0 0 3px var(--accent-ring),
+        0 0 24px -4px var(--accent-ring);
+}
+.glass :global(.btn-primary) {
+    position: relative;
+    overflow: hidden;
+}
+.glass :global(.btn-primary)::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, 0.25) 50%, transparent 65%);
+    transform: translateX(-100%);
+    animation: sheen 4.5s var(--ease-in-out) 1.6s infinite;
+    pointer-events: none;
+}
+@keyframes sheen {
+    20%,
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* ---------- tickers ---------- */
+.tk {
+    width: 100%;
+    margin-top: auto;
+    overflow: hidden;
+    border-top: 1px solid var(--line-1);
+    background: color-mix(in srgb, var(--surface) 78%, transparent);
+    padding: 8px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}
+.row {
+    display: flex;
+    gap: 34px;
+    width: max-content;
+    will-change: transform;
+    animation: marq 34s linear infinite;
+}
+.rev {
+    animation: marqR 46s linear infinite;
+    font-size: var(--text-xs);
+    color: var(--ink-3);
+}
+.row:hover {
+    animation-play-state: paused;
+}
+.row span {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--text-sm);
+    color: var(--ink-2);
+    white-space: nowrap;
+}
+.rev span {
+    font-size: inherit;
+    color: inherit;
+}
+.row svg {
+    width: 14px;
+    height: 14px;
+    color: var(--accent);
+}
+.row i {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--line-3);
+    display: block;
+}
+@keyframes marq {
+    to {
+        transform: translateX(-50%);
+    }
+}
+@keyframes marqR {
+    from {
+        transform: translateX(-50%);
+    }
+    to {
+        transform: none;
+    }
+}
+
+/* ---------- floating pills ---------- */
+.pill {
+    position: absolute;
+    pointer-events: none;
+    font-size: var(--text-xs);
+    color: var(--ink-3);
+    padding: 5px 9px;
+    border: 1px solid var(--line-1);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 86%, transparent);
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    will-change: transform;
+    transition: transform 0.25s var(--ease-out);
+}
+.pill b {
+    color: var(--ink-1);
+    font-weight: 600;
+}
+.pill svg {
+    width: 12px;
+    height: 12px;
+    color: var(--accent);
+}
+.spark {
+    width: 60px;
+    height: 18px;
+    margin-left: 2px;
+    color: var(--good);
+}
+
+/* ---------- responsive ---------- */
+@media (max-width: 900px) {
+    .h1 {
+        font-size: 30px;
+    }
+    .pill {
+        display: none;
+    }
+}
+@media (max-width: 600px) {
+    .scene {
+        padding: 24px 16px 0;
+        gap: 18px;
+    }
+    .hd {
+        gap: 12px;
+    }
+    .h1 {
+        font-size: 26px;
+    }
+    .sub {
+        white-space: normal;
+        height: auto;
+        min-height: 1.5em;
+    }
+    .glass {
+        padding: 22px 18px;
+    }
+}
+/* touch: no blur behind a repainting canvas, no 3-D, no spotlight */
+@media (hover: none) {
+    .glass {
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+        background: var(--surface);
+        transform-style: flat;
+    }
+    .glass > * {
+        transform: none;
+    }
+    .glass::before {
+        display: none;
+    }
+    .hd,
+    .pill {
+        will-change: auto;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .scene * {
+        animation: none !important;
+        transition: none !important;
+    }
+    .glass {
+        transform: none !important;
+    }
+}

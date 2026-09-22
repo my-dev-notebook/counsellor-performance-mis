@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { AuthCard } from "@/components/auth/AuthCard";
+import { LoginScene } from "@/components/auth/constellation/LoginScene";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { getCurrentUser } from "@/lib/auth/session";
 
@@ -15,9 +15,9 @@ export default async function LoginPage({
 
     return (
         <div data-component="LoginPage" className="contents">
-            <AuthCard title="Sign in">
+            <LoginScene>
                 <LoginForm next={next} />
-            </AuthCard>
+            </LoginScene>
         </div>
     );
 }
