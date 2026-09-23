@@ -56,7 +56,8 @@ export const NO_PERMISSIONS: Permissions = {
 };
 
 export const PERMISSIONS: Record<RoleName, Permissions> = {
-    // Own rows plus own team's aggregates. Read-only.
+    // Own rows plus own team's aggregates. Read-only. The dashboards also list
+    // teammates' rows on the "My team" tab (`includeTeammates`).
     counsellor: { ...NO_PERMISSIONS, viewPerformance: true },
     // Every row of own team. Read-only.
     team_leader: { ...NO_PERMISSIONS, readTeamRows: true, viewPerformance: true, viewRoster: true },

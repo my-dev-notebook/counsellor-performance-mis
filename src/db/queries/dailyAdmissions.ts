@@ -1,9 +1,10 @@
-import { eq, and, like, asc, inArray, sql } from "drizzle-orm";
+import { eq, and, like, asc, gte, lte, inArray, sql } from "drizzle-orm";
 import { getDb } from "@/db/client";
 import { admissions, users } from "@/db/schema";
 import type { BatchItem } from "drizzle-orm/batch";
 import type { AdmissionRecord, AdmissionRow } from "@/db/types";
 import { getUserById } from "@/db/queries/users";
+import { sessionMonths } from "@/schemas/dates";
 
 const COLUMNS = {
     id: admissions.id,
@@ -159,6 +160,32 @@ export async function getDailyAdmissionsForMonth(userId: number, monthDate: stri
         .from(admissions)
         .where(and(eq(admissions.userId, userId), like(admissions.date, `${monthDate}-%`)))
         .orderBy(asc(admissions.date), asc(admissions.id));
+}
+
+/**
+ * One user's admission count per day across a whole SESSION year ("YYYY",
+ * October → September; see `sessionMonths`) — feeds the yearly heatmap. Days
+ * with no admissions are absent.
+ */
+export async function getDailyAdmissionCountsForSession(
+    userId: number,
+    sessionYear: string,
+): Promise<{ date: string; count: number }[]> {
+    const months = sessionMonths(sessionYear);
+    const db = await getDb();
+    const rows = await db
+        .select({ date: admissions.date, count: sql<number>`COUNT(*)` })
+        .from(admissions)
+        .where(
+            and(
+                eq(admissions.userId, userId),
+                gte(admissions.date, `${months[0] ?? ""}-01`),
+                lte(admissions.date, `${months[months.length - 1] ?? ""}-31`),
+            ),
+        )
+        .groupBy(admissions.date)
+        .orderBy(asc(admissions.date));
+    return rows.map((row) => ({ date: row.date, count: Number(row.count) }));
 }
 
 /** One month's admission total for one user — used by prefill/fallback paths. */

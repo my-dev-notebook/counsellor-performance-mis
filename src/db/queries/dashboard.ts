@@ -57,13 +57,28 @@ function toCounsellor({ counsellor, team, target, nonNegotiable, achieved }: Row
     };
 }
 
+export interface WorkbookOptions {
+    /**
+     * Keep every row the scope's team-level filter admits in `counsellors`,
+     * not just the rows it may see one by one. Only widens the "self" scope
+     * (their teammates' rows); every other scope already sees all of them.
+     */
+    includeTeammates?: boolean;
+}
+
 /**
  * Assembles the workbook from a scope's team-level rows: team aggregates are
  * computed over EVERY row (so a counsellor still sees their team's totals),
  * then the individual `counsellors` list is trimmed to the rows the scope may
- * see one by one.
+ * see one by one — unless `includeTeammates` keeps every team-level row, so a
+ * counsellor's dashboard can list their teammates.
  */
-function buildWorkbook(rows: readonly RowFigures[], label: string, scope: Scope): ParsedWorkbook {
+function buildWorkbook(
+    rows: readonly RowFigures[],
+    label: string,
+    scope: Scope,
+    { includeTeammates = false }: WorkbookOptions = {},
+): ParsedWorkbook {
     const counsellors = rows.map(toCounsellor);
     const agencies = new Set<string>();
     for (const row of rows) if (row.counsellor.agencyName) agencies.add(row.counsellor.agencyName);
@@ -80,7 +95,9 @@ function buildWorkbook(rows: readonly RowFigures[], label: string, scope: Scope)
 
     const visibleIds = new Set(
         rows
-            .filter((row) => rowVisible(scope, { userId: row.counsellor.id, teamId: row.teamId }))
+            .filter(
+                (row) => includeTeammates || rowVisible(scope, { userId: row.counsellor.id, teamId: row.teamId }),
+            )
             .map((row) => String(row.counsellor.id)),
     );
 
@@ -110,9 +127,14 @@ function buildWorkbook(rows: readonly RowFigures[], label: string, scope: Scope)
  * Scope: team aggregates are computed over every row the scope's team-level
  * filter admits, and the individual `counsellors` list is then trimmed to the
  * rows the scope may see one by one — for a counsellor that means their own
- * row plus their team's totals.
+ * row plus their team's totals (or their teammates' rows too with
+ * `includeTeammates`).
  */
-export async function getMonthlyWorkbook(date: string, scope: Scope): Promise<ParsedWorkbook> {
+export async function getMonthlyWorkbook(
+    date: string,
+    scope: Scope,
+    options?: WorkbookOptions,
+): Promise<ParsedWorkbook> {
     const progress = await getProgressForMonth(date, scope, { includeInactive: true, teamLevel: true });
 
     const rows: RowFigures[] = [];
@@ -134,7 +156,7 @@ export async function getMonthlyWorkbook(date: string, scope: Scope): Promise<Pa
         });
     }
 
-    return buildWorkbook(rows, formatMonthLabel(date), scope);
+    return buildWorkbook(rows, formatMonthLabel(date), scope, options);
 }
 
 /** Adds a nullable monthly figure into a running yearly sum; stays null until the first non-null month. */
@@ -170,7 +192,11 @@ function formatYearLabel(year: string, months: readonly string[]): string {
  * Target and Non-Negotiable stay null only when every month left them blank;
  * a partially-set target is the sum of the months that did set one.
  */
-export async function getYearlyWorkbook(year: string, scope: Scope): Promise<ParsedWorkbook> {
+export async function getYearlyWorkbook(
+    year: string,
+    scope: Scope,
+    options?: WorkbookOptions,
+): Promise<ParsedWorkbook> {
     const months = (await listMonthsWithData(scope))
         .filter((m) => sessionOfMonth(m) === year)
         .sort((a, b) => a.localeCompare(b));
@@ -198,5 +224,5 @@ export async function getYearlyWorkbook(year: string, scope: Scope): Promise<Par
     }
 
     const rows = Array.from(byCounsellor.values()).sort((a, b) => a.counsellor.name.localeCompare(b.counsellor.name));
-    return buildWorkbook(rows, formatYearLabel(year, months), scope);
+    return buildWorkbook(rows, formatYearLabel(year, months), scope, options);
 }

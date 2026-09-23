@@ -1590,6 +1590,102 @@
         font-size: 11px;
         font-weight: 600;
     }
+
+    /* ---------- Session heatmap (year of days, one column per week) ---------- */
+    /* The wrapper is the size container: cells shrink with the card from 16px down to 9px, and only
+       scroll sideways below that. `--yh-weeks` (column count) is set inline by SessionHeatmap. */
+    .yh-wrap {
+        container-type: inline-size;
+        overflow-x: auto;
+    }
+    .yh {
+        --yh-gap: 3px;
+        /* 40px = the weekday label column (32px) plus the column gap (8px). */
+        --yh-cell: clamp(9px, calc((100cqi - 40px + var(--yh-gap)) / var(--yh-weeks, 53) - var(--yh-gap)), 16px);
+        display: grid;
+        grid-template-columns: 32px max-content;
+        gap: 6px 8px;
+        font-size: 11px;
+        color: var(--ink-3);
+    }
+    .yh .months {
+        grid-column: 2;
+        display: grid;
+        gap: var(--yh-gap);
+        height: 14px;
+    }
+    .yh .months span {
+        white-space: nowrap;
+    }
+    .yh .dows {
+        display: grid;
+        grid-template-rows: repeat(7, var(--yh-cell));
+        gap: var(--yh-gap);
+    }
+    .yh .dows span {
+        line-height: var(--yh-cell);
+    }
+    .yh .cells {
+        display: grid;
+        grid-auto-flow: column;
+        grid-template-rows: repeat(7, var(--yh-cell));
+        grid-auto-columns: var(--yh-cell);
+        gap: var(--yh-gap);
+    }
+    .yh .c {
+        width: var(--yh-cell);
+        height: var(--yh-cell);
+    }
+    .yh .c,
+    .yh-swatch {
+        display: block;
+        border-radius: 3px;
+        background: var(--surface-sunken);
+    }
+    .yh-swatch {
+        width: 12px;
+        height: 12px;
+    }
+    .yh .c.h1,
+    .yh-swatch.h1 {
+        background: var(--heat-1);
+    }
+    .yh .c.h2,
+    .yh-swatch.h2 {
+        background: var(--heat-2);
+    }
+    .yh .c.h3,
+    .yh-swatch.h3 {
+        background: var(--heat-3);
+    }
+    .yh .c.h4,
+    .yh-swatch.h4 {
+        background: var(--heat-4);
+    }
+    .yh .c.h5,
+    .yh-swatch.h5 {
+        background: var(--heat-5);
+    }
+    .yh .c.today {
+        box-shadow: 0 0 0 2px var(--ink-1);
+    }
+    .yh .c.future {
+        opacity: 0.35;
+    }
+    .yh .c.blank {
+        visibility: hidden;
+    }
+    .yh .c:hover {
+        box-shadow: 0 0 0 2px var(--accent);
+    }
+    .yh-foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 10px;
+        font-size: var(--text-xs);
+        color: var(--ink-3);
+    }
     .datepicker {
         width: 264px;
     }

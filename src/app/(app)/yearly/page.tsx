@@ -1,5 +1,6 @@
 import { getYearlyWorkbook } from "@/db/queries/dashboard";
 import { listYearsWithData } from "@/db/queries/performance";
+import { getDailyAdmissionCountsForSession } from "@/db/queries/dailyAdmissions";
 import { PageHeader } from "@/components/shell/PageHeader";
 import { CompanyDashboard } from "@/components/dashboard/CompanyDashboard";
 import { DashboardSwitch } from "@/components/dashboard/DashboardSwitch";
@@ -11,8 +12,16 @@ import { requirePermission } from "@/lib/auth/session";
 import type { CurrentUser } from "@/lib/auth/session";
 import type { ParsedWorkbook } from "@/schemas/parser";
 
-/** Same split as the monthly page; the yearly counsellor view has no calendar (a year has no days grid). */
-function DashboardForScope({ user, workbook }: { user: CurrentUser; workbook: ParsedWorkbook }) {
+/** Same split as the monthly page; the yearly counsellor view swaps the month calendar for a session-long heatmap. */
+async function DashboardForScope({
+    user,
+    workbook,
+    year,
+}: {
+    user: CurrentUser;
+    workbook: ParsedWorkbook;
+    year: string;
+}) {
     switch (user.scope.kind) {
         case "all":
             return (
@@ -26,12 +35,14 @@ function DashboardForScope({ user, workbook }: { user: CurrentUser; workbook: Pa
                     <TeamDashboard workbook={workbook} />
                 </div>
             );
-        case "self":
+        case "self": {
+            const days = await getDailyAdmissionCountsForSession(user.id, year);
             return (
                 <div data-component="DashboardForScope" className="contents">
-                    <CounsellorDashboard workbook={workbook} userId={user.id} />
+                    <CounsellorDashboard workbook={workbook} userId={user.id} session={{ year, days }} />
                 </div>
             );
+        }
         case "none":
             return (
                 <p data-component="DashboardForScope" className="empty">
@@ -52,7 +63,8 @@ export default async function YearlyDashboardPage({
     const latest = years[0];
     const year = parseYearDateParam(params.year, latest ?? currentYearDate());
 
-    const workbook = await getYearlyWorkbook(year, user.scope);
+    // A counsellor's "My team" tab lists their teammates, so their workbook keeps the team's rows.
+    const workbook = await getYearlyWorkbook(year, user.scope, { includeTeammates: user.scope.kind === "self" });
 
     return (
         <div data-component="YearlyDashboardPage" className="stack gap-5">
@@ -74,7 +86,7 @@ export default async function YearlyDashboardPage({
                     under the team they were on most recently.
                 </span>
             </p>
-            <DashboardForScope user={user} workbook={workbook} />
+            <DashboardForScope user={user} workbook={workbook} year={year} />
         </div>
     );
 }

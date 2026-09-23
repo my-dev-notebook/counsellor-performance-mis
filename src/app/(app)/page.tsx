@@ -68,7 +68,8 @@ export default async function MonthlyDashboardPage({
     const latest = months[0];
     const date = parseMonthDateParam(params.date, latest ?? currentMonthDate());
 
-    const workbook = await getMonthlyWorkbook(date, user.scope);
+    // A counsellor's "My team" tab lists their teammates, so their workbook keeps the team's rows.
+    const workbook = await getMonthlyWorkbook(date, user.scope, { includeTeammates: user.scope.kind === "self" });
 
     return (
         <div data-component="MonthlyDashboardPage" className="stack gap-5">
