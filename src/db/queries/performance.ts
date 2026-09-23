@@ -1,7 +1,7 @@
 import { eq, and, or, lt, desc, sql, like, inArray, isNotNull } from "drizzle-orm";
 import { alias } from "drizzle-orm/sqlite-core";
 import { getDb } from "@/db/client";
-import { users, teams, agencies, roles, counsellorPerfMonthly, admissions } from "@/db/schema";
+import { users, teams, agencies, roles, counsellorPerfMonthly, successfulApplications } from "@/db/schema";
 import type { MonthSummary, PerformanceEntry, ProgressRow, UserRow } from "@/db/types";
 import type { Scope } from "@/lib/auth/permissions";
 import { combine, rowVisible, scopeTeamCondition, userInScope } from "@/lib/auth/permissions";
@@ -39,7 +39,7 @@ export async function listYearsWithData(scope: Scope): Promise<string[]> {
 }
 
 /**
- * Live "achieved" for every counsellor in one month: COUNT(*) of `admissions`
+ * Live "achieved" for every counsellor in one month: COUNT(*) of `successful_applications`
  * rows whose date falls inside the given "YYYY-MM" month, grouped by user. One
  * query, used to avoid N+1 lookups from getProgressForMonth's per-counsellor
  * list. Internal: callers only surface entries for users they may see.
@@ -47,10 +47,10 @@ export async function listYearsWithData(scope: Scope): Promise<string[]> {
 export async function getAchievedForCounsellors(monthDate: string): Promise<Map<number, number>> {
     const db = await getDb();
     const rows = await db
-        .select({ userId: admissions.userId, total: sql<number>`COUNT(*)` })
-        .from(admissions)
-        .where(like(admissions.date, `${monthDate}-%`)) // TODO: optimize this!
-        .groupBy(admissions.userId); // For 2500 admissions on a month, this query will cost 2500 row reads;
+        .select({ userId: successfulApplications.userId, total: sql<number>`COUNT(*)` })
+        .from(successfulApplications)
+        .where(like(successfulApplications.date, `${monthDate}-%`)) // TODO: optimize this!
+        .groupBy(successfulApplications.userId); // For 2500 successful applications on a month, this query will cost 2500 row reads;
     return new Map(rows.map((r) => [r.userId, Number(r.total)]));
 }
 
@@ -59,8 +59,8 @@ export async function getAchievedForMonth(userId: number, monthDate: string): Pr
     const db = await getDb();
     const rows = await db
         .select({ total: sql<number>`COUNT(*)` })
-        .from(admissions)
-        .where(and(eq(admissions.userId, userId), like(admissions.date, `${monthDate}-%`)));
+        .from(successfulApplications)
+        .where(and(eq(successfulApplications.userId, userId), like(successfulApplications.date, `${monthDate}-%`)));
     return Number(rows[0]?.total ?? 0);
 }
 

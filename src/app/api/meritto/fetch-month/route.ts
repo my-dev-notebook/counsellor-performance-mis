@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
-import { fetchCounsellorAdmissions } from "@/lib/admissions/fetch-counsellor";
+import { fetchCounsellorSuccessfulApplications } from "@/lib/successful-applications/fetch-counsellor";
 import { MonthDate } from "@/schemas/dates";
 
 const Body = z.object({
@@ -13,7 +13,7 @@ const Body = z.object({
 
 /**
  * One counsellor's month from Meritto, as rows on their days, with no diff
- * (see `fetchCounsellorAdmissions`). The all-counsellors fetch page calls
+ * (see `fetchCounsellorSuccessfulApplications`). The all-counsellors fetch page calls
  * this once per counsellor, several at a time.
  *
  * A route handler rather than a server action on purpose: Next.js runs a
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     }
     const { url, headers, userId, month } = parsed.data;
     try {
-        const rows = await fetchCounsellorAdmissions(url, headers, userId, { month }, user.scope);
+        const rows = await fetchCounsellorSuccessfulApplications(url, headers, userId, { month }, user.scope);
         return NextResponse.json(rows);
     } catch (error) {
         const message = error instanceof Error ? error.message : "Fetch failed";

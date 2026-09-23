@@ -4,7 +4,7 @@
  */
 
 export const TYPED = [
-    "your admissions dashboard.",
+    "your successful applications dashboard.",
     "targets vs. achieved, live.",
     "every counsellor, every team, one screen.",
     "monthly and daily entry without the spreadsheet.",
@@ -14,12 +14,12 @@ export const TYPED = [
     "trends across months and years.",
     "target gaps you can act on today.",
     "agencies, teams, and counsellors in one roster.",
-    "the MIS your admissions team actually opens.",
-    "one source of truth for admissions.",
+    "the MIS your counselling team actually opens.",
+    "one source of truth for applications.",
 ] as const;
 
 export const REEL = [
-    "Targets in. Admissions out. Gaps visible.",
+    "Targets in. Applications out. Gaps visible.",
     "Know who's on target before the month ends.",
     "From daily entry to yearly trend.",
     "Achieved, pending, gap — per counsellor, per day.",
@@ -30,7 +30,7 @@ export const REEL = [
 
 export const TRACK = [
     "targets",
-    "admissions",
+    "successful applications",
     "every counsellor",
     "team performance",
     "call quality",

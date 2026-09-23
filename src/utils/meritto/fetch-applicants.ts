@@ -231,7 +231,7 @@ export function buildRequestBody({
 
     // Advance filters: index 0 is the date window, index 1 the counsellor,
     // index 2 restricts to online payments (offline/cash/DD/voucher/free are
-    // not counted as admissions).
+    // not counted as successful applications).
     set("application_advance_filter[0][condition]", "and");
     set("application_advance_filter[0][0][fields]", "payment_approved_date||date||");
     set("application_advance_filter[0][0][types]", "between");

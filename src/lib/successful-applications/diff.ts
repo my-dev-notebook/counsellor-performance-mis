@@ -1,9 +1,9 @@
-import type { AdmissionRecord } from "@/schemas/admissions";
+import type { SuccessfulApplicationRecord } from "@/schemas/successful-applications";
 
 /** One application number whose details differ between the DB and Meritto. */
-export interface AdmissionChange {
-    before: AdmissionRecord;
-    after: AdmissionRecord;
+export interface SuccessfulApplicationChange {
+    before: SuccessfulApplicationRecord;
+    after: SuccessfulApplicationRecord;
 }
 
 /**
@@ -14,19 +14,19 @@ export interface AdmissionChange {
  */
 export interface DayDiff {
     date: string;
-    added: AdmissionRecord[];
-    changed: AdmissionChange[];
-    removed: AdmissionRecord[];
+    added: SuccessfulApplicationRecord[];
+    changed: SuccessfulApplicationChange[];
+    removed: SuccessfulApplicationRecord[];
     unchanged: number;
     /** Meritto's full row set for the day — what an apply writes verbatim. */
-    fetched: AdmissionRecord[];
+    fetched: SuccessfulApplicationRecord[];
 }
 
 export function hasChanges(diff: DayDiff): boolean {
     return diff.added.length > 0 || diff.changed.length > 0 || diff.removed.length > 0;
 }
 
-function sameRecord(a: AdmissionRecord, b: AdmissionRecord): boolean {
+function sameRecord(a: SuccessfulApplicationRecord, b: SuccessfulApplicationRecord): boolean {
     return (
         a.applicantUserId === b.applicantUserId &&
         a.applicantName === b.applicantName &&
@@ -35,12 +35,12 @@ function sameRecord(a: AdmissionRecord, b: AdmissionRecord): boolean {
     );
 }
 
-export function diffDay(date: string, existing: AdmissionRecord[], fetched: AdmissionRecord[]): DayDiff {
+export function diffDay(date: string, existing: SuccessfulApplicationRecord[], fetched: SuccessfulApplicationRecord[]): DayDiff {
     const before = new Map(existing.map((r) => [r.applicationNumber, r]));
     const after = new Map(fetched.map((r) => [r.applicationNumber, r]));
 
-    const added: AdmissionRecord[] = [];
-    const changed: AdmissionChange[] = [];
+    const added: SuccessfulApplicationRecord[] = [];
+    const changed: SuccessfulApplicationChange[] = [];
     let unchanged = 0;
     for (const record of fetched) {
         const previous = before.get(record.applicationNumber);
@@ -59,29 +59,29 @@ export function diffDay(date: string, existing: AdmissionRecord[], fetched: Admi
  * removed from one and added to the other.
  */
 export function diffDays(
-    existingByDate: Map<string, AdmissionRecord[]>,
-    fetchedByDate: Map<string, AdmissionRecord[]>,
+    existingByDate: Map<string, SuccessfulApplicationRecord[]>,
+    fetchedByDate: Map<string, SuccessfulApplicationRecord[]>,
 ): DayDiff[] {
     const dates = Array.from(new Set([...existingByDate.keys(), ...fetchedByDate.keys()])).sort();
     return dates.map((date) => diffDay(date, existingByDate.get(date) ?? [], fetchedByDate.get(date) ?? []));
 }
 
 /** A fetched row that cannot be applied: its application number is already credited elsewhere. */
-export interface AdmissionConflict {
+export interface SuccessfulApplicationConflict {
     date: string;
-    record: AdmissionRecord;
+    record: SuccessfulApplicationRecord;
     ownerName: string;
     ownerDate: string;
 }
 
 /** One Meritto row placed on its payment-approved day. */
-export interface FetchedAdmission {
+export interface FetchedSuccessfulApplication {
     date: string;
-    record: AdmissionRecord;
+    record: SuccessfulApplicationRecord;
 }
 
 /** Where an application number currently sits in the DB. */
-export interface ExistingAdmission extends FetchedAdmission {
+export interface ExistingSuccessfulApplication extends FetchedSuccessfulApplication {
     userId: number;
     userName: string;
 }
@@ -90,7 +90,7 @@ export interface ExistingAdmission extends FetchedAdmission {
 export interface DuplicateClaim {
     userId: number;
     date: string;
-    record: AdmissionRecord;
+    record: SuccessfulApplicationRecord;
 }
 
 /**
@@ -103,11 +103,11 @@ export interface DuplicateOwnership {
     applicationNumber: string;
     claims: DuplicateClaim[];
     /** Who the DB credits it to today, if anyone. */
-    existing: ExistingAdmission | null;
+    existing: ExistingSuccessfulApplication | null;
 }
 
 /** An application the DB credits to one counsellor but Meritto to another; apply re-credits it. */
-export interface AdmissionMove {
+export interface SuccessfulApplicationMove {
     applicationNumber: string;
     date: string;
     fromUserId: number;
@@ -120,19 +120,19 @@ export interface CounsellorDiff {
     userId: number;
     /** Only days where the DB and Meritto disagree, in date order. */
     days: DayDiff[];
-    conflicts: AdmissionConflict[];
+    conflicts: SuccessfulApplicationConflict[];
     /** Rows in `days[].fetched` that another in-scope counsellor currently holds; apply reclaims them. */
-    movedIn: AdmissionMove[];
+    movedIn: SuccessfulApplicationMove[];
     /** Rows this counsellor loses to another in-scope counsellor. */
-    movedOut: AdmissionMove[];
+    movedOut: SuccessfulApplicationMove[];
     /** Rows Meritto returned for this counsellor, before duplicates and conflicts were dropped. */
     fetchedCount: number;
 }
 
 /** Applications Meritto returned under two or more counsellors. */
 export function findDuplicateOwnership(
-    fetchedByUser: Map<number, FetchedAdmission[]>,
-    existing: ExistingAdmission[],
+    fetchedByUser: Map<number, FetchedSuccessfulApplication[]>,
+    existing: ExistingSuccessfulApplication[],
 ): DuplicateOwnership[] {
     const claims = new Map<string, DuplicateClaim[]>();
     for (const [userId, rows] of fetchedByUser) {
@@ -173,15 +173,15 @@ export function diffCounsellors({
     resolutions,
 }: {
     monthDate: string;
-    fetchedByUser: Map<number, FetchedAdmission[]>;
-    existing: ExistingAdmission[];
+    fetchedByUser: Map<number, FetchedSuccessfulApplication[]>;
+    existing: ExistingSuccessfulApplication[];
     resolutions: Map<string, number | null>;
 }): Map<number, CounsellorDiff> {
     const existingByNumber = new Map(existing.map((e) => [e.record.applicationNumber, e]));
-    const existingByUserDate = new Map<number, Map<string, AdmissionRecord[]>>();
+    const existingByUserDate = new Map<number, Map<string, SuccessfulApplicationRecord[]>>();
     for (const e of existing) {
         if (!fetchedByUser.has(e.userId) || !e.date.startsWith(`${monthDate}-`)) continue;
-        const byDate = existingByUserDate.get(e.userId) ?? new Map<string, AdmissionRecord[]>();
+        const byDate = existingByUserDate.get(e.userId) ?? new Map<string, SuccessfulApplicationRecord[]>();
         byDate.set(e.date, [...(byDate.get(e.date) ?? []), e.record]);
         existingByUserDate.set(e.userId, byDate);
     }
@@ -195,12 +195,12 @@ export function diffCounsellors({
         }
     }
 
-    const movesByNumber = new Map<string, AdmissionMove>();
+    const movesByNumber = new Map<string, SuccessfulApplicationMove>();
     const result = new Map<number, CounsellorDiff>();
     for (const [userId, rows] of fetchedByUser) {
-        const fetchedByDate = new Map<string, AdmissionRecord[]>();
-        const conflicts: AdmissionConflict[] = [];
-        const movedIn: AdmissionMove[] = [];
+        const fetchedByDate = new Map<string, SuccessfulApplicationRecord[]>();
+        const conflicts: SuccessfulApplicationConflict[] = [];
+        const movedIn: SuccessfulApplicationMove[] = [];
         for (const { date, record } of rows) {
             const n = record.applicationNumber;
             if ((claimants.get(n)?.size ?? 0) > 1 && resolutions.get(n) !== userId) continue;
@@ -211,7 +211,7 @@ export function diffCounsellors({
                     conflicts.push({ date, record, ownerName: owner.userName, ownerDate: owner.date });
                     continue;
                 }
-                const move: AdmissionMove = {
+                const move: SuccessfulApplicationMove = {
                     applicationNumber: n,
                     date,
                     fromUserId: owner.userId,

@@ -3,10 +3,10 @@
 import { useMemo, useState } from "react";
 import { FiSearch } from "react-icons/fi";
 import type { ParsedWorkbook } from "@/schemas/parser";
-import type { AdmissionRow } from "@/db/types";
+import type { SuccessfulApplicationRow } from "@/db/types";
 import { KpiCards } from "@/components/kpi/KpiCards";
 import { PersonalKpis } from "@/components/dashboard/PersonalKpis";
-import { AdmissionsCalendar } from "@/components/dashboard/AdmissionsCalendar";
+import { SuccessfulApplicationsCalendar } from "@/components/dashboard/SuccessfulApplicationsCalendar";
 import { CounsellorTable } from "@/components/table/CounsellorTable";
 import { SessionHeatmap } from "@/components/dashboard/SessionHeatmap";
 import type { DailyCount } from "@/components/dashboard/SessionHeatmap";
@@ -43,7 +43,7 @@ function ViewToggle({ value, onChange }: { value: View; onChange: (view: View) =
  * aggregate and every teammate's row under "My team" (the workbook is loaded
  * with `includeTeammates`, so `counsellors` holds the team's rows; `teams`
  * carries the whole team's totals). The calendar shows the
- * month's daily admissions and is monthly-only; the yearly page passes the
+ * month's daily successful applications and is monthly-only; the yearly page passes the
  * session's daily counts instead, drawn as a year-long heatmap.
  * Call audits live on /quality/mine.
  */
@@ -51,13 +51,13 @@ export function CounsellorDashboard({
     workbook,
     userId,
     monthDate,
-    admissions,
+    successfulApplications,
     session,
 }: {
     workbook: ParsedWorkbook;
     userId: number;
     monthDate?: string;
-    admissions?: readonly AdmissionRow[];
+    successfulApplications?: readonly SuccessfulApplicationRow[];
     session?: { year: string; days: readonly DailyCount[] };
 }) {
     const [view, setView] = useState<View>("me");
@@ -117,8 +117,8 @@ export function CounsellorDashboard({
                     <p className="empty">No team data for this period.</p>
                 </div>
             )}
-            {monthDate !== undefined && admissions !== undefined && view === "me" && (
-                <AdmissionsCalendar monthDate={monthDate} admissions={admissions} />
+            {monthDate !== undefined && successfulApplications !== undefined && view === "me" && (
+                <SuccessfulApplicationsCalendar monthDate={monthDate} successfulApplications={successfulApplications} />
             )}
             {session !== undefined && view === "me" && (
                 <SessionHeatmap sessionYear={session.year} days={session.days} />

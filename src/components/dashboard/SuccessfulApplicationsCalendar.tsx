@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { AdmissionRow } from "@/db/types";
+import type { SuccessfulApplicationRow } from "@/db/types";
 import { formatInt } from "@/lib/format";
-import { cellTone } from "@/lib/admissions/calendar-tone";
+import { cellTone } from "@/lib/successful-applications/calendar-tone";
 
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -17,16 +17,16 @@ function dayDate(monthDate: string, day: number): string {
 }
 
 /**
- * One counsellor's month as a calendar heatmap: each day carries its admission
- * count, and clicking a day lists the applicants credited to it. `admissions`
+ * One counsellor's month as a calendar heatmap: each day carries its successful application
+ * count, and clicking a day lists the applicants credited to it. `successfulApplications`
  * are the rows of that one month; days with none are blank.
  */
-export function AdmissionsCalendar({
+export function SuccessfulApplicationsCalendar({
     monthDate,
-    admissions,
+    successfulApplications,
 }: {
     monthDate: string;
-    admissions: readonly AdmissionRow[];
+    successfulApplications: readonly SuccessfulApplicationRow[];
 }) {
     const [selectedDay, setSelectedDay] = useState<number | null>(null);
 
@@ -35,14 +35,14 @@ export function AdmissionsCalendar({
     const leadingBlanks = new Date(year, month - 1, 1).getDay();
 
     const byDay = useMemo(() => {
-        const map = new Map<string, AdmissionRow[]>();
-        for (const row of admissions) {
+        const map = new Map<string, SuccessfulApplicationRow[]>();
+        for (const row of successfulApplications) {
             const list = map.get(row.date);
             if (list) list.push(row);
             else map.set(row.date, [row]);
         }
         return map;
-    }, [admissions]);
+    }, [successfulApplications]);
 
     const maxCount = Math.max(0, ...Array.from(byDay.values(), (rows) => rows.length));
     const selectedRows = selectedDay === null ? [] : (byDay.get(dayDate(monthDate, selectedDay)) ?? []);
@@ -53,11 +53,11 @@ export function AdmissionsCalendar({
     ];
 
     return (
-        <div data-component="AdmissionsCalendar" className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
+        <div data-component="SuccessfulApplicationsCalendar" className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
             <div className="card">
                 <div className="card-head">
                     <h3 className="card-title">Daily applications</h3>
-                    <span className="card-meta">{formatInt(admissions.length)} in month</span>
+                    <span className="card-meta">{formatInt(successfulApplications.length)} in month</span>
                 </div>
                 <div className="card-pad">
                     <div className="cal">
@@ -98,7 +98,7 @@ export function AdmissionsCalendar({
                 </div>
                 <div className="card-pad">
                     {selectedDay === null ? (
-                        <p className="t-sm ink-3">Click a day with applications to see who was admitted.</p>
+                        <p className="t-sm ink-3">Click a day with applications to see who applied.</p>
                     ) : (
                         <ul className="divide-y divide-line-1">
                             {selectedRows.map((row) => (

@@ -114,7 +114,7 @@ export function assessRow(
         flags.push({
             level: "warn",
             code: "ACHIEVED_VS_LIVE",
-            message: `Daily admissions add up to ${String(liveAchieved)}, the sheet says ${String(sheet.achieved)}. The sheet total will be shown for the month.`,
+            message: `Daily successful applications add up to ${String(liveAchieved)}, the sheet says ${String(sheet.achieved)}. The sheet total will be shown for the month.`,
         });
     }
     if (user.merittoUserId === null) {

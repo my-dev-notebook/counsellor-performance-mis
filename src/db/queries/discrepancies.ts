@@ -12,7 +12,7 @@ import type { AchievedSource } from "@/schemas/achieved-source";
  * /entry/discrepancies:
  *
  *   - a stored `achieved` (finalize, import or manual) that no longer equals
- *     COUNT(*) over that month's `admissions`;
+ *     COUNT(*) over that month's `successful_applications`;
  *   - a monthly row filed under a team/agency other than the user's current
  *     roster assignment (a mid-year move, or an import that took the sheet's
  *     team).
@@ -121,7 +121,7 @@ export async function listSnapshotDiscrepancies(date: string, scope: Scope): Pro
 
 /**
  * Settle an achieved discrepancy. `null` hands the month back to the live
- * daily count (source 'admissions', and finalize may write it again); a
+ * daily count (source 'successful_applications', and finalize may write it again); a
  * number pins it as a manual figure that finalize leaves alone.
  */
 export async function setAchievedOverride(userId: number, date: string, achieved: number | null): Promise<void> {
@@ -130,7 +130,7 @@ export async function setAchievedOverride(userId: number, date: string, achieved
         .update(counsellorPerfMonthly)
         .set({
             achieved,
-            achievedSource: achieved === null ? "admissions" : "manual",
+            achievedSource: achieved === null ? "successful_applications" : "manual",
             importId: null,
             updatedAt: sql`(datetime('now'))`,
         })

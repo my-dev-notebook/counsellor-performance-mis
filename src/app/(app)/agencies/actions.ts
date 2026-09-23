@@ -23,7 +23,7 @@ export async function renameAgencyAction(id: number, name: string) {
 
 /**
  * Only an unreferenced agency can go: users point at their current agency
- * and every monthly entry / daily admission carries a snapshot agency id, so
+ * and every monthly entry / daily successful application carries a snapshot agency id, so
  * deleting one with history would orphan those rows.
  */
 export async function deleteAgencyAction(id: number) {

@@ -15,7 +15,7 @@ import type { Column } from "@/components/DataTable";
 const BUTTON = "btn btn-secondary btn-sm";
 const INPUT = "input input-sm input-num w-20";
 
-const SOURCE_LABELS = { admissions: "finalize", import: "import", manual: "manual" } as const;
+const SOURCE_LABELS = { successful_applications: "finalize", import: "import", manual: "manual" } as const;
 
 function AchievedActions({ row }: { row: AchievedDiscrepancy }) {
     const [pending, startTransition] = useTransition();
@@ -188,7 +188,7 @@ export function DiscrepanciesView({
         <div data-component="DiscrepanciesView" className="stack gap-6">
             <section className="stack gap-3">
                 <div>
-                    <h2 className="t-h3">Achieved: stored total vs daily admissions</h2>
+                    <h2 className="t-h3">Achieved: stored total vs daily successful applications</h2>
                     <p className="t-sm ink-2 mt-1">
                         &quot;Use live count&quot; drops the stored total so the month follows the daily rows again. A
                         manual figure is kept until changed here; finalize never overwrites it.
@@ -198,7 +198,7 @@ export function DiscrepanciesView({
                     columns={achievedColumns}
                     rows={achieved}
                     rowKey={(r) => r.userId}
-                    emptyMessage="Every stored total matches its daily admissions for this month."
+                    emptyMessage="Every stored total matches its daily successful applications for this month."
                 />
             </section>
 

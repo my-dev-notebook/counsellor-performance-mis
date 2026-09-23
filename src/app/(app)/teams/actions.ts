@@ -74,7 +74,7 @@ export async function updateTeamAction(id: number, input: { name: string; leader
 
 /**
  * Only an unreferenced team can go: users point at their current team and
- * every monthly entry / daily admission carries a snapshot team id, so
+ * every monthly entry / daily successful application carries a snapshot team id, so
  * deleting a team with history would orphan those rows.
  */
 export async function deleteTeamAction(id: number) {

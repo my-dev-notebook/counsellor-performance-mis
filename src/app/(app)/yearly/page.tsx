@@ -1,6 +1,6 @@
 import { getYearlyWorkbook } from "@/db/queries/dashboard";
 import { listYearsWithData } from "@/db/queries/performance";
-import { getDailyAdmissionCountsForSession } from "@/db/queries/dailyAdmissions";
+import { getDailySuccessfulApplicationCountsForSession } from "@/db/queries/dailySuccessfulApplications";
 import { PageHeader } from "@/components/shell/PageHeader";
 import { CompanyDashboard } from "@/components/dashboard/CompanyDashboard";
 import { DashboardSwitch } from "@/components/dashboard/DashboardSwitch";
@@ -36,7 +36,7 @@ async function DashboardForScope({
                 </div>
             );
         case "self": {
-            const days = await getDailyAdmissionCountsForSession(user.id, year);
+            const days = await getDailySuccessfulApplicationCountsForSession(user.id, year);
             return (
                 <div data-component="DashboardForScope" className="contents">
                     <CounsellorDashboard workbook={workbook} userId={user.id} session={{ year, days }} />

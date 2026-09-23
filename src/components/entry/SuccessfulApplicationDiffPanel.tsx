@@ -1,8 +1,8 @@
 "use client";
 
-import type { AdmissionRecord } from "@/db/types";
-import type { AdmissionChange, AdmissionConflict, DayDiff } from "@/lib/admissions/diff";
-import type { AdmissionFetchDiff } from "@/app/(app)/entry/actions";
+import type { SuccessfulApplicationRecord } from "@/db/types";
+import type { SuccessfulApplicationChange, SuccessfulApplicationConflict, DayDiff } from "@/lib/successful-applications/diff";
+import type { SuccessfulApplicationFetchDiff } from "@/app/(app)/entry/actions";
 import { FiAlertCircle, FiAlertTriangle } from "react-icons/fi";
 import { MONTH_NAMES } from "@/lib/format";
 
@@ -14,7 +14,7 @@ const STATUS_STYLE: Record<RowStatus, { label: string; tag: string; row: string 
     removed: { label: "Removed", tag: "tag-bad", row: "line-through" },
 };
 
-const FIELDS: { key: keyof AdmissionRecord; header: string }[] = [
+const FIELDS: { key: keyof SuccessfulApplicationRecord; header: string }[] = [
     { key: "applicationNumber", header: "Application no" },
     { key: "applicantUserId", header: "Applicant ID" },
     { key: "applicantName", header: "Applicant name" },
@@ -41,7 +41,7 @@ function StatusBadge({ status }: { status: RowStatus }) {
 /** Per-application remark shown under the status badge (e.g. which counsellor a row moved from). */
 export type RowNotes = ReadonlyMap<string, string>;
 
-function DiffRow({ status, record, note }: { status: "added" | "removed"; record: AdmissionRecord; note?: string }) {
+function DiffRow({ status, record, note }: { status: "added" | "removed"; record: SuccessfulApplicationRecord; note?: string }) {
     return (
         <tr data-component="DiffRow" className={STATUS_STYLE[status].row}>
             <td>
@@ -56,7 +56,7 @@ function DiffRow({ status, record, note }: { status: "added" | "removed"; record
 }
 
 /** A changed row: unchanged fields plain, differing fields as "old → new". */
-function ChangedRow({ change }: { change: AdmissionChange }) {
+function ChangedRow({ change }: { change: SuccessfulApplicationChange }) {
     return (
         <tr data-component="ChangedRow" className={STATUS_STYLE.changed.row}>
             <td>
@@ -136,7 +136,7 @@ export function DayDiffSection({ diff, notes }: { diff: DayDiff; notes?: RowNote
     );
 }
 
-export function ConflictList({ conflicts }: { conflicts: AdmissionConflict[] }) {
+export function ConflictList({ conflicts }: { conflicts: SuccessfulApplicationConflict[] }) {
     return (
         <div data-component="ConflictList" className="alert alert-warn">
             <FiAlertTriangle aria-hidden />
@@ -163,7 +163,7 @@ export function ConflictList({ conflicts }: { conflicts: AdmissionConflict[] }) 
  * decision. Shared by the per-day and whole-month fetch on the daily-entry
  * page; the caller owns the fetch and the apply, this only renders the diff.
  */
-export function AdmissionDiffPanel({
+export function SuccessfulApplicationDiffPanel({
     title,
     diff,
     applying,
@@ -172,7 +172,7 @@ export function AdmissionDiffPanel({
     onDiscard,
 }: {
     title: string;
-    diff: AdmissionFetchDiff;
+    diff: SuccessfulApplicationFetchDiff;
     applying: boolean;
     error: string | null;
     onApply: () => void;
@@ -189,7 +189,7 @@ export function AdmissionDiffPanel({
     );
 
     return (
-        <div data-component="AdmissionDiffPanel" className="card card-pad stack gap-3">
+        <div data-component="SuccessfulApplicationDiffPanel" className="card card-pad stack gap-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                     <p className="card-title">{title}</p>

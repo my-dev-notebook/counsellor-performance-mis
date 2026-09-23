@@ -1,5 +1,5 @@
 import { listUsers } from "@/db/queries/users";
-import { getAdmissionsForMonth } from "@/db/queries/dailyAdmissions";
+import { getSuccessfulApplicationsForMonth } from "@/db/queries/dailySuccessfulApplications";
 import { AllCounsellorsFetchView } from "@/components/entry/AllCounsellorsFetchView";
 import { MonthPicker } from "@/components/MonthPicker";
 import { PageHeader } from "@/components/shell/PageHeader";
@@ -18,7 +18,7 @@ export default async function FetchAllPage({
     const counsellors = await listUsers(user.scope, { includeInactive: false, roleNames: ["counsellor"] });
     // Every row of the month, not just these counsellors': rows held by
     // anyone else are how the diff spots an application it must not take.
-    const admissions = await getAdmissionsForMonth(date);
+    const successfulApplications = await getSuccessfulApplicationsForMonth(date);
 
     return (
         <div data-component="FetchAllPage" className="stack gap-5">
@@ -27,7 +27,7 @@ export default async function FetchAllPage({
                 sub="Pull every active counsellor's online-paid applicants for the month from Meritto, compare with what is saved, and apply per counsellor or all at once."
                 actions={<MonthPicker date={date} existingMonths={[]} basePath="/entry/fetch" />}
             />
-            <AllCounsellorsFetchView key={date} date={date} counsellors={counsellors} admissions={admissions} />
+            <AllCounsellorsFetchView key={date} date={date} counsellors={counsellors} successfulApplications={successfulApplications} />
         </div>
     );
 }

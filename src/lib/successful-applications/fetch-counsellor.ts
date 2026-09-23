@@ -1,7 +1,7 @@
 import { getActiveUserById } from "@/db/queries/users";
 import { userReadableInScope } from "@/db/queries/performance";
 import { fetchApplicants } from "@/utils/meritto/fetch-applicants";
-import type { FetchedAdmission } from "@/lib/admissions/diff";
+import type { FetchedSuccessfulApplication } from "@/lib/successful-applications/diff";
 import type { Scope } from "@/lib/auth/permissions";
 import { DayDate, MonthDate } from "@/schemas/dates";
 
@@ -18,19 +18,19 @@ export type FetchWindow = { day: string } | { month: string };
  * `meritto_user_id`, so it is resolved here rather than trusted from the
  * client. A user without a Meritto id cannot be fetched for.
  */
-export async function fetchCounsellorAdmissions(
+export async function fetchCounsellorSuccessfulApplications(
     url: string,
     headers: Record<string, string>,
     userId: number,
     range: FetchWindow,
     scope: Scope,
-): Promise<FetchedAdmission[]> {
+): Promise<FetchedSuccessfulApplication[]> {
     const counsellor = await getActiveUserById(userId);
     if (!counsellor || !(await userReadableInScope(userId, scope))) {
-        throw new Error(`fetchCounsellorAdmissions: no active user with id ${String(userId)}`);
+        throw new Error(`fetchCounsellorSuccessfulApplications: no active user with id ${String(userId)}`);
     }
     if (counsellor.merittoUserId === null) {
-        throw new Error(`fetchCounsellorAdmissions: ${counsellor.name} has no Meritto user id`);
+        throw new Error(`fetchCounsellorSuccessfulApplications: ${counsellor.name} has no Meritto user id`);
     }
 
     // Window bounds as local Dates for the request body.
@@ -55,10 +55,10 @@ export async function fetchCounsellorAdmissions(
     return applicants.map((a) => {
         const date = "day" in range ? range.day : a.paymentApprovedDate;
         if (date === "") {
-            throw new Error(`fetchCounsellorAdmissions: ${a.applicationNumber} has no payment approved date`);
+            throw new Error(`fetchCounsellorSuccessfulApplications: ${a.applicationNumber} has no payment approved date`);
         }
         // The scraper yields every field as a string straight out of the HTML;
-        // `admissions` stores the two ids as integers. Coerce here, at the boundary.
+        // `successful_applications` stores the two ids as integers. Coerce here, at the boundary.
         return {
             date,
             record: {

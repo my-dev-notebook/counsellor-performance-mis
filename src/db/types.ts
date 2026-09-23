@@ -1,4 +1,4 @@
-import type { teams, agencies, roles, counsellorPerfMonthly, admissions, userChanges } from "@/db/schema";
+import type { teams, agencies, roles, counsellorPerfMonthly, successfulApplications, userChanges } from "@/db/schema";
 
 /**
  * Row shapes for what the query layer RETURNS — deliberately not zod.
@@ -10,7 +10,7 @@ import type { teams, agencies, roles, counsellorPerfMonthly, admissions, userCha
  * `$inferSelect` instead, so a column change shows up here as a type error.
  *
  * Anything that crosses the client/server boundary IS validated, and lives in
- * src/schemas/ as a zod schema — see `AdmissionRecord`, re-exported at the
+ * src/schemas/ as a zod schema — see `SuccessfulApplicationRecord`, re-exported at the
  * bottom of this file.
  */
 
@@ -54,10 +54,10 @@ export type UserChangeRow = Omit<typeof userChanges.$inferSelect, "changedBy"> &
 export type PerformanceEntry = Omit<typeof counsellorPerfMonthly.$inferSelect, "createdAt" | "updatedAt">;
 
 /**
- * One `admissions` row — a single admission credited to one counsellor on one
+ * One `successful_applications` row — a single successful application credited to one counsellor on one
  * day. There is no count column: a day's total is COUNT(*) over its rows.
  */
-export type AdmissionRow = Omit<typeof admissions.$inferSelect, "createdAt" | "updatedAt">;
+export type SuccessfulApplicationRow = Omit<typeof successfulApplications.$inferSelect, "createdAt" | "updatedAt">;
 
 /**
  * One counsellor's month. `teamId`/`teamName` are the month's SNAPSHOT team
@@ -81,6 +81,6 @@ export interface MonthSummary {
 /**
  * Re-exported so the components and queries that already import their types
  * from here keep one import site, while the schema itself stays the single
- * source of truth in src/schemas/admissions.ts.
+ * source of truth in src/schemas/successful-applications.ts.
  */
-export type { AdmissionRecord } from "@/schemas/admissions";
+export type { SuccessfulApplicationRecord } from "@/schemas/successful-applications";

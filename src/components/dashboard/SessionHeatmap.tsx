@@ -2,10 +2,10 @@
 
 import { useMemo, useSyncExternalStore, type CSSProperties } from "react";
 import { formatInt } from "@/lib/format";
-import { cellTone } from "@/lib/admissions/calendar-tone";
+import { cellTone } from "@/lib/successful-applications/calendar-tone";
 import { Tooltip } from "@/components/Tooltip";
 
-/** One day's admission count, as `getDailyAdmissionCountsForSession` returns it. */
+/** One day's successful application count, as `getDailySuccessfulApplicationCountsForSession` returns it. */
 export interface DailyCount {
     date: string;
     count: number;
@@ -45,7 +45,7 @@ function useToday(): string | null {
 }
 
 /**
- * The monthly admissions calendar stretched over a whole session (October →
+ * The monthly successful applications calendar stretched over a whole session (October →
  * September), GitHub-style: one column per week (Monday first), one row per
  * weekday, tinted by the day's count relative to the session's best day.
  * Hovering a day shows its count; month labels sit over the week holding the 1st.

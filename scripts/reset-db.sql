@@ -5,7 +5,7 @@
 DROP TABLE IF EXISTS call_audits;
 DROP TABLE IF EXISTS sessions;
 DROP TABLE IF EXISTS user_changes;
-DROP TABLE IF EXISTS admissions;
+DROP TABLE IF EXISTS successful_applications;
 DROP TABLE IF EXISTS counsellor_perf_monthly;
 DROP TABLE IF EXISTS imports;
 DROP TABLE IF EXISTS users;

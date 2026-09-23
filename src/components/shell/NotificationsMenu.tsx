@@ -50,7 +50,7 @@ const PLACEHOLDER: Notification[] = [
         tone: "warn",
         icon: <FiAlertTriangle aria-hidden />,
         title: "3 discrepancies need review",
-        detail: "Stored totals differ from daily admissions for Karan Mehta, Neha Gupta and Vikram Singh.",
+        detail: "Stored totals differ from daily successful applications for Karan Mehta, Neha Gupta and Vikram Singh.",
         when: "1 h",
         group: "Today",
         cleared: false,

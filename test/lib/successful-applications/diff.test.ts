@@ -1,8 +1,8 @@
 import { describe, test, expect } from "vitest";
-import { diffDay, diffDays, hasChanges } from "@/lib/admissions/diff";
-import type { AdmissionRecord } from "@/schemas/admissions";
+import { diffDay, diffDays, hasChanges } from "@/lib/successful-applications/diff";
+import type { SuccessfulApplicationRecord } from "@/schemas/successful-applications";
 
-const rec = (n: string, extra: Partial<AdmissionRecord> = {}): AdmissionRecord => ({
+const rec = (n: string, extra: Partial<SuccessfulApplicationRecord> = {}): SuccessfulApplicationRecord => ({
     applicationNumber: n,
     applicantUserId: 1,
     applicantName: "A",
@@ -11,7 +11,7 @@ const rec = (n: string, extra: Partial<AdmissionRecord> = {}): AdmissionRecord =
     ...extra,
 });
 
-describe("admissions/diff", () => {
+describe("successful-applications/diff", () => {
     test("classifies added, changed, removed, unchanged by application number", () => {
         const d = diffDay(
             "2026-08-20",

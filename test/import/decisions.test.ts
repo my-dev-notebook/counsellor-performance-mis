@@ -17,8 +17,8 @@ const CONTEXT: ImportContext = {
         { id: 12, name: "Chitra Nair", email: "chitra@x.in", merittoUserId: 3, roleName: "counsellor", teamId: 1, teamName: "Engineering", agencyId: null, agencyName: null, isActive: true },
     ],
     entries: {
-        10: { overall: 40, nonNegotiable: 36, achieved: null, achievedSource: "admissions", importId: null, teamId: 1, agencyId: 1 },
-        11: { overall: 30, nonNegotiable: 27, achieved: 20, achievedSource: "admissions", importId: null, teamId: 2, agencyId: null },
+        10: { overall: 40, nonNegotiable: 36, achieved: null, achievedSource: "successful_applications", importId: null, teamId: 1, agencyId: 1 },
+        11: { overall: 30, nonNegotiable: 27, achieved: 20, achievedSource: "successful_applications", importId: null, teamId: 2, agencyId: null },
     },
     liveAchieved: { 10: 12 },
 };

@@ -2,7 +2,7 @@ import type { Band, Person } from "@/components/auth/constellation/taglines";
 
 /**
  * The constellation behind the sign-in card: plain stars plus a handful of counsellor nodes, linked when close,
- * with admission pulses running along the counsellor edges. Plain DOM and one `requestAnimationFrame` loop — no
+ * with successful application pulses running along the counsellor edges. Plain DOM and one `requestAnimationFrame` loop — no
  * React state per frame. The same loop moves the parallax layers and the hover label so nothing else has to.
  *
  * Kept cheap on purpose:
@@ -397,7 +397,7 @@ export function mountScene(els: SceneElements, people: readonly Person[]): () =>
             bursts = bursts.filter((b) => b.k < 1);
         }
 
-        // admission pulses along counsellor edges
+        // successful application pulses along counsellor edges
         if (!reduced && edgeA.length && t % 28 === 0 && pulses.length < MAX_PULSES) {
             const e = Math.floor(Math.random() * edgeA.length);
             const a = edgeA[e];

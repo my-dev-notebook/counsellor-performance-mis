@@ -116,11 +116,11 @@ export function EntryPanel({ row, date }: { row: ProgressRow; date: string }) {
                 </label>
                 <div className="field">
                     <span className="label">Achieved</span>
-                    {/* Read-only: derived from daily admissions (live) or the finalize job (closed months). */}
+                    {/* Read-only: derived from daily successful applications (live) or the finalize job (closed months). */}
                     <span className="input input-num readonly inline-flex items-center justify-end">
                         {formatInt(entry?.achieved ?? null)}
                     </span>
-                    <span className="hint">Derived from daily admissions</span>
+                    <span className="hint">Derived from daily successful applications</span>
                 </div>
             </div>
 
@@ -140,7 +140,7 @@ export function EntryPanel({ row, date }: { row: ProgressRow; date: string }) {
                     href={`/entry/daily?userId=${String(counsellor.id)}&date=${date}`}
                     className="btn btn-link ml-auto"
                 >
-                    Manage daily admissions
+                    Manage daily successful applications
                     <FiArrowRight aria-hidden />
                 </Link>
             </div>

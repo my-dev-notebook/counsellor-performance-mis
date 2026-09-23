@@ -215,7 +215,7 @@ export async function commitImport(input: CommitImportInput, actor: { id: number
                 overall: figures.overall,
                 nonNegotiable: figures.nonNegotiable,
                 achieved: figures.achieved,
-                achievedSource: figures.achieved === null ? "admissions" : "import",
+                achievedSource: figures.achieved === null ? "successful_applications" : "import",
                 importId: figures.achieved === null ? null : importId,
             }),
         );

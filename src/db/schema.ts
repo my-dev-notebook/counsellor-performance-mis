@@ -8,7 +8,7 @@ import { OVERALL_RATINGS, RATINGS } from "@/schemas/call-audit";
  *
  *   - `users` is one row per real person, for life. A team/role/agency change
  *     is a direct UPDATE of that row.
- *   - Every `admissions` and `counsellor_perf_monthly` row carries the
+ *   - Every `successful_applications` and `counsellor_perf_monthly` row carries the
  *     `team_id`/`agency_id` the counsellor belonged to when the row was
  *     created, so historical reads never depend on the user's current row.
  *   - `user_changes` is an append-only log of every team/role/agency/active
@@ -48,7 +48,7 @@ export const users = sqliteTable(
         // Login identifier.
         email: text("email").notNull().unique(),
         // Meritto's own user id for this person (7-8 digits, e.g. 16098382).
-        // Required for counsellors -- it is the join key for the admissions
+        // Required for counsellors -- it is the join key for the successful applications
         // auto-fetch (`counsellorId` in src/utils/meritto/fetch-applicants.ts)
         // -- and optional for everyone else. Enforced in the action layer.
         merittoUserId: integer("meritto_user_id").unique(),
@@ -125,7 +125,7 @@ export const sessions = sqliteTable(
 //
 // `date` is a "YYYY-MM" string (e.g. "2026-09"). `achieved` is nullable:
 // NULL means "not yet finalized" — for the live/current month it's computed
-// on the fly from `admissions` at read time (see getAchievedForMonth /
+// on the fly from `successful_applications` at read time (see getAchievedForMonth /
 // getAchievedForCounsellors in src/db/queries/performance.ts); for a
 // closed/past month it's written in by the finalize job
 // (src/db/queries/finalize.ts) so history reads stay a single cheap lookup.
@@ -137,9 +137,9 @@ export const sessions = sqliteTable(
 // "take sheet" on a row whose sheet team differs (src/db/queries/imports.ts).
 //
 // `achieved_source` says who wrote `achieved`. A workbook's monthly total is
-// allowed to disagree with COUNT(*) over `admissions` (the sheets carry
+// allowed to disagree with COUNT(*) over `successful_applications` (the sheets carry
 // corrections the daily rows never see), and when it does the stored total
-// wins: finalize only overwrites rows whose source is still 'admissions',
+// wins: finalize only overwrites rows whose source is still 'successful_applications',
 // and the discrepancies screen surfaces the rest.
 export const counsellorPerfMonthly = sqliteTable(
     "counsellor_perf_monthly",
@@ -156,7 +156,7 @@ export const counsellorPerfMonthly = sqliteTable(
         overall: integer("overall"),
         nonNegotiable: integer("non_negotiable"),
         achieved: integer("achieved"),
-        achievedSource: text("achieved_source", { enum: ACHIEVED_SOURCES }).notNull().default("admissions"),
+        achievedSource: text("achieved_source", { enum: ACHIEVED_SOURCES }).notNull().default("successful_applications"),
         // The import that last wrote this row's `achieved`, when the source is 'import'.
         importId: integer("import_id").references(() => imports.id),
         createdAt: text("created_at")
@@ -173,7 +173,7 @@ export const counsellorPerfMonthly = sqliteTable(
         check("chk_overall_non_negative", sql`${table.overall} IS NULL OR ${table.overall} >= 0`),
         check("chk_non_negotiable_non_negative", sql`${table.nonNegotiable} IS NULL OR ${table.nonNegotiable} >= 0`),
         check("chk_achieved_non_negative", sql`${table.achieved} IS NULL OR ${table.achieved} >= 0`),
-        check("chk_achieved_source", sql`${table.achievedSource} IN ('admissions', 'import', 'manual')`),
+        check("chk_achieved_source", sql`${table.achievedSource} IN ('successful_applications', 'import', 'manual')`),
     ],
 );
 
@@ -207,25 +207,25 @@ export const imports = sqliteTable(
     ],
 );
 
-// One row per ADMISSION -- not one row per day. `date` is the "YYYY-MM-DD" the
-// admission is credited to, and a day's count is COUNT(*) over its rows, so a
+// One row per SUCCESSFUL APPLICATION -- not one row per day. `date` is the "YYYY-MM-DD" the
+// successful application is credited to, and a day's count is COUNT(*) over its rows, so a
 // stored number can never drift out of sync with the records behind it (there
 // is no `count` column anywhere).
 //
 // Column names mirror `Applicant` from src/utils/meritto/fetch-applicants.ts,
 // so an entry round-trips identically whether it was typed by hand or pulled
-// from the admissions auto-fetch. The scraper yields strings; `applicant_user_id`
+// from the successful applications auto-fetch. The scraper yields strings; `applicant_user_id`
 // and `form_id` are integers here, coerced at the action-layer boundary.
 //
-// `application_number` is UNIQUE across the whole table: one admission belongs
+// `application_number` is UNIQUE across the whole table: one successful application belongs
 // to exactly one counsellor on exactly one day. This is the guarantee that
 // makes the auto-fetch safe to re-run.
 //
 // `team_id`/`agency_id` are snapshots of the counsellor's assignment at insert
 // time, so team-level range queries (`WHERE team_id = ? AND date BETWEEN ...`)
 // never join through the user's current row.
-export const admissions = sqliteTable(
-    "admissions",
+export const successfulApplications = sqliteTable(
+    "successful_applications",
     {
         id: integer("id").primaryKey({ autoIncrement: true }),
         userId: integer("user_id")
@@ -251,14 +251,14 @@ export const admissions = sqliteTable(
     (table) => [
         // The daily-entry page reads one counsellor's whole month, and
         // getAchievedForCounsellors groups a month by user.
-        index("idx_admissions_user_date").on(table.userId, table.date),
+        index("idx_successful_applications_user_date").on(table.userId, table.date),
         // Date range queries: company-wide, per team, per agency.
-        index("idx_admissions_date").on(table.date),
-        index("idx_admissions_team_date").on(table.teamId, table.date),
-        index("idx_admissions_agency_date").on(table.agencyId, table.date),
-        check("chk_admissions_date_format", sql`${table.date} GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'`),
-        check("chk_admissions_applicant_user_id_positive", sql`${table.applicantUserId} > 0`),
-        check("chk_admissions_form_id_positive", sql`${table.formId} > 0`),
+        index("idx_successful_applications_date").on(table.date),
+        index("idx_successful_applications_team_date").on(table.teamId, table.date),
+        index("idx_successful_applications_agency_date").on(table.agencyId, table.date),
+        check("chk_successful_applications_date_format", sql`${table.date} GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'`),
+        check("chk_successful_applications_applicant_user_id_positive", sql`${table.applicantUserId} > 0`),
+        check("chk_successful_applications_form_id_positive", sql`${table.formId} > 0`),
     ],
 );
 
@@ -273,7 +273,7 @@ export const admissions = sqliteTable(
 // (pass + na) / 8, recomputed at read time via `computeAqs`. `overall_rating`
 // is the analyst's own judgement, not derived from AQS.
 //
-// `team_id` snapshots the counsellor's team at audit time, like `admissions`.
+// `team_id` snapshots the counsellor's team at audit time, like `successful_applications`.
 export const callAudits = sqliteTable(
     "call_audits",
     {

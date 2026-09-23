@@ -1,9 +1,9 @@
 import { describe, test, expect } from "vitest";
-import { diffCounsellors, findDuplicateOwnership } from "@/lib/admissions/diff";
-import type { ExistingAdmission, FetchedAdmission } from "@/lib/admissions/diff";
-import type { AdmissionRecord } from "@/schemas/admissions";
+import { diffCounsellors, findDuplicateOwnership } from "@/lib/successful-applications/diff";
+import type { ExistingSuccessfulApplication, FetchedSuccessfulApplication } from "@/lib/successful-applications/diff";
+import type { SuccessfulApplicationRecord } from "@/schemas/successful-applications";
 
-const rec = (n: string, extra: Partial<AdmissionRecord> = {}): AdmissionRecord => ({
+const rec = (n: string, extra: Partial<SuccessfulApplicationRecord> = {}): SuccessfulApplicationRecord => ({
     applicationNumber: n,
     applicantUserId: 1,
     applicantName: "A",
@@ -11,8 +11,8 @@ const rec = (n: string, extra: Partial<AdmissionRecord> = {}): AdmissionRecord =
     formName: "F",
     ...extra,
 });
-const fetched = (date: string, n: string): FetchedAdmission => ({ date, record: rec(n) });
-const existing = (userId: number, date: string, n: string): ExistingAdmission => ({
+const fetched = (date: string, n: string): FetchedSuccessfulApplication => ({ date, record: rec(n) });
+const existing = (userId: number, date: string, n: string): ExistingSuccessfulApplication => ({
     userId,
     userName: `U${String(userId)}`,
     date,

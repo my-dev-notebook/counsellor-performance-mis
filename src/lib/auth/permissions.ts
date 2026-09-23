@@ -28,7 +28,7 @@ export interface Permissions {
     auditCalls: boolean;
     /** Open the Users page (read-only unless manageRoster / manageUsers). */
     viewRoster: boolean;
-    /** Monthly targets, daily admissions, finalize. */
+    /** Monthly targets, daily successful applications, finalize. */
     writeEntries: boolean;
     /** Add users, edit profiles, change team/agency. */
     manageRoster: boolean;
@@ -127,7 +127,7 @@ export function isModerator(roleName: string): boolean {
 }
 
 /**
- * What a user may read. Every query over users / admissions /
+ * What a user may read. Every query over users / successful applications /
  * counsellor_perf_monthly takes one of these and filters through
  * `scopeRowCondition` / `scopeTeamCondition` -- there is no unscoped read path.
  *

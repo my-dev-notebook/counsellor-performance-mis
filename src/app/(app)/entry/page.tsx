@@ -25,7 +25,7 @@ export default async function EntryPage({
         <div data-component="EntryPage" className="stack gap-5">
             <PageHeader
                 title="Monthly entry"
-                sub="Set each counsellor's monthly target (overall) and non-negotiable. Achieved is derived from daily admissions — expand a row and use “Manage daily admissions” to record those."
+                sub="Set each counsellor's monthly target (overall) and non-negotiable. Achieved is derived from daily successful applications — expand a row and use “Manage daily successful applications” to record those."
                 actions={
                     <>
                         <MonthPicker date={date} existingMonths={months} basePath="/entry" />

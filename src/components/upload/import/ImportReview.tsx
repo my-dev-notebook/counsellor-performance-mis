@@ -214,7 +214,7 @@ export function ImportReview({
                     <p className="card-meta mt-1">
                         Confirm the month, map anything the file could not place, resolve each flagged row, then commit.
                         The workbook&apos;s monthly total becomes the figure of record for the month, even where the
-                        daily admissions add up differently.
+                        daily successful applications add up differently.
                     </p>
                 </div>
                 <div className="flex flex-wrap items-end gap-3">

@@ -2,16 +2,16 @@
 
 import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import type { AdmissionRow, UserRow } from "@/db/types";
+import type { SuccessfulApplicationRow, UserRow } from "@/db/types";
 import { FiAlertOctagon, FiChevronDown, FiChevronRight } from "react-icons/fi";
 import { MONTH_NAMES } from "@/lib/format";
 import { Tooltip } from "@/components/Tooltip";
-import { applyFetchedAdmissionsAction } from "@/app/(app)/entry/actions";
+import { applyFetchedSuccessfulApplicationsAction } from "@/app/(app)/entry/actions";
 import { loadNpfSession } from "@/lib/nopaperformsSession";
-import { diffCounsellors, findDuplicateOwnership } from "@/lib/admissions/diff";
-import type { CounsellorDiff, DuplicateOwnership, ExistingAdmission, FetchedAdmission } from "@/lib/admissions/diff";
-import { ConflictList, DayDiffSection, formatDay } from "@/components/entry/AdmissionDiffPanel";
-import type { RowNotes } from "@/components/entry/AdmissionDiffPanel";
+import { diffCounsellors, findDuplicateOwnership } from "@/lib/successful-applications/diff";
+import type { CounsellorDiff, DuplicateOwnership, ExistingSuccessfulApplication, FetchedSuccessfulApplication } from "@/lib/successful-applications/diff";
+import { ConflictList, DayDiffSection, formatDay } from "@/components/entry/SuccessfulApplicationDiffPanel";
+import type { RowNotes } from "@/components/entry/SuccessfulApplicationDiffPanel";
 
 const BUTTON = "btn btn-secondary btn-sm";
 const PRIMARY = "btn btn-primary btn-sm";
@@ -33,7 +33,7 @@ async function fetchCounsellorMonth(
     headers: Record<string, string>,
     userId: number,
     month: string,
-): Promise<FetchedAdmission[]> {
+): Promise<FetchedSuccessfulApplication[]> {
     const response = await fetch("/api/meritto/fetch-month", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -45,19 +45,19 @@ async function fetchCounsellorMonth(
             typeof body === "object" && body !== null && "error" in body ? String(body.error) : "Fetch failed";
         throw new Error(message);
     }
-    return body as FetchedAdmission[];
+    return body as FetchedSuccessfulApplication[];
 }
 
 type FetchState =
     | { status: "skipped" }
     | { status: "pending" }
     | { status: "fetching" }
-    | { status: "done"; rows: FetchedAdmission[] }
+    | { status: "done"; rows: FetchedSuccessfulApplication[] }
     | { status: "error"; message: string };
 
 type ApplyState = { status: "applying" } | { status: "applied" } | { status: "error"; message: string };
 
-function toExisting(row: AdmissionRow & { userName: string }): ExistingAdmission {
+function toExisting(row: SuccessfulApplicationRow & { userName: string }): ExistingSuccessfulApplication {
     return {
         userId: row.userId,
         userName: row.userName,
@@ -380,13 +380,13 @@ function CounsellorCard({
 export function AllCounsellorsFetchView({
     date,
     counsellors,
-    admissions,
+    successfulApplications,
 }: {
     date: string;
     counsellors: UserRow[];
-    admissions: (AdmissionRow & { userName: string })[];
+    successfulApplications: (SuccessfulApplicationRow & { userName: string })[];
 }) {
-    const [existing, setExisting] = useState<ExistingAdmission[]>(() => admissions.map(toExisting));
+    const [existing, setExisting] = useState<ExistingSuccessfulApplication[]>(() => successfulApplications.map(toExisting));
     const [states, setStates] = useState<Map<number, FetchState>>(() => new Map());
     const [phase, setPhase] = useState<"idle" | "fetching" | "done">("idle");
     const [sessionError, setSessionError] = useState<string | null>(null);
@@ -437,7 +437,7 @@ export function AllCounsellorsFetchView({
     };
 
     const fetchedByUser = useMemo(() => {
-        const map = new Map<number, FetchedAdmission[]>();
+        const map = new Map<number, FetchedSuccessfulApplication[]>();
         if (phase !== "done") return map;
         for (const [userId, state] of states) if (state.status === "done") map.set(userId, state.rows);
         return map;
@@ -474,7 +474,7 @@ export function AllCounsellorsFetchView({
         const days = diff.days.map((d) => ({ date: d.date, records: d.fetched }));
         const reclaim = diff.movedIn.map((m) => m.applicationNumber);
         try {
-            await applyFetchedAdmissionsAction({ userId, days, reclaim });
+            await applyFetchedSuccessfulApplicationsAction({ userId, days, reclaim });
         } catch {
             setApplyStates((prev) =>
                 new Map(prev).set(userId, {

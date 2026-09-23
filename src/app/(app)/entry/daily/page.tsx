@@ -1,5 +1,5 @@
 import { listUsers } from "@/db/queries/users";
-import { getDailyAdmissionsForMonth } from "@/db/queries/dailyAdmissions";
+import { getDailySuccessfulApplicationsForMonth } from "@/db/queries/dailySuccessfulApplications";
 import { DailyEntryView } from "@/components/entry/DailyEntryView";
 import { PageHeader } from "@/components/shell/PageHeader";
 import { parseMonthDateParam } from "@/schemas/dates";
@@ -25,13 +25,13 @@ export default async function DailyEntryPage({
     // Only a counsellor inside the scope can be opened; an arbitrary id in
     // the URL is ignored rather than read.
     const counsellor = userId !== null ? (counsellors.find((c) => c.id === userId) ?? null) : null;
-    const admissions = counsellor ? await getDailyAdmissionsForMonth(counsellor.id, date) : [];
+    const successfulApplications = counsellor ? await getDailySuccessfulApplicationsForMonth(counsellor.id, date) : [];
 
     return (
         <div data-component="DailyEntryPage" className="stack gap-5">
             <PageHeader
                 title={counsellor ? `Daily entry · ${counsellor.name}` : "Daily entry"}
-                sub="Record each admission with the lead's details. The daily count is derived automatically from the number of records entered."
+                sub="Record each successful application with the lead's details. The daily count is derived automatically from the number of records entered."
             />
             <DailyEntryView
                 key={`${String(counsellor?.id ?? "none")}-${date}`}
@@ -39,7 +39,7 @@ export default async function DailyEntryPage({
                 counsellors={counsellors}
                 selectedUserId={counsellor?.id ?? null}
                 counsellorName={counsellor?.name ?? null}
-                admissions={admissions}
+                successfulApplications={successfulApplications}
             />
         </div>
     );

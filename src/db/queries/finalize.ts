@@ -1,16 +1,16 @@
 import { desc, eq, like, sql } from "drizzle-orm";
 import { getDb } from "@/db/client";
-import { admissions, counsellorPerfMonthly } from "@/db/schema";
+import { successfulApplications, counsellorPerfMonthly } from "@/db/schema";
 
 /**
- * Closes out a month: counts `admissions` per counsellor and writes
+ * Closes out a month: counts `successful_applications` per counsellor and writes
  * the total into `counsellor_perf_monthly.achieved`, so future reads of that
  * month are a single cheap lookup instead of a live daily-sum query.
  *
  * If a counsellor has no `counsellor_perf_monthly` row yet for this month,
  * one is created with `overall`/`nonNegotiable` left null (those targets are
  * set separately via the entry form; finalize only owns `achieved`). The new
- * row's `team_id`/`agency_id` snapshot is taken from the month's admissions
+ * row's `team_id`/`agency_id` snapshot is taken from the month's successful applications
  * themselves (the assignment most of them were recorded under), not from the
  * user's current row, so finalizing a month long after a team change still
  * files it under the right team. An existing row keeps its snapshot.
@@ -29,14 +29,14 @@ export async function finalizeMonth(monthDate: string): Promise<{ updated: numbe
     const db = await getDb();
     const grouped = await db
         .select({
-            userId: admissions.userId,
-            teamId: admissions.teamId,
-            agencyId: admissions.agencyId,
+            userId: successfulApplications.userId,
+            teamId: successfulApplications.teamId,
+            agencyId: successfulApplications.agencyId,
             total: sql<number>`COUNT(*)`,
         })
-        .from(admissions)
-        .where(like(admissions.date, `${monthDate}-%`))
-        .groupBy(admissions.userId, admissions.teamId, admissions.agencyId)
+        .from(successfulApplications)
+        .where(like(successfulApplications.date, `${monthDate}-%`))
+        .groupBy(successfulApplications.userId, successfulApplications.teamId, successfulApplications.agencyId)
         .orderBy(desc(sql`COUNT(*)`));
 
     const perUser = new Map<number, { teamId: number; agencyId: number | null; achieved: number }>();
@@ -58,7 +58,7 @@ export async function finalizeMonth(monthDate: string): Promise<{ updated: numbe
             .onConflictDoUpdate({
                 target: [counsellorPerfMonthly.userId, counsellorPerfMonthly.date],
                 set: { achieved, updatedAt: sql`(datetime('now'))` },
-                setWhere: eq(counsellorPerfMonthly.achievedSource, "admissions"),
+                setWhere: eq(counsellorPerfMonthly.achievedSource, "successful_applications"),
             });
         updated += 1;
     }

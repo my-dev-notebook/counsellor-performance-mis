@@ -5,7 +5,7 @@ import { MonthDate } from "@/schemas/dates";
  * The monthly entry form's Save payload (DATA_ENTRY_INTERFACE.md §4.3 step 5).
  *
  * `achieved` is absent on purpose: it is never typed in. For an open month it's
- * computed from `admissions` at read time, and for a closed month the finalize
+ * computed from `successful_applications` at read time, and for a closed month the finalize
  * job writes it (src/db/queries/finalize.ts). Both fields are nullable because
  * a target can legitimately be left blank.
  */

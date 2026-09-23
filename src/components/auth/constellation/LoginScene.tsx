@@ -63,7 +63,7 @@ const PILLS: { left: string; top: string; icon: typeof FiTarget; body: ReactNode
         icon: FiCheckCircle,
         body: (
             <>
-                <b>Admissions</b> live
+                <b>Applications</b> live
             </>
         ),
     },

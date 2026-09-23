@@ -49,7 +49,7 @@ export function formatSessionSpan(sessionYear: string): string {
     return `Oct ${String(end - 1)} – Sep ${String(end)}`;
 }
 
-/** "YYYY-MM-DD" — the `admissions.date` shape, e.g. "2026-09-10". */
+/** "YYYY-MM-DD" — the `successful_applications.date` shape, e.g. "2026-09-10". */
 export const DayDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "date must be YYYY-MM-DD");
 export type DayDate = z.infer<typeof DayDate>;
 

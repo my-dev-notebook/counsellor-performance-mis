@@ -12,20 +12,20 @@ import {
     FiTrash2,
     FiX,
 } from "react-icons/fi";
-import type { AdmissionRecord, AdmissionRow, UserRow } from "@/db/types";
+import type { SuccessfulApplicationRecord, SuccessfulApplicationRow, UserRow } from "@/db/types";
 import { MONTH_NAMES } from "@/lib/format";
-import { cellTone } from "@/lib/admissions/calendar-tone";
+import { cellTone } from "@/lib/successful-applications/calendar-tone";
 import { MonthPicker } from "@/components/MonthPicker";
 import { Select } from "@/components/Select";
 import { Tooltip } from "@/components/Tooltip";
 import {
-    saveDailyAdmissionAction,
-    fetchAdmissionDiffAction,
-    applyFetchedAdmissionsAction,
+    saveDailySuccessfulApplicationAction,
+    fetchSuccessfulApplicationDiffAction,
+    applyFetchedSuccessfulApplicationsAction,
 } from "@/app/(app)/entry/actions";
-import type { AdmissionFetchDiff, FetchWindow } from "@/app/(app)/entry/actions";
+import type { SuccessfulApplicationFetchDiff, FetchWindow } from "@/app/(app)/entry/actions";
 import { loadNpfSession } from "@/lib/nopaperformsSession";
-import { AdmissionDiffPanel } from "@/components/entry/AdmissionDiffPanel";
+import { SuccessfulApplicationDiffPanel } from "@/components/entry/SuccessfulApplicationDiffPanel";
 import { DataTable } from "@/components/DataTable";
 import type { Column } from "@/components/DataTable";
 
@@ -125,7 +125,7 @@ function CounsellorPicker({ counsellors, date }: { counsellors: UserRow[]; date:
     );
 }
 
-/** Which counsellor and which month — both navigate via the URL so the page re-fetches the admissions. */
+/** Which counsellor and which month — both navigate via the URL so the page re-fetches the successful applications. */
 function ScopeCard({ counsellors, userId, date }: { counsellors: UserRow[]; userId: number; date: string }) {
     const router = useRouter();
     return (
@@ -223,8 +223,8 @@ function CalendarGrid({
 }
 
 /**
- * The grid's in-progress mirror of `AdmissionRecord`, with every field a string.
- * `AdmissionRecord` types the two ids as numbers (they're integer columns), but
+ * The grid's in-progress mirror of `SuccessfulApplicationRecord`, with every field a string.
+ * `SuccessfulApplicationRecord` types the two ids as numbers (they're integer columns), but
  * a half-typed id is neither a valid number nor meaningfully "0" — so editing
  * happens on strings and `toRecord` converts once, on save.
  */
@@ -254,7 +254,7 @@ function isEmptyDraft(d: DraftRecord): boolean {
     );
 }
 
-function toDraft(r: AdmissionRecord): DraftRecord {
+function toDraft(r: SuccessfulApplicationRecord): DraftRecord {
     return {
         applicationNumber: r.applicationNumber,
         applicantUserId: String(r.applicantUserId),
@@ -265,11 +265,11 @@ function toDraft(r: AdmissionRecord): DraftRecord {
 }
 
 /**
- * Every `admissions` column is notNull, so a row is either complete or it isn't
+ * Every `successful_applications` column is notNull, so a row is either complete or it isn't
  * saved — returns null for an incomplete draft rather than writing a partial
  * record the DB would reject anyway.
  */
-function toRecord(d: DraftRecord): AdmissionRecord | null {
+function toRecord(d: DraftRecord): SuccessfulApplicationRecord | null {
     const applicantUserId = Number(d.applicantUserId.trim());
     const formId = Number(d.formId.trim());
     if (
@@ -309,8 +309,8 @@ function normalizeDrafts(drafts: DraftRecord[]): DraftRecord[] {
  * day and hand the written rows to `onApplied` so the caller can refresh its
  * own state. Nothing touches the DB until apply.
  */
-function useAdmissionFetch(userId: number, onApplied: (days: { date: string; records: AdmissionRecord[] }[]) => void) {
-    const [diff, setDiff] = useState<AdmissionFetchDiff | null>(null);
+function useSuccessfulApplicationFetch(userId: number, onApplied: (days: { date: string; records: SuccessfulApplicationRecord[] }[]) => void) {
+    const [diff, setDiff] = useState<SuccessfulApplicationFetchDiff | null>(null);
     const [fetching, setFetching] = useState(false);
     const [applying, setApplying] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -323,7 +323,7 @@ function useAdmissionFetch(userId: number, onApplied: (days: { date: string; rec
             return;
         }
         setFetching(true);
-        void fetchAdmissionDiffAction(session.url, session.headers, userId, range)
+        void fetchSuccessfulApplicationDiffAction(session.url, session.headers, userId, range)
             .then(setDiff)
             .catch(() => {
                 setError(
@@ -340,7 +340,7 @@ function useAdmissionFetch(userId: number, onApplied: (days: { date: string; rec
         setError(null);
         setApplying(true);
         const days = diff.days.map((d) => ({ date: d.date, records: d.fetched }));
-        void applyFetchedAdmissionsAction({ userId, days })
+        void applyFetchedSuccessfulApplicationsAction({ userId, days })
             .then(() => {
                 setDiff(null);
                 onApplied(days);
@@ -370,8 +370,8 @@ function DayEditor({
 }: {
     userId: number;
     date: string;
-    initialRecords: AdmissionRecord[];
-    onSaved: (dDate: string, records: AdmissionRecord[]) => void;
+    initialRecords: SuccessfulApplicationRecord[];
+    onSaved: (dDate: string, records: SuccessfulApplicationRecord[]) => void;
     onClose: () => void;
 }) {
     const [records, setRecords] = useState<DraftRecord[]>(() => normalizeDrafts(initialRecords.map(toDraft)));
@@ -382,7 +382,7 @@ function DayEditor({
     const [saved, setSaved] = useState(true);
     // Apply writes straight to the DB, so the grid is reset to what was
     // written: the draft (and its undo history) no longer describes anything.
-    const autoFetch = useAdmissionFetch(userId, (days) => {
+    const autoFetch = useSuccessfulApplicationFetch(userId, (days) => {
         const applied = days.find((d) => d.date === date)?.records ?? [];
         setRecords(normalizeDrafts(applied.map(toDraft)));
         setPast([]);
@@ -455,10 +455,10 @@ function DayEditor({
             );
             return;
         }
-        const valid = toSave as AdmissionRecord[];
+        const valid = toSave as SuccessfulApplicationRecord[];
         startTransition(async () => {
             try {
-                await saveDailyAdmissionAction(userId, date, valid);
+                await saveDailySuccessfulApplicationAction(userId, date, valid);
                 setSaved(true);
                 onSaved(date, valid);
             } catch {
@@ -474,7 +474,7 @@ function DayEditor({
         <div data-component="DayEditor" className="card">
             <div className="card-head items-center">
                 <h3 className="card-title">
-                    Day {day} · {filledCount} admission{filledCount === 1 ? "" : "s"}
+                    Day {day} · {filledCount} successful application{filledCount === 1 ? "" : "s"}
                 </h3>
                 <div className="row gap-1">
                     <Tooltip content="Fetch this day's online-paid applicants from Meritto and compare with what is saved">
@@ -536,7 +536,7 @@ function DayEditor({
             )}
             {autoFetch.diff && (
                 <div className="px-4 pt-3">
-                    <AdmissionDiffPanel
+                    <SuccessfulApplicationDiffPanel
                         title={`Meritto vs saved — day ${String(day)}`}
                         diff={autoFetch.diff}
                         applying={autoFetch.applying}
@@ -660,24 +660,24 @@ export function DailyEntryView({
     counsellors,
     selectedUserId,
     counsellorName,
-    admissions,
+    successfulApplications,
 }: {
     date: string;
     counsellors: UserRow[];
     selectedUserId: number | null;
     counsellorName: string | null;
-    admissions: AdmissionRow[];
+    successfulApplications: SuccessfulApplicationRow[];
 }) {
     const router = useRouter();
     const [selectedDate, setSelectedDate] = useState<string | null>(null);
     // Bumped when a month apply rewrites days behind the open editor, so it
     // remounts from the new rows instead of keeping a stale draft.
     const [editorVersion, setEditorVersion] = useState(0);
-    // `admissions` arrives as one row per admission; the calendar grid and the
+    // `successfulApplications` arrives as one row per successful application; the calendar grid and the
     // day editor both work per-day, so group once on mount.
-    const [recordsByDate, setRecordsByDate] = useState<Map<string, AdmissionRecord[]>>(() => {
-        const byDate = new Map<string, AdmissionRecord[]>();
-        for (const row of admissions) {
+    const [recordsByDate, setRecordsByDate] = useState<Map<string, SuccessfulApplicationRecord[]>>(() => {
+        const byDate = new Map<string, SuccessfulApplicationRecord[]>();
+        for (const row of successfulApplications) {
             const records = byDate.get(row.date) ?? [];
             records.push({
                 applicationNumber: row.applicationNumber,
@@ -692,7 +692,7 @@ export function DailyEntryView({
         return byDate;
     });
 
-    const monthFetch = useAdmissionFetch(selectedUserId ?? 0, (days) => {
+    const monthFetch = useSuccessfulApplicationFetch(selectedUserId ?? 0, (days) => {
         setRecordsByDate((prev) => {
             const next = new Map(prev);
             for (const d of days) {
@@ -710,7 +710,7 @@ export function DailyEntryView({
 
     const counts = new Map(Array.from(recordsByDate.entries()).map(([d, records]) => [d, records.length]));
 
-    const handleSaved = (dDate: string, records: AdmissionRecord[]) => {
+    const handleSaved = (dDate: string, records: SuccessfulApplicationRecord[]) => {
         setRecordsByDate((prev) => new Map(prev).set(dDate, records));
     };
 
@@ -758,7 +758,7 @@ export function DailyEntryView({
                         </p>
                     )}
                     {monthFetch.diff && (
-                        <AdmissionDiffPanel
+                        <SuccessfulApplicationDiffPanel
                             title={`Meritto vs saved — ${MONTH_NAMES[parseMonthDate(date).month - 1] ?? ""} ${String(parseMonthDate(date).year)}`}
                             diff={monthFetch.diff}
                             applying={monthFetch.applying}
@@ -782,7 +782,7 @@ export function DailyEntryView({
                         <div className="card">
                             <div className="empty">
                                 <div className="title">{counsellorName}</div>
-                                <p>Pick a day on the calendar to record or review its admissions.</p>
+                                <p>Pick a day on the calendar to record or review its successful applications.</p>
                             </div>
                         </div>
                     )}

@@ -25,7 +25,7 @@ export default async function DiscrepanciesPage({
         <div data-component="DiscrepanciesPage" className="stack gap-5">
             <PageHeader
                 title="Discrepancies"
-                sub="Where a month's stored total disagrees with its daily admissions, or a month is filed under a team the counsellor is no longer on. The stored figure is what the dashboards show; settle each row by choosing which side is right."
+                sub="Where a month's stored total disagrees with its daily successfulApplications, or a month is filed under a team the counsellor is no longer on. The stored figure is what the dashboards show; settle each row by choosing which side is right."
                 actions={<MonthPicker date={date} existingMonths={months} basePath="/entry/discrepancies" />}
             />
             <DiscrepanciesView

@@ -51,7 +51,7 @@ export interface ImportContext {
     roster: RosterUser[];
     /** Existing monthly rows for `date`, by user id. */
     entries: Record<number, ExistingEntry>;
-    /** COUNT(*) of `admissions` in `date`, by user id (absent = 0). */
+    /** COUNT(*) of `successful_applications` in `date`, by user id (absent = 0). */
     liveAchieved: Record<number, number>;
 }
 

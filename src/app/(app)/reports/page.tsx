@@ -113,7 +113,7 @@ export default async function ReportsOverviewPage({
         <div data-component="ReportsOverviewPage" className="stack gap-5">
             <PageHeader
                 title="Overview"
-                sub="Month-by-month Target, Achieved and Achievement % across every month on record, plus the daily admissions of one month."
+                sub="Month-by-month Target, Achieved and Achievement % across every month on record, plus the daily successful applications of one month."
             />
             {options.length > 1 && selected && (
                 <SubjectSelector options={selectOptions} value={encodeSubject(selected.subject)} />

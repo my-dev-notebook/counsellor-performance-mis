@@ -1,5 +1,5 @@
 import { getMonthlyWorkbook } from "@/db/queries/dashboard";
-import { getDailyAdmissionsForMonth } from "@/db/queries/dailyAdmissions";
+import { getDailySuccessfulApplicationsForMonth } from "@/db/queries/dailySuccessfulApplications";
 import { listMonthsWithData } from "@/db/queries/performance";
 import { PageHeader } from "@/components/shell/PageHeader";
 import { CompanyDashboard } from "@/components/dashboard/CompanyDashboard";
@@ -36,14 +36,14 @@ async function DashboardForScope({
                 </div>
             );
         case "self": {
-            const admissions = await getDailyAdmissionsForMonth(user.id, date);
+            const successfulApplications = await getDailySuccessfulApplicationsForMonth(user.id, date);
             return (
                 <div data-component="DashboardForScope" className="contents">
                     <CounsellorDashboard
                         workbook={workbook}
                         userId={user.id}
                         monthDate={date}
-                        admissions={admissions}
+                        successfulApplications={successfulApplications}
                     />
                 </div>
             );

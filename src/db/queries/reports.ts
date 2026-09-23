@@ -1,6 +1,6 @@
 import { asc, eq, like, sql } from "drizzle-orm";
 import { getDb } from "@/db/client";
-import { users, teams, counsellorPerfMonthly, admissions } from "@/db/schema";
+import { users, teams, counsellorPerfMonthly, successfulApplications } from "@/db/schema";
 import type { Status } from "@/schemas/parser";
 import { derivePctAchieved } from "@/lib/metrics/derive";
 import { deriveStatus } from "@/lib/metrics/buckets";
@@ -169,7 +169,7 @@ export async function getTeamMonthlyPoints(teamName: string, scope: Scope): Prom
 }
 
 /**
- * Whose daily admissions to count. `company` is only meaningful for an
+ * Whose daily successful applications to count. `company` is only meaningful for an
  * all-teams scope; a narrower scope's team filter still applies underneath
  * (a counsellor asking for "company" gets their own team, nothing more).
  */
@@ -184,8 +184,8 @@ export interface DailyPoint {
 }
 
 /**
- * Admissions per day across one "YYYY-MM" month for the subject — every day
- * of the month is present, days without admissions at 0. A person's series is
+ * Successful applications per day across one "YYYY-MM" month for the subject — every day
+ * of the month is present, days without successful applications at 0. A person's series is
  * gated by the scope's ROW filter (individual rows), a team's or the
  * company's by its TEAM filter (aggregates).
  */
@@ -193,17 +193,17 @@ export async function getDailyCounts(monthDate: string, subject: DailySubject, s
     const db = await getDb();
     const subjectCondition =
         subject.kind === "person"
-            ? combine(eq(admissions.userId, subject.userId), scopeRowCondition(scope, admissions.userId, admissions.teamId))
+            ? combine(eq(successfulApplications.userId, subject.userId), scopeRowCondition(scope, successfulApplications.userId, successfulApplications.teamId))
             : combine(
-                  subject.kind === "team" ? eq(admissions.teamId, subject.teamId) : undefined,
-                  scopeTeamCondition(scope, admissions.userId, admissions.teamId),
+                  subject.kind === "team" ? eq(successfulApplications.teamId, subject.teamId) : undefined,
+                  scopeTeamCondition(scope, successfulApplications.userId, successfulApplications.teamId),
               );
 
     const rows = await db
-        .select({ date: admissions.date, count: sql<number>`COUNT(*)` })
-        .from(admissions)
-        .where(combine(like(admissions.date, `${monthDate}-%`), subjectCondition))
-        .groupBy(admissions.date);
+        .select({ date: successfulApplications.date, count: sql<number>`COUNT(*)` })
+        .from(successfulApplications)
+        .where(combine(like(successfulApplications.date, `${monthDate}-%`), subjectCondition))
+        .groupBy(successfulApplications.date);
     const byDate = new Map(rows.map((r) => [r.date, Number(r.count)]));
 
     const [yearStr, monthStr] = monthDate.split("-");

@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 
 /**
  * Manual "close the month" endpoint: sums each counsellor's
- * `admissions` rows for the given month and writes the total into
+ * `successful_applications` rows for the given month and writes the total into
  * `counsellor_perf_monthly.achieved`. No Cloudflare Cron Trigger is
  * configured in wrangler.jsonc, so nothing calls this automatically — it's a
  * POST target for manual/ad-hoc invocation by a signed-in user with write
