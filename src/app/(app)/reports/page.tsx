@@ -21,7 +21,6 @@ import type { CurrentUser } from "@/lib/auth/session";
 import { decodeSubject, encodeSubject } from "@/lib/reports/subject";
 import type { Subject } from "@/lib/reports/subject";
 import { currentMonthDate, parseMonthDateParam } from "@/schemas/dates";
-import { formatMonthLabel } from "@/lib/format";
 
 interface SubjectOption {
     subject: Subject;
@@ -136,7 +135,7 @@ export default async function ReportsOverviewPage({
                             <h2 className="t-h3">Daily — {selected.label}</h2>
                             <MonthPicker date={date} existingMonths={months} basePath="/reports" />
                         </div>
-                        <DailyChart points={daily} monthLabel={formatMonthLabel(date)} />
+                        <DailyChart points={daily} monthDate={date} />
                     </section>
                 </>
             )}

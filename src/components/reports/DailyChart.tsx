@@ -3,17 +3,21 @@
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { DailyPoint } from "@/db/queries/reports";
 import { formatInt } from "@/lib/format";
+import { MonthStepper } from "@/components/MonthStepper";
 import { AXIS_STROKE, AXIS_TICK, GRID_STROKE, TOOLTIP_LABEL_STYLE, TOOLTIP_STYLE } from "./chart-theme";
 
 /** Successful applications per day of one month, as bars. Every day is on the axis; empty days sit at 0. */
-export function DailyChart({ points, monthLabel }: { points: readonly DailyPoint[]; monthLabel: string }) {
+export function DailyChart({ points, monthDate }: { points: readonly DailyPoint[]; monthDate: string }) {
     const total = points.reduce((sum, p) => sum + p.count, 0);
 
     return (
         <div data-component="DailyChart" className="card card-pad">
-            <div className="mb-3 flex items-baseline justify-between gap-3">
-                <h3 className="card-title">Daily successful applications — {monthLabel}</h3>
-                <span className="card-meta t-num">{formatInt(total)} in month</span>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                <h3 className="card-title">Daily successful applications</h3>
+                <div className="row gap-3">
+                    <span className="card-meta t-num">{formatInt(total)} in month</span>
+                    <MonthStepper date={monthDate} />
+                </div>
             </div>
             {total === 0 ? (
                 <p className="empty">No daily entries for this month.</p>

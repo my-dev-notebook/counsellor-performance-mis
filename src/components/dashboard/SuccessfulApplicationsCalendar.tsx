@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { SuccessfulApplicationRow } from "@/db/types";
 import { formatInt } from "@/lib/format";
+import { MonthStepper } from "@/components/MonthStepper";
 import { cellTone } from "@/lib/successful-applications/calendar-tone";
 
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -57,7 +58,10 @@ export function SuccessfulApplicationsCalendar({
             <div className="card">
                 <div className="card-head">
                     <h3 className="card-title">Daily applications</h3>
-                    <span className="card-meta">{formatInt(successfulApplications.length)} in month</span>
+                    <div className="row gap-3">
+                        <span className="card-meta">{formatInt(successfulApplications.length)} in month</span>
+                        <MonthStepper date={monthDate} />
+                    </div>
                 </div>
                 <div className="card-pad">
                     <div className="cal">
