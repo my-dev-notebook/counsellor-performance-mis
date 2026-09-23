@@ -23,6 +23,7 @@ const COMMIT_URL = GIT_SHA === "" ? `${REPO_URL}/commits` : `${REPO_URL}/commit/
 export function HeaderActions({ children }: { children?: ReactNode }) {
     return (
         <div data-component="HeaderActions" className="contents">
+            {/* Hidden for showcasing — restore later.
             <span className="gh-link">
                 <Tooltip content="Source on GitHub">
                     <a
@@ -41,6 +42,7 @@ export function HeaderActions({ children }: { children?: ReactNode }) {
                     </a>
                 </Tooltip>
             </span>
+            */}
             {children}
             <ThemeToggle />
         </div>
