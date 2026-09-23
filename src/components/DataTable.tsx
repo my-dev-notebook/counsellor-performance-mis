@@ -25,7 +25,7 @@ export interface Column<Row> {
     /** Called when the header is clicked, e.g. to change the sort. Renders the header as sortable. */
     onHeaderClick?: () => void;
     /** Current sort direction for this column, when it is the active sort key. */
-    sort?: SortDirection;
+    sort?: SortDirection | undefined;
     render: (row: Row, state: RowState) => ReactNode;
 }
 

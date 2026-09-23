@@ -41,7 +41,7 @@ function StatusBadge({ status }: { status: RowStatus }) {
 /** Per-application remark shown under the status badge (e.g. which counsellor a row moved from). */
 export type RowNotes = ReadonlyMap<string, string>;
 
-function DiffRow({ status, record, note }: { status: "added" | "removed"; record: SuccessfulApplicationRecord; note?: string }) {
+function DiffRow({ status, record, note }: { status: "added" | "removed"; record: SuccessfulApplicationRecord; note?: string | undefined }) {
     return (
         <tr data-component="DiffRow" className={STATUS_STYLE[status].row}>
             <td>

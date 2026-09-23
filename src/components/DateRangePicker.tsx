@@ -303,7 +303,7 @@ function RangeMonth({
     nav: "prev" | "next";
     onShift: (delta: number) => void;
     onPick: (day: string) => void;
-    onHover?: (day: string | null) => void;
+    onHover?: ((day: string | null) => void) | undefined;
 }) {
     const daysInView = new Date(month.year, month.month, 0).getDate();
     const leadingBlanks = new Date(month.year, month.month - 1, 1).getDay();
