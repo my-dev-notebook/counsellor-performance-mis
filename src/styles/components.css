@@ -1743,7 +1743,147 @@
     }
     .datepicker .grid .d.in-range {
         background: var(--accent-soft);
+        color: var(--accent-soft-fg);
         border-radius: 0;
+    }
+    .datepicker .grid .d.in-range[aria-selected="true"] {
+        background: var(--accent);
+        color: var(--accent-fg);
+    }
+    .datepicker .grid .d.range-start {
+        border-radius: var(--r-sm) 0 0 var(--r-sm);
+    }
+    .datepicker .grid .d.range-end {
+        border-radius: 0 var(--r-sm) var(--r-sm) 0;
+    }
+
+    /* Date range picker: segmented from -> to trigger, presets + two months in the popover. */
+    .daterange {
+        display: inline-flex;
+        align-items: center;
+        height: var(--control-h-md);
+        border: 1px solid var(--line-2);
+        border-radius: var(--r-md);
+        background: var(--surface);
+        box-shadow: var(--shadow-1);
+        overflow: hidden;
+    }
+    .daterange.sm {
+        height: var(--control-h-sm);
+    }
+    .daterange button {
+        height: 100%;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 12px;
+        border: 0;
+        background: transparent;
+        color: var(--ink-1);
+        font: inherit;
+        font-size: var(--text-sm);
+        white-space: nowrap;
+        cursor: pointer;
+    }
+    .daterange.sm button {
+        padding: 0 10px;
+    }
+    .daterange button:hover:not(:disabled) {
+        background: var(--surface-hover);
+    }
+    .daterange button.on {
+        background: var(--accent-soft);
+        color: var(--accent-soft-fg);
+    }
+    .daterange button:disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+    .daterange button svg {
+        color: var(--ink-3);
+    }
+    .daterange button.on svg {
+        color: inherit;
+    }
+    .daterange .placeholder {
+        color: var(--ink-3);
+    }
+    .daterange .arrow {
+        display: inline-flex;
+        color: var(--ink-3);
+    }
+    .daterange .presets {
+        border-left: 1px solid var(--line-1);
+        padding: 0 8px;
+    }
+    .daterange-pop {
+        display: flex;
+        padding: 2px;
+    }
+    .daterange-pop .months {
+        display: flex;
+        gap: var(--s-4);
+    }
+    .daterange-pop .datepicker {
+        width: 240px;
+    }
+    .daterange-pop .datepicker .grid {
+        column-gap: 0;
+    }
+    .daterange-pop .nav-spacer {
+        width: var(--control-h-sm);
+    }
+    .daterange-pop .only-narrow {
+        visibility: hidden;
+    }
+    .presets-list {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 130px;
+        padding-right: 8px;
+        margin-right: 8px;
+        border-right: 1px solid var(--line-1);
+    }
+    .presets-list button {
+        height: 30px;
+        padding: 0 8px;
+        border: 0;
+        border-radius: var(--r-sm);
+        background: transparent;
+        color: var(--ink-2);
+        font: inherit;
+        font-size: var(--text-xs);
+        text-align: left;
+        cursor: pointer;
+    }
+    .presets-list button:hover {
+        background: var(--surface-hover);
+    }
+    .presets-list button.on {
+        background: var(--accent-soft);
+        color: var(--accent-soft-fg);
+        font-weight: 500;
+    }
+    @media (max-width: 640px) {
+        .daterange-pop {
+            flex-direction: column;
+        }
+        .presets-list {
+            flex-direction: row;
+            flex-wrap: wrap;
+            min-width: 0;
+            padding: 0 0 8px;
+            margin: 0 0 8px;
+            border-right: 0;
+            border-bottom: 1px solid var(--line-1);
+        }
+        .daterange-pop .datepicker.next {
+            display: none;
+        }
+        .daterange-pop .only-narrow {
+            visibility: visible;
+        }
     }
     .datepicker .foot {
         display: flex;

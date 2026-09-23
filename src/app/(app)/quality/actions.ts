@@ -10,7 +10,7 @@ import {
     updateCallAudit,
 } from "@/db/queries/callAudits";
 import { getActiveUserById, listUsers } from "@/db/queries/users";
-import { CallAuditIdInput, CallAuditInput, computeAqs } from "@/schemas/call-audit";
+import { aqsPercent, CallAuditIdInput, CallAuditInput, computeAqs } from "@/schemas/call-audit";
 import { DayDate } from "@/schemas/dates";
 import { assertPermission } from "@/lib/auth/session";
 
@@ -60,16 +60,21 @@ export interface QualityExportRow {
     name: string;
     email: string;
     teamName: string;
-    /** Lowest AQS (0..1) among the counsellor's audits whose call date falls in the range; null when none. */
+    /**
+     * Average AQS (0..1, always a whole percent) over the counsellor's audits whose call date falls
+     * in the range; null when none. Each audit is rounded to a whole percent first, then the mean
+     * of those is rounded again.
+     */
     qualityScore: number | null;
     auditCount: number;
 }
 
 /**
- * One row per ACTIVE counsellor for the quality report: the LOWEST AQS among
- * the audits whose call date lies in [from, to] (inclusive, "YYYY-MM-DD") --
- * the worst call is what counts. Counsellors with no audit in the range are
- * still listed, with no score.
+ * One row per ACTIVE counsellor for the quality report: the AVERAGE AQS over
+ * the audits whose call date lies in [from, to] (inclusive, "YYYY-MM-DD").
+ * Each audit's AQS is rounded to a whole percent before averaging (7/8 -> 88%),
+ * and the average is rounded to a whole percent too. Counsellors with no audit
+ * in the range are still listed, with no score.
  */
 export async function getQualityExportAction(from: string, to: string): Promise<QualityExportRow[]> {
     const range = z.object({ from: DayDate, to: DayDate }).parse({ from, to });
@@ -79,11 +84,10 @@ export async function getQualityExportAction(from: string, to: string): Promise<
         listUsers(actor.scope, { includeInactive: false, roleNames: ["counsellor"] }),
         listCallAudits(actor.scope, { from: range.from, to: range.to }),
     ]);
-    const totals = new Map<number, { min: number; n: number }>();
+    const totals = new Map<number, { sumPct: number; n: number }>();
     for (const audit of audits) {
-        const aqs = computeAqs(audit.ratings);
-        const t = totals.get(audit.userId) ?? { min: aqs, n: 0 };
-        t.min = Math.min(t.min, aqs);
+        const t = totals.get(audit.userId) ?? { sumPct: 0, n: 0 };
+        t.sumPct += aqsPercent(computeAqs(audit.ratings));
         t.n += 1;
         totals.set(audit.userId, t);
     }
@@ -93,7 +97,7 @@ export async function getQualityExportAction(from: string, to: string): Promise<
             name: c.name,
             email: c.email,
             teamName: c.teamName ?? "",
-            qualityScore: t ? t.min : null,
+            qualityScore: t ? Math.round(t.sumPct / t.n) / 100 : null,
             auditCount: t?.n ?? 0,
         };
     });

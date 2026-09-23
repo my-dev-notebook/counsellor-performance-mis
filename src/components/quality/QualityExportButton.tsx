@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { FiDownload } from "react-icons/fi";
-import { DatePicker } from "@/components/DatePicker";
-import { getQualityExportAction } from "@/app/(app)/quality/actions";
+import { useEffect, useMemo, useState } from "react";
+import { FiAlertTriangle, FiCheckCircle, FiDownload } from "react-icons/fi";
+import { DateRangePicker } from "@/components/DateRangePicker";
+import { getQualityExportAction, type QualityExportRow } from "@/app/(app)/quality/actions";
 import { aqsStatus } from "@/schemas/call-audit";
 import type { Status } from "@/schemas/parser";
 
@@ -31,7 +31,7 @@ function errorMessage(error: unknown, fallback: string): string {
 }
 
 /**
- * Quality report download: every active counsellor with their lowest AQS over
+ * Quality report download: every active counsellor with their average AQS over
  * the audits in the chosen date range, highest first, rows tinted by the
  * AQS band. Built client-side (exceljs must not load on the Workers runtime).
  */
@@ -40,6 +40,34 @@ export function QualityExportButton() {
     const [to, setTo] = useState(today);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    // Rows for the selected range, tagged with the range they were fetched for so a stale
+    // response (or one still in flight) is never shown against the current dates.
+    const [preview, setPreview] = useState<{ key: string; rows: QualityExportRow[] | null; error: string | null } | null>(
+        null,
+    );
+    const rangeKey = `${from}|${to}`;
+    const rangeValid = from !== "" && to !== "" && from <= to;
+
+    useEffect(() => {
+        if (!rangeValid) return;
+        let cancelled = false;
+        getQualityExportAction(from, to).then(
+            (rows) => {
+                if (!cancelled) setPreview({ key: rangeKey, rows, error: null });
+            },
+            (e: unknown) => {
+                if (!cancelled)
+                    setPreview({ key: rangeKey, rows: null, error: errorMessage(e, "Failed to check audits.") });
+            },
+        );
+        return () => {
+            cancelled = true;
+        };
+    }, [from, to, rangeKey, rangeValid]);
+
+    const current = preview?.key === rangeKey ? preview : null;
+    const checking = rangeValid && current === null;
+    const missing = useMemo(() => (current?.rows ?? []).filter((r) => r.auditCount === 0), [current]);
 
     const download = async () => {
         setBusy(true);
@@ -123,14 +151,18 @@ export function QualityExportButton() {
 
     return (
         <div data-component="QualityExportButton" className="card card-pad flex flex-wrap items-end gap-x-4 gap-y-3">
-            <label className="field w-40">
-                <span className="label">From</span>
-                <DatePicker value={from} onChange={setFrom} max={to} size="sm" aria-label="Report start date" />
-            </label>
-            <label className="field w-40">
-                <span className="label">To</span>
-                <DatePicker value={to} onChange={setTo} min={from} size="sm" aria-label="Report end date" />
-            </label>
+            <div className="field">
+                <span className="label">Date range</span>
+                <DateRangePicker
+                    value={{ from, to }}
+                    onChange={(range) => {
+                        setFrom(range.from);
+                        setTo(range.to);
+                    }}
+                    size="sm"
+                    aria-label="Report date range"
+                />
+            </div>
             <button
                 type="button"
                 disabled={busy || from === "" || to === ""}
@@ -142,8 +174,62 @@ export function QualityExportButton() {
                 {busy ? <span className="spinner" aria-hidden /> : <FiDownload aria-hidden />}
                 {busy ? "Preparing…" : "Download Excel"}
             </button>
-            <span className="hint">All active counsellors, lowest AQS among audits in the range, highest first.</span>
+            <span className="hint">All active counsellors, average AQS over audits in the range, highest first.</span>
+            {checking && (
+                <p className="hint flex w-full items-center gap-2">
+                    <span className="spinner" aria-hidden /> Checking audits in the selected range…
+                </p>
+            )}
+            {current?.error && <p className="error-text w-full">{current.error}</p>}
+            {current?.rows && <MissingAudits missing={current.rows.length > 0 ? missing : null} />}
             {error && <p className="error-text w-full">{error}</p>}
+        </div>
+    );
+}
+
+/**
+ * Counsellors with no audit in the selected range, grouped by team, so the
+ * auditor sees the gaps before downloading. `null` means there are no active
+ * counsellors at all.
+ */
+function MissingAudits({ missing }: { missing: QualityExportRow[] | null }) {
+    const byTeam = useMemo(() => {
+        const groups = new Map<string, string[]>();
+        for (const row of missing ?? []) {
+            const team = row.teamName || "No team";
+            groups.set(team, [...(groups.get(team) ?? []), row.name]);
+        }
+        return [...groups.entries()]
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([team, names]) => ({ team, names: names.sort((a, b) => a.localeCompare(b)) }));
+    }, [missing]);
+
+    if (missing === null) return null;
+
+    if (missing.length === 0) {
+        return (
+            <div data-component="MissingAudits" className="alert alert-good w-full">
+                <FiCheckCircle aria-hidden />
+                <div className="title">Every active counsellor has at least one audit in this range.</div>
+            </div>
+        );
+    }
+
+    return (
+        <div data-component="MissingAudits" className="alert alert-warn w-full">
+            <FiAlertTriangle aria-hidden />
+            <div>
+                <div className="title">
+                    {missing.length} counsellor{missing.length === 1 ? " has" : "s have"} no audit in this range
+                </div>
+                <ul className="t-xs mt-1 flex flex-col gap-0.5">
+                    {byTeam.map(({ team, names }) => (
+                        <li key={team}>
+                            <b>{team}:</b> {names.join(", ")}
+                        </li>
+                    ))}
+                </ul>
+            </div>
         </div>
     );
 }

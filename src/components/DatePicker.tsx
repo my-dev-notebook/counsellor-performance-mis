@@ -5,30 +5,30 @@ import { FiCalendar, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { MONTH_NAMES } from "@/lib/format";
 import { Popover, PICKER_TRIGGER_CLASSES } from "@/components/Popover";
 
-const WEEKDAY_LABELS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+export const WEEKDAY_LABELS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
 function pad(n: number): string {
     return String(n).padStart(2, "0");
 }
 
-function toDayDate(year: number, month: number, day: number): string {
+export function toDayDate(year: number, month: number, day: number): string {
     return `${String(year)}-${pad(month)}-${pad(day)}`;
 }
 
 /** "YYYY-MM-DD" -> parts, or null when the string is not that shape. */
-function parseDayDate(value: string): { year: number; month: number; day: number } | null {
+export function parseDayDate(value: string): { year: number; month: number; day: number } | null {
     const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
     if (!match) return null;
     return { year: Number(match[1]), month: Number(match[2]), day: Number(match[3]) };
 }
 
-function todayParts(): { year: number; month: number; day: number } {
+export function todayParts(): { year: number; month: number; day: number } {
     const now = new Date();
     return { year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate() };
 }
 
 /** "12 Sep 2026" for the trigger. */
-function formatDayDate(value: string): string {
+export function formatDayDate(value: string): string {
     const parts = parseDayDate(value);
     if (!parts) return "";
     return `${String(parts.day)} ${MONTH_NAMES[parts.month - 1]?.slice(0, 3) ?? "?"} ${String(parts.year)}`;
