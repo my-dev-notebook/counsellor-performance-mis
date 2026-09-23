@@ -33,13 +33,13 @@ export const SECTIONS: NavSection[] = [
         title: "Overview",
         links: [
             {
-                href: "/",
+                href: "/yearly",
                 label: "Dashboard",
                 icon: FiGrid,
                 requires: "viewPerformance",
                 children: [
-                    { href: "/", label: "Monthly" },
                     { href: "/yearly", label: "Yearly" },
+                    { href: "/", label: "Monthly" },
                 ],
             },
             {
