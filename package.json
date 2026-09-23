@@ -8,11 +8,12 @@
         "node": ">=20"
     },
     "scripts": {
-        "dev": "next dev",
+        "dev": "next dev -p 80",
         "build": "next build",
         "start": "next start",
         "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview --env staging",
-        "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy --env staging",
+        "deploy:staging": "opennextjs-cloudflare build && opennextjs-cloudflare deploy --env staging",
+        "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy --env production",
         "cf-typegen": "wrangler types --env staging --env-interface CloudflareEnv cloudflare-env.d.ts",
         "db:generate": "drizzle-kit generate",
         "db:seed:generate": "node scripts/seed-users.mjs",
