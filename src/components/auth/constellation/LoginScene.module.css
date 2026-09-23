@@ -16,7 +16,13 @@
     padding: 36px 24px 0;
     overflow: hidden;
     background: var(--canvas);
-    perspective: 1200px;
+    -webkit-user-select: none;
+    user-select: none;
+}
+/* form fields stay selectable so typed text can be edited */
+.scene :is(input, textarea) {
+    -webkit-user-select: text;
+    user-select: text;
 }
 
 /* ---------- aurora ---------- */
@@ -103,7 +109,6 @@
     flex-direction: column;
     align-items: center;
     gap: 14px;
-    will-change: transform;
 }
 .mark {
     position: relative;
@@ -233,11 +238,8 @@
     justify-content: center;
     width: 100%;
     padding: 0 0 26px;
-    perspective: 1000px;
 }
 .glass {
-    --mx: 50%;
-    --my: 50%;
     position: relative;
     width: 100%;
     max-width: 400px;
@@ -247,8 +249,6 @@
     -webkit-backdrop-filter: blur(8px);
     backdrop-filter: blur(8px);
     box-shadow: var(--shadow-3);
-    transform-style: preserve-3d;
-    transition: transform 0.12s var(--ease-out);
     animation: rise 0.6s var(--ease-out) both;
 }
 @keyframes rise {
@@ -256,32 +256,6 @@
         opacity: 0;
         transform: translateY(14px);
     }
-}
-/* spotlight border that follows the pointer (--mx/--my set by TiltCard) */
-.glass::before {
-    content: "";
-    position: absolute;
-    inset: -1px;
-    border-radius: inherit;
-    padding: 1px;
-    background: radial-gradient(240px circle at var(--mx) var(--my), var(--accent), transparent 60%);
-    -webkit-mask:
-        linear-gradient(#000 0 0) content-box,
-        linear-gradient(#000 0 0);
-    mask:
-        linear-gradient(#000 0 0) content-box,
-        linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    opacity: 0;
-    transition: opacity 0.3s;
-    pointer-events: none;
-}
-.glass:hover::before {
-    opacity: 0.9;
-}
-.glass > * {
-    transform: translateZ(18px);
 }
 .glass :global(.input:focus) {
     box-shadow:
@@ -388,8 +362,6 @@
     display: inline-flex;
     gap: 6px;
     align-items: center;
-    will-change: transform;
-    transition: transform 0.25s var(--ease-out);
 }
 .pill b {
     color: var(--ink-1);
@@ -436,23 +408,12 @@
         padding: 22px 18px;
     }
 }
-/* touch: no blur behind a repainting canvas, no 3-D, no spotlight */
+/* touch: no blur behind a repainting canvas */
 @media (hover: none) {
     .glass {
         -webkit-backdrop-filter: none;
         backdrop-filter: none;
         background: var(--surface);
-        transform-style: flat;
-    }
-    .glass > * {
-        transform: none;
-    }
-    .glass::before {
-        display: none;
-    }
-    .hd,
-    .pill {
-        will-change: auto;
     }
 }
 @media (prefers-reduced-motion: reduce) {

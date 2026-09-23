@@ -3,14 +3,14 @@ import type { Band, Person } from "@/components/auth/constellation/taglines";
 /**
  * The constellation behind the sign-in card: plain stars plus a handful of counsellor nodes, linked when close,
  * with successful application pulses running along the counsellor edges. Plain DOM and one `requestAnimationFrame` loop — no
- * React state per frame. The same loop moves the parallax layers and the hover label so nothing else has to.
+ * React state per frame. The same loop moves the hover label so nothing else has to.
  *
  * Kept cheap on purpose:
  *   - neighbour search goes through a uniform grid (cell = longest link), not every pair
  *   - edges and stars are bucketed by alpha and stroked/filled in a few batched paths instead of one call each
  *   - node count follows the viewport area, the canvas backing store is capped at 2× DPR
  *   - the loop stops when the tab is hidden or the canvas is scrolled off-screen
- *   - touch devices get taps (shockwave) but no cursor bend, hover, drag or parallax
+ *   - touch devices get taps (shockwave) but no cursor bend, hover or drag
  *   - `prefers-reduced-motion` renders a single static frame
  */
 
@@ -22,7 +22,7 @@ type Node = {
     oy: number;
     vx: number;
     vy: number;
-    z: number; // depth 0.3–1: parallax amount and brightness
+    z: number; // depth 0.3–1: brightness
     r: number;
     sx: number; // screen position this frame
     sy: number;
@@ -42,8 +42,6 @@ export type SceneElements = {
     canvas: HTMLCanvasElement;
     label: HTMLElement;
     labelOnClass: string;
-    head: HTMLElement;
-    pills: HTMLElement[];
     /** True for targets that sit on top of the canvas (hero, card, tickers) — pointer events there don't reach the graph. */
     isUi: (target: Element) => boolean;
 };
@@ -85,7 +83,7 @@ function escapeHtml(s: string) {
 }
 
 export function mountScene(els: SceneElements, people: readonly Person[]): () => void {
-    const { root, canvas, label, labelOnClass, head, pills, isUi } = els;
+    const { root, canvas, label, labelOnClass, isUi } = els;
     const context = canvas.getContext("2d");
     if (!context) return () => {};
     const ctx = context;
@@ -107,7 +105,7 @@ export function mountScene(els: SceneElements, people: readonly Person[]): () =>
     const bandColor = (b: Band) => C[b];
 
     // ---- pointer ----
-    const mouse = { x: -1e4, y: -1e4, nx: 0, ny: 0, in: false };
+    const mouse = { x: -1e4, y: -1e4, in: false };
     let drag: Node | null = null;
     let pinned: Node | null = null;
     let hover: Node | null = null;
@@ -131,8 +129,6 @@ export function mountScene(els: SceneElements, people: readonly Person[]): () =>
         const p = localPoint(e);
         mouse.x = p.x;
         mouse.y = p.y;
-        mouse.nx = (p.x / p.w - 0.5) * 2;
-        mouse.ny = (p.y / p.h - 0.5) * 2;
         mouse.in = true;
     }
     function onLeave() {
@@ -254,16 +250,12 @@ export function mountScene(els: SceneElements, people: readonly Person[]): () =>
     // ---- draw ----
     let shownLabel: Node | null = null;
     let cursor = "";
-    let lastPx = NaN;
-    let lastPy = NaN;
 
     function frame() {
         const g = ctx;
         t++;
         g.clearRect(0, 0, W, H);
         const bend = finePointer && mouse.in && !reduced;
-        const px = bend ? mouse.nx : 0;
-        const py = bend ? mouse.ny : 0;
 
         if (drag) {
             drag.x += (mouse.x - drag.x) * 0.35;
@@ -304,8 +296,8 @@ export function mountScene(els: SceneElements, people: readonly Person[]): () =>
                     n.oy *= 0.92;
                 }
             }
-            n.sx = n.x + n.ox + px * n.z * 14;
-            n.sy = n.y + n.oy + py * n.z * 10;
+            n.sx = n.x + n.ox;
+            n.sy = n.y + n.oy;
         }
 
         // bucket nodes into the grid
@@ -495,17 +487,6 @@ export function mountScene(els: SceneElements, people: readonly Person[]): () =>
             cursor = wantCursor;
             canvas.style.cursor = cursor;
         }
-
-        // parallax layers, written only when the pointer moved
-        if (finePointer && !reduced && (px !== lastPx || py !== lastPy)) {
-            lastPx = px;
-            lastPy = py;
-            head.style.transform = `translate3d(${px2(px * -6)},${px2(py * -4)},0)`;
-            pills.forEach((pill, i) => {
-                const z = 0.5 + (i % 3) * 0.35;
-                pill.style.transform = `translate3d(${px2(px * -18 * z)},${px2(py * -12 * z)},0)`;
-            });
-        }
     }
 
     // ---- loop: runs only while visible and on-screen ----
@@ -566,7 +547,5 @@ export function mountScene(els: SceneElements, people: readonly Person[]): () =>
         root.removeEventListener("pointerdown", onDown);
         root.removeEventListener("pointerup", onUp);
         root.removeEventListener("pointercancel", onCancel);
-        head.style.transform = "";
-        for (const p of pills) p.style.transform = "";
     };
 }

@@ -16,7 +16,6 @@ import { Headline } from "@/components/auth/constellation/Headline";
 import { mountScene } from "@/components/auth/constellation/scene";
 import { Tagline } from "@/components/auth/constellation/Tagline";
 import { Ticker } from "@/components/auth/constellation/Ticker";
-import { TiltCard } from "@/components/auth/constellation/TiltCard";
 import { FACTS, PEOPLE, REEL, TRACK, TYPED } from "@/components/auth/constellation/taglines";
 import styles from "@/components/auth/constellation/LoginScene.module.css";
 
@@ -112,21 +111,19 @@ const PILLS: { left: string; top: string; icon: typeof FiTarget; body: ReactNode
 
 /**
  * The sign-in page around the form: aurora + counsellor constellation on a canvas, scrambling headline with the
- * rotating tagline, the tilting glass card (children = `LoginForm`), and two tickers. The `AuthHeader` above is
+ * rotating tagline, the glass card (children = `LoginForm`), and two tickers. The `AuthHeader` above is
  * untouched. See `scene.ts` for the canvas loop and what keeps it cheap.
  */
 export function LoginScene({ children }: { children: ReactNode }) {
     const rootRef = useRef<HTMLElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const labelRef = useRef<HTMLDivElement>(null);
-    const headRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const root = rootRef.current;
         const canvas = canvasRef.current;
         const label = labelRef.current;
-        const head = headRef.current;
-        if (!root || !canvas || !label || !head) return;
+        if (!root || !canvas || !label) return;
         const ui = `.${s("hd")},.${s("formcol")},.${s("tk")}`;
         return mountScene(
             {
@@ -134,8 +131,6 @@ export function LoginScene({ children }: { children: ReactNode }) {
                 canvas,
                 label,
                 labelOnClass: s("labOn"),
-                head,
-                pills: Array.from(root.querySelectorAll<HTMLElement>(`.${s("pill")}`)),
                 isUi: (target) => target.closest(ui) !== null,
             },
             PEOPLE,
@@ -155,7 +150,7 @@ export function LoginScene({ children }: { children: ReactNode }) {
                 </span>
             ))}
 
-            <div ref={headRef} className={s("hd")}>
+            <div className={s("hd")}>
                 <div className={s("mark")} aria-hidden>
                     CP
                 </div>
@@ -167,12 +162,12 @@ export function LoginScene({ children }: { children: ReactNode }) {
             </div>
 
             <section className={s("formcol")}>
-                <TiltCard className={s("glass")}>
+                <div className={`card card-pad stack ${s("glass")}`}>
                     <div className="text-center">
                         <h2 className="t-h1">Sign in</h2>
                     </div>
                     {children}
-                </TiltCard>
+                </div>
             </section>
 
             <div className={s("tk")}>
