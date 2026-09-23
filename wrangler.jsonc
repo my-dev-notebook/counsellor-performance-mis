@@ -32,5 +32,15 @@
                 },
             ],
         },
+        "production": {
+            "name": "mis",
+            "d1_databases": [
+                {
+                    "binding": "DB",
+                    "database_name": "mis",
+                    "database_id": "ccf6272d-51a0-4c15-934c-895525026e83"
+                },
+            ],
+        },
     },
 }
