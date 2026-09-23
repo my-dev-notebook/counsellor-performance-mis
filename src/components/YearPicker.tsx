@@ -7,15 +7,13 @@ import { formatSessionSpan } from "@/schemas/dates";
 /**
  * `MonthPicker`'s yearly sibling — a session stepper that pushes `?year=YYYY` onto `basePath`. The year is a
  * SESSION year (Oct → Sep, named after the calendar year it ends in), so the control spells out the calendar span
- * under the session name. Sessions that already have data are listed as quick jumps.
+ * under the session name.
  */
 export function YearPicker({
     year,
-    existingYears,
     basePath,
 }: {
     year: string;
-    existingYears: string[];
     basePath: string;
 }) {
     const router = useRouter();
@@ -55,23 +53,6 @@ export function YearPicker({
                     <FiChevronRight aria-hidden />
                 </button>
             </div>
-            {existingYears.length > 0 && (
-                <div className="row gap-1.5">
-                    {existingYears.map((y) => (
-                        <button
-                            key={y}
-                            type="button"
-                            aria-pressed={y === year}
-                            onClick={() => {
-                                navigate(Number.parseInt(y, 10));
-                            }}
-                            className="chip"
-                        >
-                            {y}
-                        </button>
-                    ))}
-                </div>
-            )}
         </div>
     );
 }

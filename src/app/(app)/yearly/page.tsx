@@ -74,7 +74,7 @@ export default async function YearlyDashboardPage({
                 actions={
                     <>
                         <DashboardSwitch active="yearly" />
-                        <YearPicker year={year} existingYears={years} basePath="/yearly" />
+                        <YearPicker year={year} basePath="/yearly" />
                     </>
                 }
             />
