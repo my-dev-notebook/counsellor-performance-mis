@@ -1,0 +1,13 @@
+name: Deploy (staging)
+
+on:
+    push:
+        branches: [main]
+    workflow_dispatch:
+
+jobs:
+    deploy_staging:
+        uses: ./.github/workflows/deploy-to-cloudflare.yml
+        with:
+            environment: staging
+        secrets: inherit

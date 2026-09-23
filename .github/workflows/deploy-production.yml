@@ -1,0 +1,13 @@
+name: Deploy (production)
+
+# Manual only. Independent of staging for now — production can be deployed
+# directly without a prior staging deploy.
+on:
+    workflow_dispatch:
+
+jobs:
+    deploy_production:
+        uses: ./.github/workflows/deploy-to-cloudflare.yml
+        with:
+            environment: production
+        secrets: inherit
